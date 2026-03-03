@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Maestro Dashboard</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<div id="top-bar">
+    <input id="taskInput" placeholder="Enter task...">
+    <button onclick="startTask()">Start</button>
+    <button onclick="stopTask()">Stop</button>
+</div>
+
+<div id="layout">
+    <div id="left-panel">
+        <h2>Agents</h2>
+        <div id="currentAgent"></div>
+
+        <h2>Models</h2>
+        <pre id="currentModel"></pre>
+
+        <h2>Running</h2>
+        <div id="isRunning"></div>
+    </div>
+
+    <div id="center-panel">
+        <h2>Conversation</h2>
+        <div id="conversation"></div>
+    </div>
+
+    <div id="right-panel">
+        <h2>Code</h2>
+        <pre id="codeOutput"></pre>
+    </div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
