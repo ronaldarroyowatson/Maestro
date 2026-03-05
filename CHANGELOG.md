@@ -1,33 +1,23 @@
-
----
-
-# 🧾 **CHANGELOG.md**
-
-```markdown
 # Changelog
 
 ## Maestro 0.2 — March 2026
-### Stable, fully working build
+Stable, fully working build.
 
-- Complete backend rewrite
-- Complete frontend rewrite
-- Deterministic AutoGen 0.6.0 agent pipeline
-- Full WebSocket stability
-- Thread‑safe global state manager
-- Debug instrumentation across all subsystems
-- New dashboard UI (conversation, code, debug)
-- Local LLM integration via Ollama
-- Clean project structure
-- Added `.gitignore` to remove cache files
-
----
+- Complete backend rewrite (FastAPI, WebSockets, state manager, event loop)
+- Complete frontend rewrite (HTML/CSS/JS dashboard)
+- Deterministic AutoGen 0.6.0 multi‑agent pipeline
+- Local LLM integration via Ollama (mistral, deepseek-coder, phi3)
+- Full debug instrumentation across backend and frontend
+- WebSocket stability and reconnection logic
+- Clean project structure and file organization
+- Added .gitignore and removed cache files
+- First fully stable end‑to‑end execution of multi‑agent tasks
 
 ## Maestro 0.1 — February 2026
-### First experimental build
+Initial experimental build.
 
-- Initial FastAPI backend
-- Basic WebSocket connection
-- Early agent pipeline (unstable)
+- Basic FastAPI backend
+- Early WebSocket connection
 - Minimal UI
-- No debug instrumentation
+- Unstable agent pipeline
 - Frequent hangs and communication failures
