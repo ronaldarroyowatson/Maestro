@@ -1,40 +1,42 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Maestro Dashboard</title>
-    <link rel="stylesheet" href="styles.css">
+    <meta charset="UTF-8" />
+    <title>Maestro 2.0 Dashboard</title>
+    <link rel="stylesheet" href="styles.css" />
 </head>
+
 <body>
+    <div id="app-container">
 
-<div id="top-bar">
-    <input id="taskInput" placeholder="Enter task...">
-    <button onclick="startTask()">Start</button>
-    <button onclick="stopTask()">Stop</button>
-</div>
+        <!-- Left: Conversation Timeline -->
+        <div id="conversation-panel">
+            <h2>Conversation</h2>
+            <div id="conversation"></div>
+        </div>
 
-<div id="layout">
-    <div id="left-panel">
-        <h2>Agents</h2>
-        <div id="currentAgent"></div>
+        <!-- Right: Code + Controls -->
+        <div id="right-panel">
 
-        <h2>Models</h2>
-        <pre id="currentModel"></pre>
+            <div id="task-panel">
+                <h2>New Task</h2>
+                <textarea id="task-input" placeholder="Enter a task for Maestro..."></textarea>
+                <button id="start-btn">Start</button>
+            </div>
 
-        <h2>Running</h2>
-        <div id="isRunning"></div>
+            <div id="code-panel">
+                <h2>Generated Code</h2>
+                <pre id="code-output"></pre>
+            </div>
+
+            <div id="debug-panel">
+                <h2>Debug Log</h2>
+                <div id="debug-log"></div>
+            </div>
+
+        </div>
     </div>
 
-    <div id="center-panel">
-        <h2>Conversation</h2>
-        <div id="conversation"></div>
-    </div>
-
-    <div id="right-panel">
-        <h2>Code</h2>
-        <pre id="codeOutput"></pre>
-    </div>
-</div>
-
-<script src="app.js"></script>
+    <script src="app.js"></script>
 </body>
 </html>

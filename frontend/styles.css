@@ -1,51 +1,179 @@
+/* ============================================================
+   Maestro 2.0 Frontend Stylesheet (Drop‑in Replacement)
+   ------------------------------------------------------------
+   Goals:
+   - Clean, readable, modern layout
+   - Clear separation of conversation / code / debug panels
+   - Scrollable content areas
+   - Terminal‑style debug console
+   - Zero external dependencies
+   ============================================================ */
+
+/* Global layout ----------------------------------------------------------- */
+
 body {
-    font-family: Arial;
     margin: 0;
+    padding: 0;
+    font-family: system-ui, sans-serif;
     background: #f5f5f5;
+    color: #222;
 }
 
-#top-bar {
-    background: #333;
-    color: white;
-    padding: 10px;
-}
-
-#layout {
+#app-container {
     display: flex;
-    height: calc(100vh - 50px);
+    height: 100vh;
+    overflow: hidden;
 }
 
-#left-panel, #center-panel, #right-panel {
-    padding: 10px;
+/* Left panel: Conversation ------------------------------------------------ */
+
+#conversation-panel {
+    width: 45%;
+    border-right: 2px solid #ddd;
+    padding: 16px;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+}
+
+#conversation-panel h2 {
+    margin-top: 0;
+    margin-bottom: 12px;
+    font-size: 20px;
+    font-weight: 600;
+}
+
+#conversation {
+    flex: 1;
     overflow-y: auto;
-}
-
-#left-panel {
-    width: 20%;
-    background: #fafafa;
-    border-right: 1px solid #ccc;
-}
-
-#center-panel {
-    width: 50%;
-}
-
-#right-panel {
-    width: 30%;
-    background: #fafafa;
-    border-left: 1px solid #ccc;
-}
-
-.agent-card {
-    padding: 5px;
-    margin: 5px 0;
-    border-radius: 4px;
-    background: #eee;
+    padding-right: 8px;
 }
 
 .message {
-    background: white;
+    margin-bottom: 16px;
+    padding: 12px;
+    border-radius: 6px;
+    background: #fff;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.08);
+}
+
+.message .agent {
+    font-weight: 600;
+    margin-bottom: 4px;
+}
+
+.message .timestamp {
+    font-size: 12px;
+    color: #666;
+    margin-bottom: 8px;
+}
+
+/* Right panel ------------------------------------------------------------- */
+
+#right-panel {
+    width: 55%;
+    display: flex;
+    flex-direction: column;
+    padding: 16px;
+    box-sizing: border-box;
+}
+
+/* Task input -------------------------------------------------------------- */
+
+#task-panel h2 {
+    margin: 0 0 8px 0;
+}
+
+#task-input {
+    width: 100%;
+    height: 80px;
+    resize: vertical;
     padding: 10px;
-    margin: 10px 0;
-    border-left: 4px solid #888;
+    font-size: 14px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+    box-sizing: border-box;
+}
+
+#start-btn {
+    margin-top: 8px;
+    padding: 10px 16px;
+    font-size: 14px;
+    border: none;
+    border-radius: 6px;
+    background: #0078d4;
+    color: white;
+    cursor: pointer;
+}
+
+#start-btn:hover {
+    background: #005fa3;
+}
+
+/* Code panel -------------------------------------------------------------- */
+
+#code-panel {
+    margin-top: 20px;
+}
+
+#code-panel h2 {
+    margin: 0 0 8px 0;
+}
+
+#code-output {
+    background: #1e1e1e;
+    color: #dcdcdc;
+    padding: 12px;
+    border-radius: 6px;
+    height: 200px;
+    overflow-y: auto;
+    white-space: pre-wrap;
+    font-family: Consolas, monospace;
+    font-size: 13px;
+}
+
+/* Debug panel ------------------------------------------------------------- */
+
+#debug-panel {
+    margin-top: 20px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+#debug-panel h2 {
+    margin: 0 0 8px 0;
+}
+
+#debug-log {
+    flex: 1;
+    background: #111;
+    color: #0f0;
+    padding: 12px;
+    border-radius: 6px;
+    overflow-y: auto;
+    font-family: Consolas, monospace;
+    font-size: 12px;
+    white-space: pre-wrap;
+}
+
+/* Scrollbar styling ------------------------------------------------------- */
+
+#conversation::-webkit-scrollbar,
+#code-output::-webkit-scrollbar,
+#debug-log::-webkit-scrollbar {
+    width: 8px;
+}
+
+#conversation::-webkit-scrollbar-thumb,
+#code-output::-webkit-scrollbar-thumb,
+#debug-log::-webkit-scrollbar-thumb {
+    background: #bbb;
+    border-radius: 4px;
+}
+
+#conversation::-webkit-scrollbar-thumb:hover,
+#code-output::-webkit-scrollbar-thumb:hover,
+#debug-log::-webkit-scrollbar-thumb:hover {
+    background: #999;
 }

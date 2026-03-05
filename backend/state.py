@@ -1,8 +1,30 @@
-from dataclasses import dataclass, field, asdict
-from threading import Lock
-from typing import List, Optional
+# backend/state.py
+# ============================================================
+# Maestro 2.0 Shared State (Drop‑in Replacement)
+# ------------------------------------------------------------
+# Responsibilities:
+# - Hold all runtime state for a single Maestro run
+# - Provide a thread‑safe reset() and to_dict()
+# - Represent individual agent messages
+# - Be the single source of truth for the frontend
+# ============================================================
+
+from dataclasses import dataclass, asdict
+from typing import List, Optional, Any
+import threading
 import time
 
+
+# ------------------------------------------------------------
+# Debug helper (kept minimal to avoid noise)
+# ------------------------------------------------------------
+def debug(msg: str):
+    print(f"[MAESTRO-STATE][{time.strftime('%H:%M:%S')}] {msg}")
+
+
+# ============================================================
+# AgentMessage: one entry in the conversation timeline
+# ============================================================
 
 @dataclass
 class AgentMessage:
@@ -12,29 +34,40 @@ class AgentMessage:
     timestamp: float
 
 
-@dataclass
-class MaestroState:
-    running: bool = False
-    original_task: str = ""
-    current_agent: Optional[str] = None
-    current_model: Optional[str] = None
-    current_code: str = ""
-    error: Optional[str] = None
-    conversation: List[AgentMessage] = field(default_factory=list)
+# ============================================================
+# State: global, shared, thread‑safe Maestro run state
+# ============================================================
 
-    # not serialized
-    lock: Lock = field(default_factory=Lock, repr=False, compare=False)
+class State:
+    def __init__(self):
+        # Lock to protect all mutations
+        self.lock = threading.Lock()
+        # Core fields
+        self.running: bool = False
+        self.original_task: str = ""
+        self.current_agent: str = ""
+        self.current_model: str = ""
+        self.current_code: str = ""
+        self.conversation: List[AgentMessage] = []
+        self.error: Optional[str] = None
 
+    # --------------------------------------------------------
+    # Reset state for a new run
+    # --------------------------------------------------------
     def reset(self):
-        with self.lock:
-            self.running = False
-            self.original_task = ""
-            self.current_agent = None
-            self.current_model = None
-            self.current_code = ""
-            self.error = None
-            self.conversation.clear()
+        debug("State.reset() called")
+        self.running = False
+        self.original_task = ""
+        self.current_agent = ""
+        self.current_model = ""
+        self.current_code = ""
+        self.conversation = []
+        self.error = None
+        debug("State.reset() completed")
 
+    # --------------------------------------------------------
+    # Serialize to dict for WebSocket broadcast / frontend
+    # --------------------------------------------------------
     def to_dict(self) -> dict:
         with self.lock:
             return {
@@ -43,17 +76,10 @@ class MaestroState:
                 "current_agent": self.current_agent,
                 "current_model": self.current_model,
                 "current_code": self.current_code,
+                "conversation": [asdict(msg) for msg in self.conversation],
                 "error": self.error,
-                "conversation": [
-                    {
-                        "agent": m.agent,
-                        "model": m.model,
-                        "content": m.content,
-                        "timestamp": m.timestamp,
-                    }
-                    for m in self.conversation
-                ],
             }
 
 
-STATE = MaestroState()
+# Single shared instance imported as STATE everywhere else
+STATE = State()

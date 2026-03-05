@@ -1,89 +1,152 @@
-// ===============================
-// WebSocket Setup
-// ===============================
+// ============================================================
+// Maestro 2.0 Frontend Logic (Drop‑in Replacement)
+// ------------------------------------------------------------
+// Responsibilities:
+// - Connect to WebSocket backend
+// - Receive STATE updates and render UI
+// - Provide debug logging for all events
+// - Send /start requests to backend
+// ============================================================
 
+// ------------------------------------------------------------
+// Debug logger (writes to #debug-log panel)
+// ------------------------------------------------------------
+function debug(msg) {
+    const log = document.getElementById("debug-log");
+    const timestamp = new Date().toLocaleTimeString();
+    log.textContent += `[${timestamp}] ${msg}\n`;
+    log.scrollTop = log.scrollHeight;
+}
+
+// ------------------------------------------------------------
+// UI Elements
+// ------------------------------------------------------------
+const conversationEl = document.getElementById("conversation");
+const codeOutputEl = document.getElementById("code-output");
+const taskInputEl = document.getElementById("task-input");
+const startBtn = document.getElementById("start-btn");
+
+// ------------------------------------------------------------
+// WebSocket Connection
+// ------------------------------------------------------------
 let ws = null;
 
-function connectWS() {
-    ws = new WebSocket("ws://127.0.0.1:8000/ws");
+function connectWebSocket() {
+    debug("Attempting WebSocket connection...");
+
+    ws = new WebSocket(`ws://${window.location.host}/ws`);
 
     ws.onopen = () => {
-        console.log("WebSocket connected");
+        debug("WebSocket connected");
     };
 
     ws.onclose = () => {
-        console.log("WebSocket closed, retrying in 1s...");
-        setTimeout(connectWS, 1000);
+        debug("WebSocket disconnected");
+        // Optional: auto-reconnect
+        setTimeout(connectWebSocket, 1000);
     };
 
     ws.onerror = (err) => {
-        console.log("WebSocket error:", err);
+        debug("WebSocket error: " + err);
     };
 
     ws.onmessage = (event) => {
-        console.log("WS message received:", event.data);
+        debug("WebSocket message received");
         try {
             const state = JSON.parse(event.data);
-            updateUI(state);
+            renderState(state);
         } catch (e) {
-            console.error("Failed to parse WS message:", e);
+            debug("Error parsing WS message: " + e);
         }
     };
 }
 
-connectWS();
+connectWebSocket();
 
+// ------------------------------------------------------------
+// Render STATE from backend
+// ------------------------------------------------------------
+function renderState(state) {
+    debug("Rendering state update");
 
-// ===============================
-// UI Update Logic
-// ===============================
+    // -------------------------
+    // Conversation timeline
+    // -------------------------
+    conversationEl.innerHTML = "";
 
-function updateUI(state) {
-    // Running
-    document.getElementById("isRunning").textContent = state.running;
-
-    // Current Agent
-    document.getElementById("currentAgent").textContent =
-        state.current_agent || "None";
-
-    // Current Model
-    document.getElementById("currentModel").textContent =
-        state.current_model || "None";
-
-    // Conversation
-    const convoDiv = document.getElementById("conversation");
-    convoDiv.innerHTML = "";
-    state.conversation.forEach(msg => {
+    state.conversation.forEach((msg) => {
         const div = document.createElement("div");
         div.className = "message";
-        div.innerHTML = `<strong>${msg.agent} (${msg.model})</strong><br>${msg.content}`;
-        convoDiv.appendChild(div);
+
+        div.innerHTML = `
+            <div class="agent">${msg.agent} (${msg.model})</div>
+            <div class="timestamp">${new Date(msg.timestamp * 1000).toLocaleTimeString()}</div>
+            <div class="content">${escapeHtml(msg.content).replace(/\n/g, "<br>")}</div>
+        `;
+
+        conversationEl.appendChild(div);
     });
 
-    // Code Output
-    document.getElementById("codeOutput").textContent =
-        state.current_code || "";
+    conversationEl.scrollTop = conversationEl.scrollHeight;
+
+    // -------------------------
+    // Code output
+    // -------------------------
+    if (state.current_code) {
+        const code = extractFencedCode(state.current_code);
+        codeOutputEl.textContent = code || "";
+    } else {
+        codeOutputEl.textContent = "";
+    }
+
+    // -------------------------
+    // Error display (if any)
+    // -------------------------
+    if (state.error) {
+        debug("ERROR from backend: " + state.error);
+    }
 }
 
-
-// ===============================
-// Start / Stop Task
-// ===============================
-
-function startTask() {
-    const task = document.getElementById("taskInput").value;
-
-    fetch("http://127.0.0.1:8000/start", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ task })
-    })
-        .then(r => r.json())
-        .then(d => console.log("Start response:", d))
-        .catch(err => console.error("Start error:", err));
+// ------------------------------------------------------------
+// Extract fenced code block from a message
+// ------------------------------------------------------------
+function extractFencedCode(text) {
+    const match = text.match(/```(?:\w+)?\n([\s\S]*?)```/);
+    return match ? match[1].trim() : "";
 }
 
-function stopTask() {
-    // Not implemented yet — placeholder
-    console.log("Stop requested (not implemented)");
+// ------------------------------------------------------------
+// Escape HTML for safe rendering
+// ------------------------------------------------------------
+function escapeHtml(str) {
+    return str
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;");
 }
+
+// ------------------------------------------------------------
+// Start task button
+// ------------------------------------------------------------
+startBtn.addEventListener("click", async () => {
+    const task = taskInputEl.value.trim();
+    if (!task) {
+        debug("No task entered");
+        return;
+    }
+
+    debug("Sending /start request with task: " + task);
+
+    try {
+        const res = await fetch("/start", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ task }),
+        });
+
+        const data = await res.json();
+        debug("Backend response: " + JSON.stringify(data));
+    } catch (e) {
+        debug("Error calling /start: " + e);
+    }
+});
