@@ -1,31 +1,37 @@
-# backend/maestro_local_autonomous.py
 # ============================================================
-# Maestro 2.0 — Local Autonomous Pipeline
-# AutoGen 0.6.0 + Ollama (Drop‑in Replacement)
-# ------------------------------------------------------------
-# Responsibilities:
-# - Define Composer / Coder / Critic / Archivist agents
-# - Wire them into a deterministic GroupChat
-# - Expose run_autonomous_task(task: str) for maestro_runner.py
-# - Provide rich debug tracing for imports, LLM calls, and flow
+# DEPRECATED: Local Autonomous Pipeline (Legacy Code)
 # ============================================================
+# This file is NOT USED. It's kept for reference only.
+#
+# The new Maestro architecture uses:
+# - pipeline_loader.py    → Load XML
+# - pipeline_parser.py    → Parse XML to PipelineConfig
+# - pipeline_compiler.py  → Compile to AutoGen agents + manager
+# - pipeline_executor.py  → Turn-by-turn execution with state tracking
+# - maestro_runner.py     → Thread orchestration
+#
+# This file represents the old pre-XML hardcoded approach.
+# For examples of the old pattern, see comments below.
+# ============================================================
+
+# DEPRECATED CODE BELOW - see new architecture above
 
 import time
 from autogen import ConversableAgent, GroupChat, GroupChatManager
 
-# ------------------------------------------------------------
 # Debug helper
-# ------------------------------------------------------------
 def debug(msg: str):
-    print(f"[MAESTRO-AUTO][{time.strftime('%H:%M:%S')}] {msg}")
+    print(f"[MAESTRO-AUTO-DEPRECATED][{time.strftime('%H:%M:%S')}] {msg}")
 
 
-debug(f"LOADED maestro_local_autonomous.py FROM: {__file__}")
+debug(f"DEPRECATED: maestro_local_autonomous.py loaded")
+debug("Use pipeline_loader/parser/compiler/executor instead")
 
 
 # ============================================================
-# Ollama LLM CONFIGS (AutoGen 0.6.0 correct format)
+# DEPRECATED: Old hardcoded agent definitions
 # ============================================================
+# These were replaced by XML-driven agent configuration
 
 OLLAMA_BASE = "http://localhost:11434"
 
@@ -54,119 +60,21 @@ archivist_llm = {
 }
 
 
-# ============================================================
-# Agent definitions
-# ============================================================
-
-debug("Initializing agents...")
-
-composer = ConversableAgent(
-    name="Composer",
-    system_message=(
-        "You are the Composer. Your job is to break the user's task into a clear, "
-        "step-by-step plan for the Coder. Output ONLY the plan, no code."
-    ),
-    llm_config=composer_llm,
-)
-
-coder = ConversableAgent(
-    name="Coder",
-    system_message=(
-        "You are the Coder. Write clean, correct Python code that satisfies the plan. "
-        "Output ONLY code inside triple backticks."
-    ),
-    llm_config=coder_llm,
-)
-
-critic = ConversableAgent(
-    name="Critic",
-    system_message=(
-        "You are the Critic. Review the Coder's output. Identify bugs, logic issues, "
-        "or missing requirements. Output ONLY critique text."
-    ),
-    llm_config=critic_llm,
-)
-
-archivist = ConversableAgent(
-    name="Archivist",
-    system_message=(
-        "You are the Archivist. Summarize the final solution and provide a clean final answer "
-        "for the user, referencing the code and critique."
-    ),
-    llm_config=archivist_llm,
-)
-
-debug("Agents initialized.")
-
-
-# ============================================================
-# Optional: simple agent message tracing
-# ============================================================
-
-def _on_message(agent, message):
-    # This fires whenever an agent sends a message
-    preview = message.replace("\n", " ")[:120]
-    debug(f"AGENT → {agent.name}: {preview!r}")
-
-composer.on_message = _on_message
-coder.on_message = _on_message
-critic.on_message = _on_message
-archivist.on_message = _on_message
-
-
-# ============================================================
-# GroupChat wiring (deterministic round‑robin)
-# ============================================================
-
-debug("Configuring GroupChat...")
-
-groupchat = GroupChat(
-    agents=[composer, coder, critic, archivist],
-    messages=[],
-    max_round=12,
-    speaker_selection_method="round_robin",  # Composer → Coder → Critic → Archivist → repeat
-)
-
-manager = GroupChatManager(
-    groupchat=groupchat,
-    llm_config=composer_llm,  # manager uses a lightweight config; same Ollama endpoint
-)
-
-debug("GroupChat configured.")
-
-
-# Optional: trace speaker selection
-def _on_select_speaker(speaker):
-    debug(f"MANAGER → Next speaker: {speaker.name}")
-
-manager.on_select_speaker = _on_select_speaker
-
-
-# ============================================================
-# Main task runner
-# ============================================================
-
 def run_autonomous_task(task: str):
     """
-    Runs the full Composer → Coder → Critic → Archivist pipeline.
-    Called from maestro_runner.run_maestro_task() inside a background thread.
+    DEPRECATED: This function is not used.
+    
+    New execution flow:
+    1. main.py POST /start
+    2. main.py → maestro_runner.run_task()
+    3. maestro_runner → pipeline_executor.execute_pipeline()
+    4. executor → manager.initiate_chat() with state tracking
+    5. Results propagate back through STATE to frontend
     """
-    debug("=== MAESTRO LOCAL RUN START ===")
-    debug(f"Task received: {task!r}")
-
-    try:
-        debug("Initiating chat via GroupChatManager.initiate_chat()...")
-        result = manager.initiate_chat(
-            recipient=composer,
-            message=task,
-        )
-        debug("Chat completed successfully.")
-        return result
-
-    except Exception as e:
-        debug(f"ERROR inside run_autonomous_task: {e}")
-        # Re-raise so maestro_runner can capture and surface in STATE.error
-        raise
+    raise NotImplementedError(
+        "This function is deprecated. Use pipeline_executor.execute_pipeline() instead. "
+        "See pipeline_compiler, pipeline_executor, and maestro_runner for new architecture."
+    )
 
     finally:
         debug("=== MAESTRO LOCAL RUN END ===")

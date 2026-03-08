@@ -1,0 +1,158 @@
+<Pipeline id="maestro-default" version="0.3">
+
+  <Metadata>
+    <Name>Default Maestro Pipeline</Name>
+    <Description>Four-agent round-robin orchestration pipeline.</Description>
+  </Metadata>
+
+  <Agents>
+
+    <!-- COMPOSER -->
+    <Agent id="composer" role="planner" model="mistral:instruct">
+      <Display>
+        <Label>Composer</Label>
+        <Color>#4A90E2</Color>
+        <Icon>composer</Icon>
+        <Position x="120" y="80" />
+      </Display>
+
+      <Prompt><![CDATA[
+You are the Composer. Your job is to break the user's task into clear, numbered steps.
+Keep the plan concise, structured, and executable by the Coder.
+      ]]></Prompt>
+
+      <Parameters>
+        <Temperature>0.3</Temperature>
+        <MaxTokens>2048</MaxTokens>
+      </Parameters>
+
+      <Tools>
+        <Tool name="python" enabled="false" />
+      </Tools>
+
+      <Memory>
+        <Strategy>stateless</Strategy>
+      </Memory>
+    </Agent>
+
+    <!-- CODER -->
+    <Agent id="coder" role="developer" model="deepseek-coder:6.7b">
+      <Display>
+        <Label>Coder</Label>
+        <Color>#7ED321</Color>
+        <Icon>code</Icon>
+        <Position x="420" y="80" />
+      </Display>
+
+      <Prompt><![CDATA[
+You are the Coder. Write clean, correct Python code that implements the Composer's plan.
+
+IMPORTANT: Output ONLY the Python code inside fenced code blocks. Do not add any commentary, explanations, or text outside the code blocks.
+
+Example output format:
+```
+def square_number(n):
+    """Calculate the square of a number."""
+    return n * n
+
+# Test the function
+if __name__ == "__main__":
+    print(square_number(5))  # Should print 25
+```
+
+Do not include any text before or after the code blocks. Just the code.
+      ]]></Prompt>
+
+      <Parameters>
+        <Temperature>0.2</Temperature>
+        <MaxTokens>4096</MaxTokens>
+      </Parameters>
+
+      <Tools>
+        <Tool name="python" enabled="true" />
+      </Tools>
+
+      <Memory>
+        <Strategy>stateless</Strategy>
+      </Memory>
+    </Agent>
+
+    <!-- CRITIC -->
+    <Agent id="critic" role="reviewer" model="mistral:instruct">
+      <Display>
+        <Label>Critic</Label>
+        <Color>#F5A623</Color>
+        <Icon>review</Icon>
+        <Position x="720" y="80" />
+      </Display>
+
+      <Prompt><![CDATA[
+You are the Critic. Review the Coder's output for correctness, bugs, missing logic, or structural issues.
+Respond with a short list of improvements. If the code is correct, say "Looks good."
+      ]]></Prompt>
+
+      <Parameters>
+        <Temperature>0.3</Temperature>
+        <MaxTokens>2048</MaxTokens>
+      </Parameters>
+
+      <Tools>
+        <Tool name="python" enabled="false" />
+      </Tools>
+
+      <Memory>
+        <Strategy>stateless</Strategy>
+      </Memory>
+    </Agent>
+
+    <!-- ARCHIVIST -->
+    <Agent id="archivist" role="summarizer" model="phi3">
+      <Display>
+        <Label>Archivist</Label>
+        <Color>#BD10E0</Color>
+        <Icon>archive</Icon>
+        <Position x="1020" y="80" />
+      </Display>
+
+      <Prompt><![CDATA[
+You are the Archivist. Summarize the final result clearly and concisely.
+Do not add new code. Do not repeat the entire conversation.
+      ]]></Prompt>
+
+      <Parameters>
+        <Temperature>0.2</Temperature>
+        <MaxTokens>1024</MaxTokens>
+      </Parameters>
+
+      <Tools>
+        <Tool name="python" enabled="false" />
+      </Tools>
+
+      <Memory>
+        <Strategy>stateless</Strategy>
+      </Memory>
+    </Agent>
+
+  </Agents>
+
+  <Edges>
+    <Edge from="composer" to="coder">
+      <Condition>always</Condition>
+    </Edge>
+
+    <Edge from="coder" to="critic">
+      <Condition>always</Condition>
+    </Edge>
+
+    <Edge from="critic" to="archivist">
+      <Condition>always</Condition>
+    </Edge>
+  </Edges>
+
+  <Execution>
+    <Mode>round-robin</Mode>
+    <MaxTurns>12</MaxTurns>
+    <StopOnFirstSuccess>false</StopOnFirstSuccess>
+  </Execution>
+
+</Pipeline>

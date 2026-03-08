@@ -8,9 +8,6 @@
 # - Add a debug banner so we always know when the backend loads
 # ============================================================
 
-import time
+from .debug import log_debug
 
-def debug(msg: str):
-    print(f"[MAESTRO-BACKEND][{time.strftime('%H:%M:%S')}] {msg}")
-
-debug("Backend package initialized")
+log_debug("backend", "Backend package initialized")

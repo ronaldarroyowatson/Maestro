@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8" />
-    <title>Maestro 2.0 Dashboard</title>
+    <title>Maestro Dashboard</title>
     <link rel="stylesheet" href="styles.css" />
 </head>
 
@@ -11,7 +11,13 @@
 
         <!-- Left: Conversation Timeline -->
         <div id="conversation-panel">
-            <h2>Conversation</h2>
+            <div id="panel-header">
+                <h2>Conversation</h2>
+                <div id="status" class="status status-ready">Ready</div>
+            </div>
+            <div id="progress-bar">
+                <div id="progress" class="progress"></div>
+            </div>
             <div id="conversation"></div>
         </div>
 
@@ -21,11 +27,15 @@
             <div id="task-panel">
                 <h2>New Task</h2>
                 <textarea id="task-input" placeholder="Enter a task for Maestro..."></textarea>
-                <button id="start-btn">Start</button>
+                <button id="start-btn">Start Pipeline</button>
             </div>
 
             <div id="code-panel">
                 <h2>Generated Code</h2>
+                <div id="code-controls">
+                    <button id="extract-btn" disabled>Extract from Chat</button>
+                    <button id="save-btn" disabled>Save Code</button>
+                </div>
                 <pre id="code-output"></pre>
             </div>
 

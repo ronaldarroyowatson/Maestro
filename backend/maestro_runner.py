@@ -1,178 +1,122 @@
+# =====================================================================
 # backend/maestro_runner.py
-# ============================================================
-# Maestro 2.0 Runner (Drop‑in Replacement)
-# ------------------------------------------------------------
-# Responsibilities:
-# - Launch background agent pipeline
-# - Launch streamer thread to push messages to STATE
-# - Broadcast state to WebSocket clients
-# - Provide deep debug instrumentation for every step
-# ============================================================
+# Orchestrates pipeline execution: compiles config, manages task threading,
+# and coordinates with the executor layer and state management.
+# =====================================================================
 
-import threading
-import time
-import asyncio
+from threading import Thread
+from typing import Any, Dict
 
-import backend.event_loop as event_loop
-from .state import STATE, AgentMessage
-from .ws import ws_manager
-
-# Import the autonomous pipeline
-from .maestro_local_autonomous import (
-    composer,
-    coder,
-    critic,
-    archivist,
-    manager,
-    groupchat,
-    run_autonomous_task,
-)
+from .debug import log_debug
+from .pipeline_config import PipelineConfig
+from .pipeline_compiler import compile_pipeline
+from .state import STATE
 
 
-# ------------------------------------------------------------
-# Debug helper
-# ------------------------------------------------------------
-def debug(msg: str):
-    print(f"[MAESTRO-RUNNER][{time.strftime('%H:%M:%S')}] {msg}")
+class MaestroRunner:
+    """
+    Orchestrates a single Maestro pipeline run.
+    Responsibilities:
+    - Compile pipeline once at startup
+    - Accept user tasks and spawn execution threads
+    - Coordinate state transitions with executor
+    - Handle compilation failures gracefully
+    """
 
+    def __init__(self, pipeline_config: PipelineConfig):
+        self.pipeline_config = pipeline_config
+        self.compiled: Dict[str, Any] | None = None
+        self.running = False
+        log_debug("maestro_runner", f"Initialized with pipeline: {pipeline_config.id}")
 
-debug(f"LOADED maestro_runner.py FROM: {__file__}")
+    # =====================================================================
+    # Pipeline compilation (one-time at startup)
+    # =====================================================================
 
-
-# ------------------------------------------------------------
-# Broadcast STATE to all WebSocket clients
-# ------------------------------------------------------------
-def broadcast_state():
-    debug("broadcast_state() called")
-
-    loop = event_loop.MAIN_LOOP
-    if loop is None:
-        debug("MAIN_LOOP is None → cannot broadcast")
-        return
-
-    try:
-        asyncio.run_coroutine_threadsafe(
-            ws_manager.broadcast(STATE.to_dict()),
-            loop,
-        )
-        debug("broadcast_state() → submitted to event loop")
-    except Exception as e:
-        debug(f"ERROR in broadcast_state: {e}")
-
-
-# ------------------------------------------------------------
-# Stream messages from AutoGen into STATE
-# ------------------------------------------------------------
-def stream_messages_to_state():
-    debug("STREAMER THREAD ENTERED")
-    last_index = 0
-
-    while True:
-        time.sleep(0.1)
-
-        # Determine which message list exists
-        if hasattr(groupchat, "messages"):
-            messages = groupchat.messages
-        elif hasattr(groupchat, "history"):
-            messages = groupchat.history
-        elif hasattr(manager, "chat_messages"):
-            messages = manager.chat_messages
-        elif hasattr(manager, "_messages"):
-            messages = manager._messages
-        else:
-            messages = []
-
-        # Exit when run is over and all messages consumed
-        if not STATE.running and last_index >= len(messages):
-            debug("STREAMER EXIT → no more messages and STATE.running=False")
-            return
-
-        if len(messages) == last_index:
-            continue
-
-        new_messages = messages[last_index:]
-        last_index = len(messages)
-
-        for msg in new_messages:
-            name = msg.get("name", "Unknown")
-            content = msg.get("content", "")
-            timestamp = time.time()
-
-            # Determine model
-            model = "unknown"
-            if name == "Composer":
-                model = composer.llm_config.get("model", "unknown")
-            elif name == "Coder":
-                model = coder.llm_config.get("model", "unknown")
-            elif name == "Critic":
-                model = critic.llm_config.get("model", "unknown")
-            elif name == "Archivist":
-                model = archivist.llm_config.get("model", "unknown")
-
-            # Update shared state
-            with STATE.lock:
-                STATE.current_agent = name
-                STATE.current_model = model
-
-                STATE.conversation.append(
-                    AgentMessage(
-                        agent=name,
-                        model=model,
-                        content=content,
-                        timestamp=timestamp,
-                    )
-                )
-
-                # Capture code if Coder posts fenced code
-                if name == "Coder" and "```" in content:
-                    STATE.current_code = content
-
-            debug(f"STREAM → {name} ({model})")
-            broadcast_state()
-
-
-# ------------------------------------------------------------
-# Main entry point called by /start
-# ------------------------------------------------------------
-def run_maestro_task(task: str):
-    debug(f"run_maestro_task() ENTERED with task: {task}")
-
-    # Reset state
-    with STATE.lock:
-        STATE.reset()
-        STATE.original_task = task
-        STATE.running = True
-
-    broadcast_state()
-
-    # --------------------------------------------------------
-    # Start streamer thread
-    # --------------------------------------------------------
-    debug("Starting STREAMER thread...")
-    streamer = threading.Thread(target=stream_messages_to_state, daemon=True)
-    streamer.start()
-
-    # --------------------------------------------------------
-    # Background execution thread
-    # --------------------------------------------------------
-    def background():
-        debug("BACKGROUND THREAD ENTERED")
+    def initialize(self) -> bool:
+        """Compile pipeline config into runtime objects. Returns success status."""
         try:
-            debug("Calling run_autonomous_task()...")
-            run_autonomous_task(task)
-            debug("run_autonomous_task() returned successfully")
+            log_debug("maestro_runner", f"Compiling pipeline: {self.pipeline_config.id}")
+            self.compiled = compile_pipeline(self.pipeline_config)
+            log_debug("maestro_runner", "Pipeline compilation successful")
+            return True
         except Exception as e:
-            debug(f"ERROR inside background thread: {e}")
-            with STATE.lock:
-                STATE.error = str(e)
+            log_debug("maestro_runner", f"Pipeline compilation failed: {e}")
+            return False
+
+    # =====================================================================
+    # Task execution entry point
+    # =====================================================================
+
+    def run_task(self, user_task: str) -> None:
+        """
+        Spawn a background thread to execute the pipeline with the given task.
+        Assumes STATE.original_task is already set by caller (usually main.py).
+        """
+        # Compile if not already compiled
+        if self.compiled is None:
+            log_debug("maestro_runner", "Pipeline not compiled; compiling now")
+            if not self.initialize():
+                STATE.add_message("error", "system", "Pipeline compilation failed")
+                STATE.set_running(False)
+                return
+
+        # Verify state initialization (should have been done by caller)
+        if not STATE.original_task:
+            log_debug("maestro_runner", f"WARNING: STATE.original_task not set; using parameter: {user_task}")
+            STATE.original_task = user_task
+
+        log_debug("maestro_runner", f"Task enqueued: {user_task}, spawning executor thread")
+
+        # Spawn background thread for execution
+        thread = Thread(
+            target=self._execute_in_thread,
+            args=(self.compiled, user_task),
+            daemon=True,
+        )
+        thread.start()
+
+    # =====================================================================
+    # Background execution thread
+    # =====================================================================
+
+    def _execute_in_thread(self, compiled: Dict[str, Any], user_task: str) -> None:
+        """
+        Runs in background thread: orchestrates executor and manages state transitions.
+        """
+        try:
+            log_debug("maestro_runner", "=== EXECUTION THREAD START ===")
+            log_debug("maestro_runner", f"Task: {user_task}, Original task in STATE: {STATE.original_task}")
+
+            # Verify state is consistent
+            if STATE.original_task != user_task:
+                log_debug("maestro_runner", f"WARNING: Task mismatch - parameter={user_task}, STATE={STATE.original_task}")
+
+            # Import executor here to avoid circular imports
+            from .pipeline_executor import execute_pipeline
+
+            # Add initial marker to conversation
+            STATE.add_message("system", "system", f"Executor starting for task: {user_task}")
+            log_debug("maestro_runner", "Calling pipeline executor")
+
+            # Execute the pipeline (this runs turn-by-turn in the thread)
+            success = execute_pipeline(compiled)
+
+            # Handle completion
+            if success:
+                log_debug("maestro_runner", "Executor completed successfully")
+                STATE.add_message("system", "system", "Pipeline execution completed successfully")
+            else:
+                log_debug("maestro_runner", "Executor failed or was interrupted")
+                STATE.add_message("error", "system", "Pipeline execution failed")
+
+        except Exception as e:
+            error_msg = f"Execution error: {e}"
+            log_debug("maestro_runner", error_msg)
+            STATE.add_message("error", "system", error_msg)
+
         finally:
-            with STATE.lock:
-                STATE.running = False
-            broadcast_state()
-            debug("BACKGROUND THREAD EXITING (STATE.running=False)")
-
-    debug("Starting BACKGROUND thread...")
-    thread = threading.Thread(target=background, daemon=True)
-    thread.start()
-
-    debug("run_maestro_task() EXITING (threads launched)")
+            # Ensure state is clean on exit
+            if STATE.running:
+                STATE.set_running(False)
+            log_debug("maestro_runner", "=== EXECUTION THREAD COMPLETE ===")

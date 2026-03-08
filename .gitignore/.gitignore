@@ -72,3 +72,4 @@ backend/pipline_executor.py
 
 # Ignore local model artifacts
 models/
+pipelines/user/

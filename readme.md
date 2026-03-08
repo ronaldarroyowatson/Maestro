@@ -1,8 +1,49 @@
-# Maestro 0.2 — Local Multi‑Agent Orchestration Studio
+# Maestro 0.4 — Local Multi-Agent Orchestration Studio
 
 Maestro is a fully local, fully autonomous multi‑agent orchestration system built for experimentation, education, and real‑world automation. It combines a FastAPI backend, a real‑time WebSocket dashboard, and a deterministic AutoGen 0.6.0 agent pipeline powered by local LLMs running through Ollama.
 
-This version (0.2) is the first fully stable, end‑to‑end working build.
+Version 0.4 focuses on stabilization, cleaner startup flow, and release readiness.
+
+## Quick Start
+
+### Prerequisites
+- Python 3.11+
+- Ollama installed and running
+
+### Install
+
+```bash
+pip install -r backend/requirements.txt
+```
+
+### Run (Current)
+
+```bash
+uvicorn backend.main:app --reload
+```
+
+Open:
+
+```text
+http://127.0.0.1:8000
+```
+
+### Run (Unified Entrypoint)
+
+After Phase 3, use:
+
+```bash
+python run_maestro.py
+```
+
+This will start the backend, wait until it is ready, then open the dashboard in your browser.
+
+## Architecture (0.4)
+
+Maestro 0.4 has three primary layers:
+- `backend/`: pipeline load/parse/compile/execute, state management, API and WebSocket endpoints
+- `frontend/`: dashboard UI, event handling, message/code rendering
+- `pipelines/system/default.xml`: default multi-agent workflow definition (composer -> coder -> critic -> archivist)
 
 ## Features
 
@@ -39,26 +80,13 @@ This makes Maestro easy to debug, extend, and teach.
 
 ## Installation
 
-### Requirements
-- Python 3.11+
-- Ollama installed and running
-- Git
-- Node (optional for future builds)
-
-### Setup
 Clone the repository and install dependencies:
 
-    git clone <your-repo-url>
-    cd Maestro
-    pip install -r requirements.txt
-
-Start the backend:
-
-    uvicorn backend.main:app --reload
-
-Open the UI in your browser:
-
-    http://127.0.0.1:8000/ui
+```bash
+git clone <your-repo-url>
+cd Maestro
+pip install -r backend/requirements.txt
+```
 
 ## Project Structure
 
@@ -100,7 +128,7 @@ Maestro uses simple semantic versioning:
 - 0.x — development builds
 - 1.0 — first public release
 
-Current version: 0.2
+Current version: 0.4
 
 See CHANGELOG.md for details.
 

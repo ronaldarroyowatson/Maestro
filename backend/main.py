@@ -1,84 +1,26 @@
+# =====================================================================
 # backend/main.py
-# ============================================================
-# Maestro 2.0 FastAPI App (Drop‑in Replacement)
-# ------------------------------------------------------------
-# Responsibilities:
-# - Expose /ws WebSocket endpoint
-# - Serve static frontend at /ui
-# - Capture and share the main event loop
-# - Expose /start to launch maestro_runner.run_maestro_task()
-# - Add rich debug tracing for connections and task starts
-# ============================================================
+# Clean, single-responsibility FastAPI entrypoint.
+# Loads the pipeline once, creates one global MaestroRunner, and exposes
+# the /start endpoint to run tasks. Includes rich debug instrumentation.
+# =====================================================================
 
-from fastapi import FastAPI, WebSocket
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.staticfiles import StaticFiles
 import asyncio
-import os
 
-from .models import StartRequest
-from .maestro_runner import run_maestro_task
-from .ws import ws_manager
-import backend.event_loop as event_loop
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi import WebSocket, WebSocketDisconnect
 
-
-# ------------------------------------------------------------
-# Debug helper
-# ------------------------------------------------------------
-def debug(msg: str):
-    import time
-    print(f"[MAESTRO-MAIN][{time.strftime('%H:%M:%S')}] {msg}")
+from .debug import log_debug
+from .pipeline_loader import load_default_pipeline
+from .maestro_runner import MaestroRunner
+from .state import STATE
 
 
+# ---------------------------------------------------------------------
+# FastAPI app setup
+# ---------------------------------------------------------------------
 app = FastAPI()
-
-
-# ============================================================
-# WebSocket Endpoint (must be defined before static mount)
-# ============================================================
-
-@app.websocket("/ws")
-async def websocket_endpoint(websocket: WebSocket):
-    # Small delay to let server fully settle before accepting
-    await asyncio.sleep(0.05)
-
-    try:
-        await websocket.accept()
-        await ws_manager.connect(websocket)
-        debug("WebSocket fully connected")
-    except Exception as e:
-        debug(f"WebSocket accept/connect failed: {e}")
-        return
-
-    try:
-        while True:
-            await asyncio.sleep(0.1)
-    except Exception:
-        ws_manager.disconnect(websocket)
-        debug("WebSocket disconnected")
-
-
-# ============================================================
-# Serve Frontend at /ui
-# ============================================================
-
-frontend_path = os.path.join(os.path.dirname(__file__), "..", "frontend")
-app.mount("/ui", StaticFiles(directory=frontend_path, html=True), name="frontend")
-
-
-# ============================================================
-# Startup: capture event loop
-# ============================================================
-
-@app.on_event("startup")
-async def startup_event():
-    event_loop.MAIN_LOOP = asyncio.get_running_loop()
-    debug(f"MAIN_LOOP SET: {event_loop.MAIN_LOOP}")
-
-
-# ============================================================
-# CORS
-# ============================================================
 
 app.add_middleware(
     CORSMiddleware,
@@ -89,26 +31,113 @@ app.add_middleware(
 )
 
 
-# ============================================================
-# Start Task (runs in background thread via maestro_runner)
-# ============================================================
+# ---------------------------------------------------------------------
+# Load pipeline ONCE and create a single global MaestroRunner
+# ---------------------------------------------------------------------
+log_debug("main", "Loading default pipeline at startup.")
+pipeline_config = load_default_pipeline()
 
+log_debug("main", "Creating global MaestroRunner instance.")
+runner = MaestroRunner(pipeline_config)
+
+log_debug("main", "Global MaestroRunner ready.")
+
+
+# ---------------------------------------------------------------------
+# API Endpoints
+# ---------------------------------------------------------------------
 @app.post("/start")
-async def start_task(req: StartRequest):
-    debug(f"/start called with task: {req.task!r}")
+async def start_task(payload: dict):
+    """
+    Start a new Maestro task using the global runner.
+    Initializes STATE and spawns executor thread.
+    
+    Request body:
+        {
+            "task": "User task description (required, non-empty)"
+        }
+    
+    Response:
+        {
+            "status": "started",
+            "task": "task summary"
+        } on success
+        
+        {
+            "error": "error message"
+        } on failure
+    """
+    # Validate input
+    if not payload or not isinstance(payload, dict):
+        log_debug("main", f"ERROR: Invalid payload type: {type(payload)}")
+        return {"error": "Request body must be a JSON object"}
+    
+    user_task = payload.get("task", "").strip()
+    
+    if not user_task:
+        log_debug("main", "ERROR: Task is empty")
+        return {"error": "Task cannot be empty. Please provide a task description."}
+    
+    if len(user_task) > 10000:
+        log_debug("main", f"ERROR: Task too long ({len(user_task)} chars)")
+        return {"error": "Task is too long (max 10000 characters)"}
 
-    # Wait up to 2 seconds for at least one WebSocket connection
-    for _ in range(20):
-        if ws_manager.has_connections():
-            debug("WebSocket connection detected before launching task")
-            break
-        await asyncio.sleep(0.1)
-    else:
-        debug("No WebSocket connections detected after wait window")
+    log_debug("main", "=== TASK INITIALIZATION SEQUENCE START ===")
 
-    loop = asyncio.get_running_loop()
-    debug("Submitting run_maestro_task() to executor")
-    loop.run_in_executor(None, run_maestro_task, req.task)
+    # Step 1: Initialize state for new run (clears old data for multi-pipeline support)
+    log_debug("main", "Resetting STATE for clean execution")
+    STATE.reset()
+    
+    # Step 2: Set task
+    log_debug("main", f"Setting STATE.original_task: {user_task[:80]}...")
+    STATE.original_task = user_task
 
-    debug("/start returning status=started")
-    return {"status": "started"}
+    # Step 3: Mark as running
+    log_debug("main", "Setting STATE.running = True")
+    STATE.set_running(True)
+
+    # Step 4: Spawn execution thread
+    log_debug("main", "Passing to runner.run_task()...")
+    try:
+        runner.run_task(user_task)
+        log_debug("main", "=== TASK INITIALIZATION SEQUENCE COMPLETE ===")
+        return {"status": "started", "task": user_task[:100]}
+    except Exception as e:
+        error_msg = f"Failed to start task: {e}"
+        log_debug("main", f"ERROR: {error_msg}")
+        STATE.set_running(False)
+        STATE.add_message("system", "system", f"ERROR: {error_msg}")
+        return {"error": error_msg}
+
+
+@app.get("/state")
+async def get_state():
+    """
+    Return the current global state for the frontend.
+    """
+    return STATE.to_dict()
+
+
+@app.get("/")
+async def root():
+    return {"message": "Maestro backend is running."}
+
+@app.websocket("/ws")
+async def websocket_endpoint(websocket: WebSocket):
+    await websocket.accept()
+    log_debug("ws", "WebSocket client connected")
+
+    last_state = None
+
+    try:
+        while True:
+            current = STATE.to_dict()
+
+            # Only send when state actually changes
+            if current != last_state:
+                await websocket.send_json(current)
+                last_state = current
+
+            await asyncio.sleep(0.1)  # light polling without spamming
+    except WebSocketDisconnect:
+        log_debug("ws", "WebSocket client disconnected")
