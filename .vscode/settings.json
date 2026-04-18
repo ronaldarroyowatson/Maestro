@@ -1,0 +1,16 @@
+{
+  "task.allowAutomaticTasks": "on",
+  "tasks.runOnFolderOpen": "Start MemPalace MCP Server",
+  "python-envs.defaultEnvManager": "ms-python.python:system",
+  "mcpServers": {
+    "mempalace": {
+      "command": "python",
+      "args": [
+        "-m",
+        "mempalace.mcp_server",
+        "--palace",
+        ".mempalace/palace"
+      ]
+    }
+  }
+}

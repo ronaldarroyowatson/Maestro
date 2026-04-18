@@ -69,12 +69,20 @@ def _parse_agent_parameters(agent_el: ET.Element) -> AgentParameters:
 
     try:
         temperature = float(params_el.findtext("Temperature", default="0.2"))
+        # BOUNDARY: Temperature must be non-negative
+        if temperature < 0.0:
+            log_debug("pipeline_parser", f"Invalid Temperature value {temperature}; must be >= 0.0. Defaulting to 0.2.")
+            temperature = 0.2
     except ValueError:
         log_debug("pipeline_parser", "Invalid Temperature value; defaulting to 0.2.")
         temperature = 0.2
 
     try:
         max_tokens = int(params_el.findtext("MaxTokens", default="2048"))
+        # BOUNDARY: MaxTokens must be positive
+        if max_tokens <= 0:
+            log_debug("pipeline_parser", f"Invalid MaxTokens value {max_tokens}; must be > 0. Defaulting to 2048.")
+            max_tokens = 2048
     except ValueError:
         log_debug("pipeline_parser", "Invalid MaxTokens value; defaulting to 2048.")
         max_tokens = 2048

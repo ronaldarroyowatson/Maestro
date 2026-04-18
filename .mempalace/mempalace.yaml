@@ -1,0 +1,10 @@
+wing: .mempalace
+rooms:
+- name: palace
+  description: Files from palace/
+  keywords:
+  - palace
+  - palace
+- name: general
+  description: Files that don't fit other rooms
+  keywords: []
