@@ -43,6 +43,24 @@ Use dry-run mode for local checks when Otto binary is unavailable:
 - Windows PowerShell:
   - `$env:OTTO_DRY_RUN = "1"; ./installer/windows/bootstrap.ps1`
 
+## macOS Signing and Notarization
+
+The macOS release workflow supports signing, notarization, and stapling when credentials are configured.
+
+Required workflow environment variables (typically injected from GitHub Actions secrets):
+
+- `MAESTRO_APPLE_DEVELOPER_ID_APPLICATION`
+- `MAESTRO_APPLE_DEVELOPER_ID_INSTALLER`
+- `MAESTRO_NOTARY_APPLE_ID`
+- `MAESTRO_NOTARY_TEAM_ID`
+- `MAESTRO_NOTARY_APP_PASSWORD`
+
+Behavior:
+
+- If signing secrets are present, the workflow signs Mach-O payload binaries and then signs the `.pkg`.
+- If notarization secrets are present, the workflow submits the package for notarization, waits for completion, staples the ticket, and validates stapling.
+- If secrets are not present, the workflow still builds an unsigned `.pkg` for internal testing.
+
 ## Expected Runtime Commands
 
 - `otto maestro install --payload otto/maestro-payload.json`

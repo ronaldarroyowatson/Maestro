@@ -23,8 +23,10 @@ jobs:
 
       - name: Stage repository snapshot
         run: |
+          export COPYFILE_DISABLE=1
           mkdir -p dist/installers/macos/stage/opt/maestro
-          rsync -a --delete --exclude .git --exclude dist --exclude node_modules ./ dist/installers/macos/stage/opt/maestro/
+          rsync -a --delete --exclude .git --exclude dist --exclude node_modules --exclude '._*' ./ dist/installers/macos/stage/opt/maestro/
+          find dist/installers/macos/stage -name '._*' -type f -delete
           chmod +x dist/installers/macos/stage/opt/maestro/installer/macos/bootstrap.sh
 
       - name: Prepare postinstall hook
@@ -35,12 +37,42 @@ jobs:
           set -e
 
           BOOTSTRAP="/opt/maestro/installer/macos/bootstrap.sh"
+          LOG_FILE="/var/log/maestro-installer.log"
+
+          if ! touch "$LOG_FILE" >/dev/null 2>&1; then
+            LOG_FILE="/tmp/maestro-installer.log"
+            touch "$LOG_FILE" >/dev/null 2>&1 || true
+          fi
+          echo "[$(date)] Maestro postinstall start" >> "$LOG_FILE" 2>/dev/null || true
+
+          if [ ! -f "$BOOTSTRAP" ]; then
+            echo "[$(date)] ERROR: missing bootstrap script at $BOOTSTRAP" >> "$LOG_FILE" 2>/dev/null || true
+            exit 1
+          fi
+
           chmod +x "$BOOTSTRAP"
-          "$BOOTSTRAP"
+
+          if [ -n "${OTTO_BIN:-}" ]; then
+            if command -v "$OTTO_BIN" >/dev/null 2>&1; then
+              "$BOOTSTRAP" >> "$LOG_FILE" 2>&1
+              exit 0
+            fi
+            echo "[$(date)] WARN: OTTO_BIN is set but not found ($OTTO_BIN); skipping bootstrap" >> "$LOG_FILE" 2>/dev/null || true
+            exit 0
+          fi
+
+          if command -v otto >/dev/null 2>&1; then
+            "$BOOTSTRAP" >> "$LOG_FILE" 2>&1
+            exit 0
+          fi
+
+          echo "[$(date)] WARN: Otto CLI not found during pkg install; bootstrap deferred" >> "$LOG_FILE" 2>/dev/null || true
+          echo "[$(date)] INFO: run /opt/maestro/installer/macos/bootstrap.sh after installing Otto" >> "$LOG_FILE" 2>/dev/null || true
+          exit 0
           EOF
           chmod +x dist/installers/macos/scripts/postinstall
 
-      - name: Build package
+      - name: Build unsigned package
         run: |
           pkgbuild \
             --root dist/installers/macos/stage \
@@ -48,6 +80,51 @@ jobs:
             --identifier com.otto-systems.maestro.installer \
             --version "$MAESTRO_VERSION" \
             dist/installers/maestro-installer-macos.pkg
+
+      - name: Sign embedded Mach-O binaries
+        run: |
+          if [ -z "${MAESTRO_APPLE_DEVELOPER_ID_APPLICATION:-}" ]; then
+            echo "Skipping Mach-O signing: MAESTRO_APPLE_DEVELOPER_ID_APPLICATION is not set"
+            exit 0
+          fi
+          find dist/installers/macos/stage -type f -perm -111 | while read -r file; do
+            if file "$file" | grep -q "Mach-O"; then
+              codesign --force --options runtime --timestamp --sign "$MAESTRO_APPLE_DEVELOPER_ID_APPLICATION" "$file"
+            fi
+          done
+
+      - name: Sign package
+        run: |
+          if [ -z "${MAESTRO_APPLE_DEVELOPER_ID_INSTALLER:-}" ]; then
+            echo "Skipping pkg signing: MAESTRO_APPLE_DEVELOPER_ID_INSTALLER is not set"
+            exit 0
+          fi
+          productsign \
+            --sign "$MAESTRO_APPLE_DEVELOPER_ID_INSTALLER" \
+            dist/installers/maestro-installer-macos.pkg \
+            dist/installers/maestro-installer-macos-signed.pkg
+          mv dist/installers/maestro-installer-macos-signed.pkg dist/installers/maestro-installer-macos.pkg
+
+      - name: Submit package for notarization
+        run: |
+          if [ -z "${MAESTRO_NOTARY_APPLE_ID:-}" ] || [ -z "${MAESTRO_NOTARY_TEAM_ID:-}" ] || [ -z "${MAESTRO_NOTARY_APP_PASSWORD:-}" ]; then
+            echo "Skipping notarization: notary credentials are not fully configured"
+            exit 0
+          fi
+          xcrun notarytool submit dist/installers/maestro-installer-macos.pkg \
+            --apple-id "$MAESTRO_NOTARY_APPLE_ID" \
+            --team-id "$MAESTRO_NOTARY_TEAM_ID" \
+            --password "$MAESTRO_NOTARY_APP_PASSWORD" \
+            --wait
+
+      - name: Staple notarization ticket
+        run: |
+          if [ -z "${MAESTRO_NOTARY_APPLE_ID:-}" ] || [ -z "${MAESTRO_NOTARY_TEAM_ID:-}" ] || [ -z "${MAESTRO_NOTARY_APP_PASSWORD:-}" ]; then
+            echo "Skipping stapling: notary credentials are not fully configured"
+            exit 0
+          fi
+          xcrun stapler staple dist/installers/maestro-installer-macos.pkg
+          xcrun stapler validate dist/installers/maestro-installer-macos.pkg
 
       - name: Upload workflow artifact
         uses: actions/upload-artifact@v4
