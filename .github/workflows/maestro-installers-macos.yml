@@ -19,7 +19,10 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Resolve version
-        run: echo "MAESTRO_VERSION=$(node -p \"require('./package.json').version\")" >> "$GITHUB_ENV"
+        run: |
+          MAESTRO_VERSION="$(python3 -c "import json; print(json.load(open('package.json'))['version'])")"
+          test -n "$MAESTRO_VERSION"
+          echo "MAESTRO_VERSION=$MAESTRO_VERSION" >> "$GITHUB_ENV"
 
       - name: Stage repository snapshot
         run: |
