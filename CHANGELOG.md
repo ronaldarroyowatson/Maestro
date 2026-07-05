@@ -40,3 +40,4 @@
 ### Changed
 
 - Rewrote `readme.md` for Otto-managed install, durable installer links, and production integration documentation.
+- Extracted command service layer into standalone repo and rewired all Otto repos to use it.
