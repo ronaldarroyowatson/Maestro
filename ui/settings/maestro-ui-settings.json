@@ -1,0 +1,23 @@
+{
+  "version": "1.0.0",
+  "runtime": "maestro",
+  "defaults": {
+    "startView": "graph",
+    "showLogsPanel": true,
+    "showTelemetryPanel": true,
+    "showTracingPanel": true,
+    "logVerbosity": "info",
+    "traceSamplingRate": 1,
+    "telemetryEnabled": true
+  },
+  "availableViews": [
+    "graph",
+    "logs",
+    "telemetry",
+    "runtime-status"
+  ],
+  "preferences": {
+    "persistAcrossSessions": true,
+    "allowPerWorkspaceOverride": true
+  }
+}

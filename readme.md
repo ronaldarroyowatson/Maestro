@@ -1,54 +1,65 @@
-# Maestro Archive Repository
+# Maestro Runtime
 
-## Status
+Maestro is a modular, deterministic runtime for agent orchestration, pipelines, provider adapters, and reviewer-driven execution control.
 
-This repository has been intentionally cleared and preserved as archive documentation only.
+## Install Maestro via Otto
 
-- Archive date: 2026-07-04
-- Prototype status: frozen and retired
-- Active development target: Maestro v1.0 greenfield repository
+Maestro is installed and managed by Otto.
 
-## Local Compressed Backup
+1. Install Otto from your Otto distribution channel.
+2. Run one of the bootstrap installers in this repository, or install directly via Otto CLI.
+3. Otto performs self-update, reads `otto/maestro-payload.json`, and installs/configures Maestro.
 
-- Archive file: `/Users/dev-macbook/Documents/GitHub/archives/Maestro-archive-2026-07-04.tar.gz`
-- SHA-256: `2a6fc3cb1294332ad429563744d1e108b8b19a60341c3704126586155daa4dd8`
+Primary lifecycle commands:
 
-## Release Reset
+- `otto maestro install --payload otto/maestro-payload.json`
+- `otto maestro update --payload otto/maestro-payload.json`
+- `otto maestro repair --payload otto/maestro-payload.json`
+- `otto maestro uninstall`
 
-- Legacy release tags removed from this repository
-- Version history files removed from the working tree
-- Versioning state reset for greenfield development
+## Download Installers
 
-See [ARCHIVE.md](./ARCHIVE.md) for the full archival record.
-3. Run the agent pipeline
-4. Stream messages to the UI
-5. Display code and summary
+These are bootstrap-only installers. Otto completes all runtime downloads and setup.
 
-## Versioning
+- Windows: https://github.com/otto-systems/maestro/releases/latest/download/maestro-installer-windows.ps1
+- Linux: https://github.com/otto-systems/maestro/releases/latest/download/maestro-installer-linux.sh
+- macOS: https://github.com/otto-systems/maestro/releases/latest/download/maestro-installer-macos.sh
 
-Maestro uses simple semantic versioning:
-- 0.x — development builds
-- 1.0 — first public release
+## Telemetry and Logs
 
-Current version: 0.4
+Maestro integrates with Otto extension modules for:
 
-See CHANGELOG.md for details.
+- Logging (`logging.module`)
+- Tracing (`tracing.module`)
+- Telemetry (`metrics.module`)
 
-## Roadmap
+Configured runtime paths (resolved by Otto):
 
-- Agent activity indicators
-- Model selection UI
-- Node‑graph orchestration view
-- Task history
-- Multi‑task queue
-- Context window management
-- Plugin system
-- Exportable pipelines
+- Logs: `{otto.dataDir}/logs/maestro`
+- Traces: `{otto.dataDir}/traces/maestro`
+- Telemetry: `{otto.dataDir}/telemetry/maestro`
 
-## License
+## Installer and Payload Files
 
-MIT License (or your preferred license)
+- Payload: `otto/maestro-payload.json`
+- Command manifest: `otto/maestro-commands.json`
+- Installer architecture: `installer/README.md`
+- Linux bootstrap: `installer/linux/bootstrap.sh`
+- macOS bootstrap: `installer/macos/bootstrap.sh`
+- Windows bootstrap: `installer/windows/bootstrap.ps1`
 
-## Contributing
+## Documentation
 
-Pull requests are welcome. Please open issues for bugs or feature requests.
+- Current state: `docs/maestro-current-state.md`
+- Integration plan: `docs/maestro-otto-integration-plan.md`
+- Payload semantics: `docs/maestro-otto-payload.md`
+- Installation guide: `docs/maestro-installation-via-otto.md`
+- Telemetry and logging: `docs/maestro-telemetry-and-logging.md`
+- UI and node graphs: `docs/maestro-ui-and-node-graphs.md`
+- Live test report: `docs/maestro-otto-live-test-report.md`
+
+## Development Validation
+
+- `pnpm typecheck`
+- `pnpm test`
+- Installer dry-run instructions are in `installer/README.md`

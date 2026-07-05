@@ -1,0 +1,32 @@
+{
+  "version": "1.0.0",
+  "runtime": "maestro",
+  "section": "Maestro",
+  "entries": [
+    {
+      "id": "maestro.install-status",
+      "label": "Install Status",
+      "panel": "install-status"
+    },
+    {
+      "id": "maestro.runtime-status",
+      "label": "Runtime Status",
+      "panel": "runtime-status"
+    },
+    {
+      "id": "maestro.node-graph",
+      "label": "Node Graph",
+      "panel": "node-graph"
+    },
+    {
+      "id": "maestro.logs",
+      "label": "Logs",
+      "panel": "logs"
+    },
+    {
+      "id": "maestro.telemetry",
+      "label": "Telemetry",
+      "panel": "telemetry"
+    }
+  ]
+}

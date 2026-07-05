@@ -1,0 +1,45 @@
+name: Maestro Installers Windows
+
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - v*
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-windows-installer:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Prepare bootstrap installer
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Path dist/installers -Force | Out-Null
+          Copy-Item installer/windows/bootstrap.ps1 dist/installers/maestro-installer-windows.ps1 -Force
+
+      - name: Upload workflow artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: maestro-installer-windows
+          path: dist/installers/maestro-installer-windows.ps1
+
+      - name: Publish durable latest release artifact
+        uses: ncipollo/release-action@v1
+        with:
+          tag: latest
+          name: Latest Maestro Installers
+          allowUpdates: true
+          replacesArtifacts: true
+          artifacts: dist/installers/maestro-installer-windows.ps1

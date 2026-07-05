@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "maestro://schemas/otto-payload",
+  "title": "Maestro Otto Payload",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "payloadId",
+    "payloadVersion",
+    "product",
+    "artifacts",
+    "extensions",
+    "configuration",
+    "lifecycleHooks"
+  ],
+  "properties": {
+    "schemaVersion": { "type": "string", "minLength": 1 },
+    "payloadId": { "type": "string", "minLength": 1 },
+    "payloadVersion": { "type": "string", "minLength": 1 },
+    "product": {
+      "type": "object",
+      "required": ["id", "name", "channel"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "name": { "type": "string", "minLength": 1 },
+        "channel": { "type": "string", "minLength": 1 }
+      },
+      "additionalProperties": true
+    },
+    "artifacts": {
+      "type": "array",
+      "items": { "type": "object" }
+    },
+    "extensions": { "type": "object" },
+    "configuration": { "type": "object" },
+    "lifecycleHooks": { "type": "object" }
+  },
+  "additionalProperties": true
+}

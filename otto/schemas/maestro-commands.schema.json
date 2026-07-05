@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "maestro://schemas/otto-maestro-commands",
+  "title": "Maestro Otto Commands Manifest",
+  "type": "object",
+  "required": ["schemaVersion", "commands"],
+  "properties": {
+    "schemaVersion": {
+      "type": "string",
+      "minLength": 1
+    },
+    "commands": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "command", "description", "handler"],
+        "properties": {
+          "id": { "type": "string", "minLength": 1 },
+          "command": { "type": "string", "minLength": 1 },
+          "description": { "type": "string", "minLength": 1 },
+          "handler": { "type": "string", "minLength": 1 },
+          "payload": { "type": "object" }
+        },
+        "additionalProperties": true
+      }
+    }
+  },
+  "additionalProperties": true
+}

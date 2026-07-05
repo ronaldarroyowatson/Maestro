@@ -2,6 +2,13 @@ import { randomUUID } from 'node:crypto';
 import { EVENT_NAMES } from '../../src/shared/index.js';
 import type { ExecutablePipeline, ConductorDependencies, ExecutionContext, ExecutionResult, RetryConfig } from './models/types.js';
 import { EventBus } from './services/event-bus/index.js';
+export type {
+  OttoLoggingExtension,
+  OttoTelemetryExtension,
+  OttoTraceSpan,
+  OttoTracingExtension
+} from './services/otto-observability/index.js';
+export { OttoObservabilityBridge } from './services/otto-observability/index.js';
 import { Executor } from './services/executor/index.js';
 import { Scheduler } from './services/scheduler/index.js';
 import { NodeGraph } from '../node-graph/index.js';

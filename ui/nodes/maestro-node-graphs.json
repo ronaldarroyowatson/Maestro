@@ -1,0 +1,81 @@
+{
+  "version": "1.0.0",
+  "runtime": "maestro",
+  "nodeTypes": [
+    {
+      "id": "agent.node",
+      "label": "Agent",
+      "icon": "bot",
+      "color": "#1F6FEB"
+    },
+    {
+      "id": "tool.node",
+      "label": "Tool",
+      "icon": "wrench",
+      "color": "#2DA44E"
+    },
+    {
+      "id": "pipeline.node",
+      "label": "Pipeline",
+      "icon": "workflow",
+      "color": "#BF8700"
+    },
+    {
+      "id": "review.node",
+      "label": "Reviewer",
+      "icon": "check",
+      "color": "#8250DF"
+    }
+  ],
+  "graphs": [
+    {
+      "id": "default-maestro-runtime",
+      "name": "Default Maestro Runtime Graph",
+      "nodes": [
+        {
+          "id": "conductor",
+          "type": "pipeline.node",
+          "label": "Conductor"
+        },
+        {
+          "id": "context-engine",
+          "type": "tool.node",
+          "label": "Context Engine"
+        },
+        {
+          "id": "prompt-engine",
+          "type": "tool.node",
+          "label": "Prompt Engine"
+        },
+        {
+          "id": "provider-registry",
+          "type": "agent.node",
+          "label": "Provider Registry"
+        },
+        {
+          "id": "reviewer",
+          "type": "review.node",
+          "label": "Reviewer"
+        }
+      ],
+      "edges": [
+        {
+          "from": "conductor",
+          "to": "context-engine"
+        },
+        {
+          "from": "context-engine",
+          "to": "prompt-engine"
+        },
+        {
+          "from": "prompt-engine",
+          "to": "provider-registry"
+        },
+        {
+          "from": "provider-registry",
+          "to": "reviewer"
+        }
+      ]
+    }
+  ]
+}
