@@ -1,4 +1,4 @@
-name: Maestro Installer Windows
+name: Maestro Installers Windows
 
 on:
   push:

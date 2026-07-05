@@ -1,4 +1,4 @@
-name: Maestro Installer macOS
+name: Maestro Installers macOS
 
 on:
   push:

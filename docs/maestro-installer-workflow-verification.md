@@ -9,9 +9,9 @@ Date: 2026-07-05
 ## Findings
 
 - The workflow set now consists of:
-  - `.github/workflows/maestro-installer-linux.yml`
-  - `.github/workflows/maestro-installer-macos.yml`
-  - `.github/workflows/maestro-installer-windows.yml`
+  - `.github/workflows/maestro-installers-linux.yml`
+  - `.github/workflows/maestro-installers-macos.yml`
+  - `.github/workflows/maestro-installers-windows.yml`
 - Each workflow triggers on `main`, tagged releases, and manual dispatch.
 - Each workflow packages the repository snapshot, builds an OS-specific installer artifact, and publishes it to the latest release.
 

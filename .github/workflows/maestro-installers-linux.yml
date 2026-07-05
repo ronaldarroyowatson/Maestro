@@ -1,4 +1,4 @@
-name: Maestro Installer Linux
+name: Maestro Installers Linux
 
 on:
   push:
