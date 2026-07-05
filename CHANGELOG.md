@@ -41,3 +41,4 @@
 
 - Rewrote `readme.md` for Otto-managed install, durable installer links, and production integration documentation.
 - Extracted command service layer into standalone repo and rewired all Otto repos to use it.
+- Revalidated Maestro command-service contract against the standalone `Otto/otto-command-service` repo.
