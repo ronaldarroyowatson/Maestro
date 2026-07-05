@@ -38,3 +38,7 @@ export { sha256 } from './utils/hash.js';
 export { compare, isCompatible, parse } from './utils/semver.js';
 export { validate } from './utils/json-schema-validator.js';
 export { CycleDetectedError, topoSort } from './utils/topological-sort.js';
+export {
+  requiredMaestroCommandNames,
+  validateMaestroCommandServiceContract
+} from './utils/commandServiceContract.js';

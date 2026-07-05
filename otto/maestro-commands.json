@@ -1,12 +1,16 @@
 {
   "$schema": "./schemas/maestro-commands.schema.json",
   "schemaVersion": "1.0.0",
+  "sourceOfTruth": {
+    "repo": "../Otto/otto-command-service",
+    "schemaPath": "src/schemas"
+  },
   "commands": [
     {
       "id": "otto.maestro.install",
       "command": "otto maestro install",
       "description": "Install Maestro using the Otto payload specification.",
-      "handler": "installer/hooks/pre-install.sh",
+      "commandServiceSchema": "maestro.install",
       "payload": {
         "required": [
           "payloadPath"
@@ -26,7 +30,7 @@
       "id": "otto.maestro.update",
       "command": "otto maestro update",
       "description": "Update Maestro and apply post-update lifecycle hooks.",
-      "handler": "installer/hooks/post-update.sh",
+      "commandServiceSchema": "maestro.update",
       "payload": {
         "required": [],
         "properties": {
@@ -41,7 +45,7 @@
       "id": "otto.maestro.repair",
       "command": "otto maestro repair",
       "description": "Repair a damaged Maestro installation by replaying payload install steps.",
-      "handler": "installer/hooks/pre-install.sh",
+      "commandServiceSchema": "maestro.repair",
       "payload": {
         "required": [],
         "properties": {
@@ -56,7 +60,7 @@
       "id": "otto.maestro.uninstall",
       "command": "otto maestro uninstall",
       "description": "Uninstall Maestro runtime and remove runtime assets.",
-      "handler": "installer/hooks/pre-update.sh",
+      "commandServiceSchema": "maestro.uninstall",
       "payload": {
         "required": [],
         "properties": {

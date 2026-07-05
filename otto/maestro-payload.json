@@ -79,7 +79,11 @@
     "navigation": "ui/navigation/maestro-panels.json"
   },
   "commands": {
-    "manifest": "otto/maestro-commands.json"
+    "manifest": "otto/maestro-commands.json",
+    "sourceOfTruth": {
+      "repo": "../Otto/otto-command-service",
+      "schemaPath": "src/schemas"
+    }
   },
   "lifecycleHooks": {
     "preInstall": "installer/hooks/pre-install.sh",
