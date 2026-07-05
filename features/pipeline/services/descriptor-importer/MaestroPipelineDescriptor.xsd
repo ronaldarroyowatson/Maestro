@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified">
+  <xs:element name="MaestroPipeline">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="Metadata" minOccurs="1" maxOccurs="1"/>
+        <xs:element name="Nodes" minOccurs="1" maxOccurs="1"/>
+        <xs:element name="Edges" minOccurs="1" maxOccurs="1"/>
+      </xs:sequence>
+      <xs:attribute name="version" type="xs:string" use="required"/>
+      <xs:attribute name="snapshotId" type="xs:string" use="required"/>
+      <xs:attribute name="maestroVersion" type="xs:string" use="required"/>
+    </xs:complexType>
+  </xs:element>
+</xs:schema>
