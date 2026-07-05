@@ -136,10 +136,11 @@ jobs:
           path: dist/installers/maestro-installer-macos.pkg
 
       - name: Publish durable latest release artifact
-        uses: ncipollo/release-action@v1
-        with:
-          tag: latest
-          name: Latest Maestro Installers
-          allowUpdates: true
-          replacesArtifacts: true
-          artifacts: dist/installers/maestro-installer-macos.pkg
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if gh release view latest >/dev/null 2>&1; then
+            gh release upload latest dist/installers/maestro-installer-macos.pkg --clobber
+          else
+            gh release create latest dist/installers/maestro-installer-macos.pkg --title "Latest Maestro Installers" --notes "Durable latest installer assets"
+          fi
