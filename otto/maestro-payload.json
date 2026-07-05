@@ -15,6 +15,14 @@
   },
   "artifacts": [
     {
+      "id": "otto-command-service",
+      "type": "git",
+      "uri": "https://github.com/otto-systems/otto-command-service.git",
+      "ref": "main",
+      "version": "0.2.1",
+      "installPath": "{otto.dataDir}/otto-command-service"
+    },
+    {
       "id": "maestro-source",
       "type": "git",
       "uri": "https://github.com/otto-systems/maestro.git",

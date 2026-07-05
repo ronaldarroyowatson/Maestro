@@ -18,6 +18,7 @@
 ## Components
 
 - Runtime artifacts: source checkout and build output definition.
+- Command-service artifact: explicit `otto-command-service` source checkout used during install.
 - Config/settings: default node graph and UI settings paths.
 - Extension dependencies: `logging.module`, `tracing.module`, and `metrics.module` (telemetry alias).
 - UI assets: node graph, settings, and panel navigation metadata.
