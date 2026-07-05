@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MaestroPipeline version="1.0.0" snapshotId="fixture-snapshot-ocr" maestroVersion="0.1.4">
+  <Metadata>
+    <PipelineId>fixture-page-ocr-pipeline</PipelineId>
+    <PipelineVersion>1.0.0</PipelineVersion>
+    <PipelineHash>fixture-hash-page-ocr</PipelineHash>
+  </Metadata>
+  <Nodes>
+    <Node id="trigger-entry" typeId="trigger">{&quot;role&quot;:&quot;entry&quot;}</Node>
+    <Node id="loader" typeId="service">{&quot;purpose&quot;:&quot;load-image&quot;}</Node>
+    <Node id="ocr" typeId="service">{&quot;purpose&quot;:&quot;ocr-read&quot;}</Node>
+    <Node id="parser" typeId="service">{&quot;purpose&quot;:&quot;parse-page&quot;}</Node>
+  </Nodes>
+  <Edges>
+    <Edge id="e1" from="loader" fromPort="out" to="ocr" toPort="in" reviewerNodeId="" />
+    <Edge id="e2" from="ocr" fromPort="out" to="parser" toPort="in" reviewerNodeId="" />
+  </Edges>
+</MaestroPipeline>
