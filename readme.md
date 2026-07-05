@@ -1,3 +1,17 @@
+> ## ⚠️ ARCHIVED — PROTOTYPE ONLY
+>
+> **This repository contains Maestro v0.4, a proof-of-concept prototype. It is formally
+> archived as of 2026-07-04 (tag: `v0.4-prototype`, branch: `archive/v0.4-prototype`).**
+>
+> **Do not use this as a base for new development.**
+>
+> The Maestro project has been redesigned from the ground up as a modular,
+> framework-agnostic AI agent orchestration platform. See the Maestro v1.0 repository
+> for current development.
+>
+> See [ARCHIVE.md](./ARCHIVE.md) for the full archive record, lessons learned, and
+> a mapping of prototype concepts to the greenfield architecture.
+
 # Maestro 0.4 — Local Multi-Agent Orchestration Studio
 
 Maestro is a fully local, fully autonomous multi‑agent orchestration system built for experimentation, education, and real‑world automation. It combines a FastAPI backend, a real‑time WebSocket dashboard, and a deterministic AutoGen 0.6.0 agent pipeline powered by local LLMs running through Ollama.
