@@ -1,6 +1,6 @@
+---
 name: Maestro Installers Windows
-
-on:
+"on":
   push:
     branches:
       - main

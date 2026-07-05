@@ -1,6 +1,6 @@
+---
 name: Maestro Installers macOS
-
-on:
+"on":
   push:
     branches:
       - main

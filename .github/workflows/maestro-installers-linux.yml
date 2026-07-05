@@ -1,6 +1,6 @@
+---
 name: Maestro Installers Linux
-
-on:
+"on":
   push:
     branches:
       - main

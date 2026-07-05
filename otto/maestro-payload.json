@@ -2,7 +2,7 @@
   "$schema": "./schemas/maestro-payload.schema.json",
   "schemaVersion": "1.0.0",
   "payloadId": "maestro-runtime-stable",
-  "payloadVersion": "0.1.6",
+  "payloadVersion": "0.1.7",
   "product": {
     "id": "maestro",
     "name": "Maestro Runtime",
