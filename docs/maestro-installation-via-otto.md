@@ -23,6 +23,12 @@ Maestro is installed and managed through Otto. Bootstrap installers only launch 
 - macOS: `installer/macos/bootstrap.sh`
 - Windows: `installer/windows/bootstrap.ps1`
 
+### Durable Release Installers
+
+- Windows: https://github.com/otto-systems/maestro/releases/latest/download/maestro-installer-windows.exe
+- Linux: https://github.com/otto-systems/maestro/releases/latest/download/maestro-installer-linux.sh
+- macOS: https://github.com/otto-systems/maestro/releases/latest/download/maestro-installer-macos.pkg
+
 Each bootstrap installer runs:
 
 1. `otto ui splash --product maestro`

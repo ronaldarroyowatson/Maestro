@@ -18,6 +18,12 @@ Bootstrap flow:
 - Linux: `installer/linux/bootstrap.sh`
 - macOS: `installer/macos/bootstrap.sh`
 
+The packaged release installers are published as durable latest-release assets and wrap these bootstrap entry points.
+
+- Windows: `maestro-installer-windows.exe`
+- Linux: `maestro-installer-linux.sh`
+- macOS: `maestro-installer-macos.pkg`
+
 ## Lifecycle Hooks
 
 - `installer/hooks/pre-install.sh`

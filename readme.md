@@ -19,11 +19,11 @@ Primary lifecycle commands:
 
 ## Download Installers
 
-These are bootstrap-only installers. Otto completes all runtime downloads and setup.
+These installers are published as durable latest-release assets. Otto completes runtime downloads and setup after launch.
 
-- Windows: https://github.com/otto-systems/maestro/releases/latest/download/maestro-installer-windows.ps1
+- Windows: https://github.com/otto-systems/maestro/releases/latest/download/maestro-installer-windows.exe
 - Linux: https://github.com/otto-systems/maestro/releases/latest/download/maestro-installer-linux.sh
-- macOS: https://github.com/otto-systems/maestro/releases/latest/download/maestro-installer-macos.sh
+- macOS: https://github.com/otto-systems/maestro/releases/latest/download/maestro-installer-macos.pkg
 
 ## Telemetry and Logs
 
