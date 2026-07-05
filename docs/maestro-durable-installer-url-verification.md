@@ -8,9 +8,9 @@ Date: 2026-07-05
 
 ## Updated URLs
 
-- Windows: `https://github.com/otto-systems/maestro/releases/latest/download/maestro-installer-windows.exe`
-- Linux: `https://github.com/otto-systems/maestro/releases/latest/download/maestro-installer-linux.sh`
-- macOS: `https://github.com/otto-systems/maestro/releases/latest/download/maestro-installer-macos.pkg`
+- Windows: `https://github.com/ronaldarroyowatson/Maestro/releases/latest/download/maestro-installer-windows.exe`
+- Linux: `https://github.com/ronaldarroyowatson/Maestro/releases/latest/download/maestro-installer-linux.sh`
+- macOS: `https://github.com/ronaldarroyowatson/Maestro/releases/latest/download/maestro-installer-macos.pkg`
 
 ## Result
 
