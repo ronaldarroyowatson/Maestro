@@ -64,3 +64,12 @@ The prototype's XML pipeline definitions, agent role configs, and prompt strings
 preserved in the greenfield repo under `docs/prototype-reference/` as design reference.
 
 No prototype implementation code was carried forward.
+
+## Post-Archive Reset Record
+
+- Repository cleared to archive documentation only on 2026-07-04.
+- Local compressed backup created at:
+  `/Users/dev-macbook/Documents/GitHub/archives/Maestro-archive-2026-07-04.tar.gz`
+- Backup SHA-256:
+  `2a6fc3cb1294332ad429563744d1e108b8b19a60341c3704126586155daa4dd8`
+- Release tags removed and versioning reset as part of greenfield transition.
