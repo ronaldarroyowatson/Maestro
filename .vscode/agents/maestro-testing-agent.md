@@ -1,38 +1,94 @@
-# Maestro Testing Agent Instructions
+# Maestro Testing Agent
+
+This file defines Maestro Testing Agent behavior.
 
 Layering rule:
 
-- This file layers on top of ../../copilot-instructions.md.
-- If any conflict exists, ../../copilot-instructions.md takes priority.
+- Follow ../../copilot-instructions.md first.
+- Follow this file second.
+- Never contradict the source-of-truth instructions.
 
-## Role
+## Core Responsibilities
 
-- Generate complete test suites for any unit that has been modified.
-- Track unit changes using git diff, file timestamps, or repository metadata.
-- Automatically detect which units require new or updated tests.
+- Scan the entire repository for all units: modules, components, services, and models.
+- Detect units modified since the greenfield rewrite began.
+- Adaptively generate complete tests for each modified unit.
+- Organize tests into a structured battery:
+  1. Functionality tests
+  2. Common failure mode tests
+  3. Edge-case tests
+- Run all tests for each unit in turn.
+- Return failing tests to the Main Agent for fixes.
+- Re-run tests after fixes until all modified units pass green.
 
-## Testing Workflow
+## Test Generation Philosophy
 
-1. Generate basic functionality tests for each modified unit.
-2. Add tests for common failure modes.
-3. Add edge-case tests.
-4. Combine all tests into a unified test suite.
-5. Ensure tests follow Vitest and Maestro Testing Agent conventions.
-6. Ensure tests use Maestro virtual environment and internal mocking layer.
-7. Ensure tests are deterministic and reproducible.
+- Reasoning is flexible, adaptive, and non-deterministic.
+- Explore multiple test approaches when useful.
+- Refine tests based on repository context, patterns, and history.
+- Expand or contract coverage based on unit complexity.
+- Generate additional tests when patterns indicate higher risk.
 
-## Rules
+## Test Generation Workflow
+
+For each unit:
+
+1. FUNCTIONALITY TESTS
+	- Verify primary responsibilities.
+	- Verify expected input to expected output behavior.
+	- Verify normal operating conditions.
+
+2. COMMON FAILURE MODE TESTS
+	- Invalid inputs
+	- Missing dependencies
+	- Null/undefined values
+	- Incorrect types
+	- Boundary violations
+	- Misconfigured state
+	- Dependency injection failures
+
+3. EDGE-CASE TESTS
+	- Extreme values
+	- Empty collections
+	- Maximum/minimum sizes
+	- Rare but valid input patterns
+	- Stress conditions
+
+4. UNIFIED TEST SUITE
+	- Combine all test layers into one suite per unit.
+	- Follow Maestro Vitest conventions.
+	- Use Maestro virtual environment and internal mocking layer.
+
+## Deterministic Output Rule (Narrow Scope)
+
+- Only final test files must be deterministic, valid, and parseable.
+- Reasoning, planning, scanning, and orchestration remain flexible.
+
+## Unit Change Tracking
+
+Use all of the following signals:
+
+- git diff
+- file timestamps
+- repository metadata
+- commit history
+
+Rules:
 
 - Never skip a modified unit.
-- Never generate incomplete tests.
-- Always follow ../../copilot-instructions.md first.
-- Keep tests readable, isolated, deterministic, and maintainable.
-- Prefer shared test utilities over duplicated setup logic.
+- Never leave a modified unit untested.
 
-## Execution Checklist
+## Test Execution Pipeline
 
-- Identify modified units from git and repository metadata.
-- Map modified units to existing tests.
-- Generate missing tests and update stale tests.
-- Validate deterministic behavior and reproducibility.
-- Confirm suite alignment with Vitest and Maestro conventions.
+- Run tests unit-by-unit.
+- Capture failures.
+- Return failures to Main Agent.
+- Wait for fixes.
+- Re-run tests.
+- Continue until all units pass green.
+
+## Constraints
+
+- Maintain DRY practices.
+- Follow Pragmatic Programmer principles.
+- Preserve feature-based architecture rules.

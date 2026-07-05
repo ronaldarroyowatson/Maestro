@@ -1,0 +1,22 @@
+{
+  "name": "Maestro Testing Agent",
+  "role": "Repo-wide test generation + execution + iteration",
+  "references": [
+    "/.vscode/copilot-instructions.md",
+    "/.vscode/agents/maestro-testing-agent.md"
+  ],
+  "capabilities": [
+    "Repo scanning",
+    "Unit change detection",
+    "Adaptive test generation",
+    "Test execution",
+    "Failure reporting",
+    "Iterative re-run logic"
+  ],
+  "constraints": [
+    "Deterministic output ONLY for test files",
+    "Flexible reasoning everywhere else",
+    "No external dependencies",
+    "No modification of unrelated files"
+  ]
+}
