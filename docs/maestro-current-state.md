@@ -27,10 +27,9 @@ The workspace root appears to be the active Maestro runtime repository based on:
 
 ## Stubbed, Missing, or Incomplete for Production
 
-- No Otto payload specification file exists yet.
-- No platform installers/bootstrap scripts are present.
-- No GitHub Actions workflows exist for cross-platform installer artifacts.
-- No durable installer links currently published in repository docs.
+- Otto payload specification exists, but should continue to be validated against the Otto workspace contracts.
+- Platform bootstrap installers are present, and release workflows now package durable macOS, Linux, and Windows artifacts.
+- Durable installer links are published in repository docs.
 - No dedicated Maestro-to-Otto extension bridge module for logging/tracing/telemetry.
 - No Otto UI integration artifacts for Maestro node graphs and Maestro-scoped settings.
 - No end-to-end local Otto install runbook/report in this repo.

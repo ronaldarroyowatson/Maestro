@@ -40,8 +40,8 @@ This section is intentionally added before major implementation changes.
 
 ### Missing Installer CI/CD
 
-- No workflows in `.github/workflows` for Windows, Linux, or macOS installer packaging.
-- No durable `releases/latest/download/*` strategy documented and enforced via workflows.
+- Installer workflows exist for Windows, Linux, and macOS packaging and durable release publication.
+- Durable `releases/latest/download/*` links are documented and aligned with release asset names.
 
 ## External Dependencies and Boundaries
 

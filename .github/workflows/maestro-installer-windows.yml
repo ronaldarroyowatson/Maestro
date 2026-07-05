@@ -1,0 +1,88 @@
+name: Maestro Installer Windows
+
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - v*
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-windows-installer:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Resolve version
+        shell: pwsh
+        run: |
+          $version = (Get-Content package.json | ConvertFrom-Json).version
+          Add-Content -Path $env:GITHUB_ENV -Value "MAESTRO_VERSION=$version"
+
+      - name: Stage repository snapshot
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path dist/installers/windows/stage/Maestro | Out-Null
+          robocopy . dist/installers/windows/stage/Maestro /E /XD .git dist node_modules | Out-Null
+          if ($LASTEXITCODE -ge 8) { exit $LASTEXITCODE }
+          if (Test-Path dist/installers/windows/stage/Maestro/installer/windows/bootstrap.ps1) {
+            Unblock-File dist/installers/windows/stage/Maestro/installer/windows/bootstrap.ps1
+          }
+
+      - name: Install PS2EXE
+        shell: pwsh
+        run: Install-Module ps2exe -Scope CurrentUser -Force -AllowClobber
+
+      - name: Build executable installer
+        shell: pwsh
+        run: |
+          $archivePath = Join-Path $PWD 'dist/installers/windows/maestro-payload.zip'
+          if (Test-Path $archivePath) { Remove-Item $archivePath -Force }
+          Compress-Archive -Path 'dist/installers/windows/stage/Maestro' -DestinationPath $archivePath -Force
+
+          $base64 = [Convert]::ToBase64String([IO.File]::ReadAllBytes($archivePath))
+          $wrapperPath = Join-Path $PWD 'dist/installers/windows/maestro-installer-windows.ps1'
+          $wrapperLines = @(
+            '$ErrorActionPreference = ''Stop''',
+            '',
+            '$payloadBase64 = @''',
+            $base64,
+            ''@',
+            '',
+            '$installRoot = Join-Path $env:ProgramFiles ''Maestro''',
+            '',
+            'if ($env:OTTO_DRY_RUN -eq ''1'') {',
+            '  Write-Host "[dry-run] would install Maestro to $installRoot"',
+            '  exit 0',
+            '}',
+            '',
+            'New-Item -ItemType Directory -Force -Path $env:ProgramFiles | Out-Null',
+            '$tempZip = Join-Path $env:TEMP ''maestro-install.zip''',
+            '[IO.File]::WriteAllBytes($tempZip, [Convert]::FromBase64String($payloadBase64))',
+            'Expand-Archive -Path $tempZip -DestinationPath $env:ProgramFiles -Force',
+            '& (Join-Path $installRoot ''installer/windows/bootstrap.ps1'')'
+          )
+          $wrapperLines | Set-Content -Path $wrapperPath -Encoding UTF8
+
+          Import-Module ps2exe
+          Invoke-PS2EXE -InputFile $wrapperPath -OutputFile (Join-Path $PWD 'dist/installers/maestro-installer-windows.exe') -NoConsole -RequireAdmin -Title 'Maestro Installer'
+
+      - name: Upload workflow artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: maestro-installer-windows
+          path: dist/installers/maestro-installer-windows.exe
+
+      - name: Publish durable latest release artifact
+        uses: ncipollo/release-action@v1
+        with:
+          tag: latest
+          name: Latest Maestro Installers
+          allowUpdates: true
+          replacesArtifacts: true
+          artifacts: dist/installers/maestro-installer-windows.exe
