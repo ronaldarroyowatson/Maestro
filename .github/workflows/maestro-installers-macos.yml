@@ -98,6 +98,7 @@ jobs:
           set -e
 
           BOOTSTRAP="/opt/maestro/installer/macos/bootstrap.sh"
+          APP_DIR="/Applications/Maestro.app"
           LOG_FILE="/var/log/maestro-installer.log"
 
           if ! touch "$LOG_FILE" >/dev/null 2>&1; then
@@ -123,7 +124,39 @@ jobs:
           fi
 
           "$BOOTSTRAP" >> "$LOG_FILE" 2>&1
+
+          mkdir -p "$APP_DIR/Contents/MacOS" "$APP_DIR/Contents/Resources"
+          cat > "$APP_DIR/Contents/Info.plist" <<'APPINFOEOF'
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+            <key>CFBundleDisplayName</key>
+            <string>Maestro</string>
+            <key>CFBundleExecutable</key>
+            <string>Maestro</string>
+            <key>CFBundleIdentifier</key>
+            <string>com.otto-systems.maestro.app</string>
+            <key>CFBundleName</key>
+            <string>Maestro</string>
+            <key>CFBundlePackageType</key>
+            <string>APPL</string>
+            <key>CFBundleShortVersionString</key>
+            <string>__MAESTRO_VERSION__</string>
+            <key>CFBundleVersion</key>
+            <string>__MAESTRO_VERSION__</string>
+            <key>LSMinimumSystemVersion</key>
+            <string>12.0</string>
+          </dict>
+          </plist>
+          APPINFOEOF
+          cat > "$APP_DIR/Contents/MacOS/Maestro" <<'APPEXEOF'
+          #!/bin/sh
+          exec /opt/maestro/installer/macos/bootstrap.sh "$@"
+          APPEXEOF
+          chmod +x "$APP_DIR/Contents/MacOS/Maestro"
           EOF
+          sed -i '' "s/__MAESTRO_VERSION__/${MAESTRO_VERSION}/g" dist/installers/macos/scripts/postinstall
           chmod +x dist/installers/macos/scripts/postinstall
 
       - name: Build unsigned package
