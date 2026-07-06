@@ -70,13 +70,13 @@ jobs:
             </Package>
             <Fragment>
               <ComponentGroup Id="Files" Directory="INSTALLFOLDER">
-                <Files Include="dist/installers/windows/msi-root/Maestro/**" />
+                <Files Include="!(bindpath.StagedRoot)\**" />
               </ComponentGroup>
             </Fragment>
           </Wix>
           "@ | Set-Content -Path dist/installers/windows/wix/maestro.wxs -Encoding UTF8
 
-          wix build dist/installers/windows/wix/maestro.wxs -o dist/installers/maestro-installer-windows.msi
+          wix build dist/installers/windows/wix/maestro.wxs -bindpath StagedRoot=dist/installers/windows/msi-root/Maestro -o dist/installers/maestro-installer-windows.msi
 
       - name: Upload workflow artifact
         uses: actions/upload-artifact@v4
