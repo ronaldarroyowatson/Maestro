@@ -26,6 +26,29 @@ jobs:
           mkdir -p dist/installers/linux/stage/opt/maestro
           rsync -a --delete --exclude .git --exclude dist --exclude node_modules ./ dist/installers/linux/stage/opt/maestro/
           chmod +x dist/installers/linux/stage/opt/maestro/installer/linux/bootstrap.sh
+          chmod +x dist/installers/linux/stage/opt/maestro/otto/bin/otto
+          chmod +x dist/installers/linux/stage/opt/maestro/otto/bin/command-service
+
+      - name: Build and embed Otto core
+        run: |
+          mkdir -p dist/installers/linux/stage/opt/maestro/otto/runtime
+          mkdir -p dist/installers/linux/stage/opt/maestro/otto/manifests
+          mkdir -p dist/installers/linux/stage/opt/maestro/otto/extensions
+          mkdir -p dist/installers/linux/stage/opt/maestro/otto/update
+
+          git clone --depth 1 https://github.com/otto-systems/otto-command-service.git /tmp/otto-command-service
+          git clone --depth 1 https://github.com/otto-systems/otto-update.git /tmp/otto-update
+
+          npm --prefix /tmp/otto-command-service ci
+          npm --prefix /tmp/otto-command-service run build
+          npm --prefix /tmp/otto-update ci
+          npm --prefix /tmp/otto-update run build
+
+          mkdir -p dist/installers/linux/stage/opt/maestro/otto/runtime/otto-command-service
+          mkdir -p dist/installers/linux/stage/opt/maestro/otto/runtime/otto-update
+          rsync -a --delete /tmp/otto-command-service/dist/ dist/installers/linux/stage/opt/maestro/otto/runtime/otto-command-service/dist/
+          rsync -a --delete /tmp/otto-update/dist/ dist/installers/linux/stage/opt/maestro/otto/runtime/otto-update/dist/
+          rsync -a --delete /tmp/otto-update/manifests/ dist/installers/linux/stage/opt/maestro/otto/manifests/
 
       - name: Build self-extracting installer
         run: |
@@ -62,10 +85,11 @@ jobs:
           path: dist/installers/maestro-installer-linux.sh
 
       - name: Publish durable latest release artifact
-        uses: ncipollo/release-action@v1
-        with:
-          tag: latest
-          name: Latest Maestro Installers
-          allowUpdates: true
-          replacesArtifacts: true
-          artifacts: dist/installers/maestro-installer-linux.sh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if gh release view latest >/dev/null 2>&1; then
+            gh release upload latest dist/installers/maestro-installer-linux.sh --clobber
+          else
+            gh release create latest dist/installers/maestro-installer-linux.sh --title "Latest Maestro Installers" --notes "Durable latest installer assets"
+          fi

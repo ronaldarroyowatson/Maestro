@@ -6,11 +6,10 @@ Maestro installers are bootstrap-only entrypoints. They do not embed full Maestr
 
 Bootstrap flow:
 
-1. Validate Otto CLI availability.
-2. Trigger Otto splash/startup surface.
-3. Run Otto self-update.
-4. Run `otto maestro install` against `otto/maestro-payload.json`.
-5. Otto resolves payload artifacts, installs dependencies, configures extensions, and records telemetry.
+1. Resolve embedded Otto binary at `/opt/maestro/otto/bin/otto`.
+2. Load embedded Otto payload at `/opt/maestro/otto/payload.json`.
+3. Run embedded Otto bootstrap/install sequence for Maestro payload.
+4. Embedded Otto resolves payload artifacts, installs dependencies, configures extensions, and records telemetry.
 
 ## Platform Entry Points
 
@@ -23,6 +22,22 @@ The packaged release installers are published as durable latest-release assets a
 - Windows: `maestro-installer-windows.exe`
 - Linux: `maestro-installer-linux.sh`
 - macOS: `maestro-installer-macos.pkg`
+
+## Embedded Otto Core Layout
+
+Install target layout:
+
+`/opt/maestro/otto/`
+
+- `bin/otto`
+- `bin/command-service`
+- `runtime/`
+- `manifests/`
+- `extensions/`
+- `update/`
+- `payload.json`
+
+The embedded boot path intentionally avoids PATH lookups and external Otto dependencies.
 
 ## Lifecycle Hooks
 

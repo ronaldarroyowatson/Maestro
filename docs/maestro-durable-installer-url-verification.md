@@ -9,7 +9,10 @@ Date: 2026-07-05
 ## Updated URLs
 
 - Windows: `https://github.com/ronaldarroyowatson/Maestro/releases/latest/download/maestro-installer-windows.exe`
+- Windows (MSI): `https://github.com/ronaldarroyowatson/Maestro/releases/latest/download/maestro-installer-windows.msi`
 - Linux: `https://github.com/ronaldarroyowatson/Maestro/releases/latest/download/maestro-installer-linux.sh`
+- Linux (DEB): `https://github.com/ronaldarroyowatson/Maestro/releases/latest/download/maestro-installer-linux.deb`
+- Linux (RPM): `https://github.com/ronaldarroyowatson/Maestro/releases/latest/download/maestro-installer-linux.rpm`
 - macOS: `https://github.com/ronaldarroyowatson/Maestro/releases/latest/download/maestro-installer-macos.pkg`
 
 ## Result

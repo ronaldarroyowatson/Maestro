@@ -1,8 +1,9 @@
 $ErrorActionPreference = "Stop"
 
 $root = Resolve-Path (Join-Path $PSScriptRoot "../..")
-$payload = Join-Path $root "otto/maestro-payload.json"
-$otto = if ($env:OTTO_BIN) { $env:OTTO_BIN } else { "otto" }
+$ottoEmbeddedPayload = Join-Path $root "otto/payload.json"
+$maestroPayload = Join-Path $root "otto/maestro-payload.json"
+$otto = Join-Path $root "otto/bin/otto"
 
 function Invoke-Otto {
   param (
@@ -18,16 +19,18 @@ function Invoke-Otto {
   & $otto @Args
 }
 
-if (!(Test-Path $payload)) {
-  throw "Missing payload file: $payload"
+if (!(Test-Path $ottoEmbeddedPayload)) {
+  throw "Missing embedded Otto payload file: $ottoEmbeddedPayload"
 }
 
-if (($env:OTTO_DRY_RUN -ne "1") -and -not (Get-Command $otto -ErrorAction SilentlyContinue)) {
-  throw "Otto CLI not found. Set OTTO_BIN or install Otto first."
+if (!(Test-Path $maestroPayload)) {
+  throw "Missing Maestro payload file: $maestroPayload"
 }
 
-Invoke-Otto -Args @("ui", "splash", "--product", "maestro")
-Invoke-Otto -Args @("self-update", "--channel", "stable")
-Invoke-Otto -Args @("maestro", "install", "--payload", $payload, "--channel", "stable")
+if (($env:OTTO_DRY_RUN -ne "1") -and -not (Test-Path $otto)) {
+  throw "Embedded Otto binary is missing: $otto"
+}
 
-Write-Host "Maestro bootstrap install flow completed."
+Invoke-Otto -Args @("--payload", $ottoEmbeddedPayload, "--maestro-payload", $maestroPayload, "--channel", "stable")
+
+Write-Host "Maestro embedded Otto bootstrap flow completed."

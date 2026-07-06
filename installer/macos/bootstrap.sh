@@ -2,8 +2,9 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-PAYLOAD_PATH="${ROOT_DIR}/otto/maestro-payload.json"
-OTTO_BIN="${OTTO_BIN:-otto}"
+OTTO_EMBEDDED_PAYLOAD="${ROOT_DIR}/otto/payload.json"
+MAESTRO_PAYLOAD="${ROOT_DIR}/otto/maestro-payload.json"
+OTTO_BIN="${ROOT_DIR}/otto/bin/otto"
 
 run() {
   if [[ "${OTTO_DRY_RUN:-0}" == "1" ]]; then
@@ -13,18 +14,21 @@ run() {
   "$@"
 }
 
-if [[ ! -f "${PAYLOAD_PATH}" ]]; then
-  echo "Missing payload file: ${PAYLOAD_PATH}" >&2
+if [[ ! -f "${OTTO_EMBEDDED_PAYLOAD}" ]]; then
+  echo "Missing embedded Otto payload file: ${OTTO_EMBEDDED_PAYLOAD}" >&2
   exit 1
 fi
 
-if [[ "${OTTO_DRY_RUN:-0}" != "1" ]] && ! command -v "${OTTO_BIN}" >/dev/null 2>&1; then
-  echo "Otto CLI not found. Set OTTO_BIN or install Otto first." >&2
+if [[ ! -f "${MAESTRO_PAYLOAD}" ]]; then
+  echo "Missing Maestro payload file: ${MAESTRO_PAYLOAD}" >&2
   exit 1
 fi
 
-run "${OTTO_BIN}" ui splash --product maestro
-run "${OTTO_BIN}" self-update --channel stable
-run "${OTTO_BIN}" maestro install --payload "${PAYLOAD_PATH}" --channel stable
+if [[ "${OTTO_DRY_RUN:-0}" != "1" ]] && [[ ! -x "${OTTO_BIN}" ]]; then
+  echo "Embedded Otto binary is missing or not executable: ${OTTO_BIN}" >&2
+  exit 1
+fi
 
-echo "Maestro bootstrap install flow completed."
+run "${OTTO_BIN}" --payload "${OTTO_EMBEDDED_PAYLOAD}" --maestro-payload "${MAESTRO_PAYLOAD}" --channel stable
+
+echo "Maestro embedded Otto bootstrap flow completed."

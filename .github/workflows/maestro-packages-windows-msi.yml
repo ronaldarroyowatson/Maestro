@@ -1,0 +1,97 @@
+---
+name: Maestro Packages Windows MSI
+"on":
+  push:
+    branches:
+      - main
+    tags:
+      - v*
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-windows-msi:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Resolve version
+        shell: pwsh
+        run: |
+          $version = (Get-Content package.json | ConvertFrom-Json).version
+          Add-Content -Path $env:GITHUB_ENV -Value "MAESTRO_VERSION=$version"
+
+      - name: Stage payload and embed Otto core
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path dist/installers/windows/msi-root/Maestro | Out-Null
+          robocopy . dist/installers/windows/msi-root/Maestro /E /XD .git dist node_modules | Out-Null
+          if ($LASTEXITCODE -ge 8) { exit $LASTEXITCODE }
+
+          git clone --depth 1 https://github.com/otto-systems/otto-command-service.git $env:TEMP/otto-command-service
+          git clone --depth 1 https://github.com/otto-systems/otto-update.git $env:TEMP/otto-update
+          npm --prefix $env:TEMP/otto-command-service ci
+          npm --prefix $env:TEMP/otto-command-service run build
+          npm --prefix $env:TEMP/otto-update ci
+          npm --prefix $env:TEMP/otto-update run build
+
+          New-Item -ItemType Directory -Force -Path dist/installers/windows/msi-root/Maestro/otto/runtime/otto-command-service/dist | Out-Null
+          New-Item -ItemType Directory -Force -Path dist/installers/windows/msi-root/Maestro/otto/runtime/otto-update/dist | Out-Null
+          robocopy $env:TEMP/otto-command-service/dist dist/installers/windows/msi-root/Maestro/otto/runtime/otto-command-service/dist /E | Out-Null
+          if ($LASTEXITCODE -ge 8) { exit $LASTEXITCODE }
+          robocopy $env:TEMP/otto-update/dist dist/installers/windows/msi-root/Maestro/otto/runtime/otto-update/dist /E | Out-Null
+          if ($LASTEXITCODE -ge 8) { exit $LASTEXITCODE }
+          robocopy $env:TEMP/otto-update/manifests dist/installers/windows/msi-root/Maestro/otto/manifests /E | Out-Null
+          if ($LASTEXITCODE -ge 8) { exit $LASTEXITCODE }
+
+      - name: Install WiX toolset
+        shell: pwsh
+        run: |
+          dotnet tool install --global wix
+          echo "$env:USERPROFILE/.dotnet/tools" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+
+      - name: Build MSI
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path dist/installers/windows/wix | Out-Null
+          @"
+          <Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
+            <Package Name="Maestro" Manufacturer="Otto Systems" Version="$env:MAESTRO_VERSION" UpgradeCode="A4B57F0D-93A7-457D-8A2D-A2F7EB9A6C49">
+              <MediaTemplate />
+              <StandardDirectory Id="ProgramFiles64Folder">
+                <Directory Id="INSTALLFOLDER" Name="Maestro" />
+              </StandardDirectory>
+              <Feature Id="MainFeature" Title="Maestro" Level="1">
+                <ComponentGroupRef Id="Files" />
+              </Feature>
+            </Package>
+            <Fragment>
+              <ComponentGroup Id="Files" Directory="INSTALLFOLDER">
+                <Files Include="dist/installers/windows/msi-root/Maestro/**" />
+              </ComponentGroup>
+            </Fragment>
+          </Wix>
+          "@ | Set-Content -Path dist/installers/windows/wix/maestro.wxs -Encoding UTF8
+
+          wix build dist/installers/windows/wix/maestro.wxs -o dist/installers/maestro-installer-windows.msi
+
+      - name: Upload workflow artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: maestro-installer-windows-msi
+          path: dist/installers/maestro-installer-windows.msi
+
+      - name: Publish durable latest release artifact
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release view latest --repo ronaldarroyowatson/Maestro *> $null
+          if ($LASTEXITCODE -eq 0) {
+            gh release upload latest dist/installers/maestro-installer-windows.msi --repo ronaldarroyowatson/Maestro --clobber
+          } else {
+            gh release create latest dist/installers/maestro-installer-windows.msi --repo ronaldarroyowatson/Maestro --title "Latest Maestro Installers" --notes "Durable latest installer assets"
+          }

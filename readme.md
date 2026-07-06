@@ -4,25 +4,26 @@ Maestro is a modular, deterministic runtime for agent orchestration, pipelines, 
 
 ## Install Maestro via Otto
 
-Maestro is installed and managed by Otto.
+Maestro installers now embed a minimal Otto core and do not require a separate Otto installation.
 
-1. Install Otto from your Otto distribution channel.
-2. Run one of the bootstrap installers in this repository, or install directly via Otto CLI.
-3. Otto performs self-update, reads `otto/maestro-payload.json`, and installs/configures Maestro.
+1. Download and install Maestro using the platform installer.
+2. Launch Maestro.
+3. Embedded Otto boots from `/opt/maestro/otto/bin/otto`, loads `otto/payload.json`, and installs/configures Maestro runtime.
 
 Primary lifecycle commands:
 
-- `otto maestro install --payload otto/maestro-payload.json`
-- `otto maestro update --payload otto/maestro-payload.json`
-- `otto maestro repair --payload otto/maestro-payload.json`
-- `otto maestro uninstall`
+- `/opt/maestro/otto/bin/otto --payload /opt/maestro/otto/payload.json`
+- `/opt/maestro/installer/macos/bootstrap.sh`
 
 ## Download Installers
 
 These installers are published as durable latest-release assets. Otto completes runtime downloads and setup after launch.
 
 - Windows: https://github.com/ronaldarroyowatson/Maestro/releases/latest/download/maestro-installer-windows.exe
+- Windows (MSI): https://github.com/ronaldarroyowatson/Maestro/releases/latest/download/maestro-installer-windows.msi
 - Linux: https://github.com/ronaldarroyowatson/Maestro/releases/latest/download/maestro-installer-linux.sh
+- Linux (DEB): https://github.com/ronaldarroyowatson/Maestro/releases/latest/download/maestro-installer-linux.deb
+- Linux (RPM): https://github.com/ronaldarroyowatson/Maestro/releases/latest/download/maestro-installer-linux.rpm
 - macOS: https://github.com/ronaldarroyowatson/Maestro/releases/latest/download/maestro-installer-macos.pkg
 
 ## Telemetry and Logs

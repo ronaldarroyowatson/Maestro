@@ -31,6 +31,64 @@ jobs:
           rsync -a --delete --exclude .git --exclude dist --exclude node_modules --exclude '._*' ./ dist/installers/macos/stage/opt/maestro/
           find dist/installers/macos/stage -name '._*' -type f -delete
           chmod +x dist/installers/macos/stage/opt/maestro/installer/macos/bootstrap.sh
+          chmod +x dist/installers/macos/stage/opt/maestro/otto/bin/otto
+          chmod +x dist/installers/macos/stage/opt/maestro/otto/bin/command-service
+
+      - name: Build and embed Otto core
+        run: |
+          mkdir -p dist/installers/macos/stage/opt/maestro/otto/runtime
+          mkdir -p dist/installers/macos/stage/opt/maestro/otto/manifests
+          mkdir -p dist/installers/macos/stage/opt/maestro/otto/extensions
+          mkdir -p dist/installers/macos/stage/opt/maestro/otto/update
+
+          git clone --depth 1 https://github.com/otto-systems/otto-command-service.git /tmp/otto-command-service
+          git clone --depth 1 https://github.com/otto-systems/otto-update.git /tmp/otto-update
+
+          npm --prefix /tmp/otto-command-service ci
+          npm --prefix /tmp/otto-command-service run build
+          npm --prefix /tmp/otto-update ci
+          npm --prefix /tmp/otto-update run build
+
+          mkdir -p dist/installers/macos/stage/opt/maestro/otto/runtime/otto-command-service
+          mkdir -p dist/installers/macos/stage/opt/maestro/otto/runtime/otto-update
+          rsync -a --delete /tmp/otto-command-service/dist/ dist/installers/macos/stage/opt/maestro/otto/runtime/otto-command-service/dist/
+          rsync -a --delete /tmp/otto-update/dist/ dist/installers/macos/stage/opt/maestro/otto/runtime/otto-update/dist/
+          rsync -a --delete /tmp/otto-update/manifests/ dist/installers/macos/stage/opt/maestro/otto/manifests/
+
+      - name: Create Maestro app bundle
+        run: |
+          APP_DIR="dist/installers/macos/stage/Applications/Maestro.app"
+          mkdir -p "${APP_DIR}/Contents/MacOS"
+          mkdir -p "${APP_DIR}/Contents/Resources"
+          cat > "${APP_DIR}/Contents/Info.plist" <<EOF
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+            <key>CFBundleDisplayName</key>
+            <string>Maestro</string>
+            <key>CFBundleExecutable</key>
+            <string>Maestro</string>
+            <key>CFBundleIdentifier</key>
+            <string>com.otto-systems.maestro.app</string>
+            <key>CFBundleName</key>
+            <string>Maestro</string>
+            <key>CFBundlePackageType</key>
+            <string>APPL</string>
+            <key>CFBundleShortVersionString</key>
+            <string>${MAESTRO_VERSION}</string>
+            <key>CFBundleVersion</key>
+            <string>${MAESTRO_VERSION}</string>
+            <key>LSMinimumSystemVersion</key>
+            <string>12.0</string>
+          </dict>
+          </plist>
+          EOF
+          cat > "${APP_DIR}/Contents/MacOS/Maestro" <<'EOF'
+          #!/bin/sh
+          exec /opt/maestro/installer/macos/bootstrap.sh "$@"
+          EOF
+          chmod +x "${APP_DIR}/Contents/MacOS/Maestro"
 
       - name: Prepare postinstall hook
         run: |
@@ -64,14 +122,7 @@ jobs:
             exit 0
           fi
 
-          if command -v otto >/dev/null 2>&1; then
-            "$BOOTSTRAP" >> "$LOG_FILE" 2>&1
-            exit 0
-          fi
-
-          echo "[$(date)] WARN: Otto CLI not found during pkg install; bootstrap deferred" >> "$LOG_FILE" 2>/dev/null || true
-          echo "[$(date)] INFO: run /opt/maestro/installer/macos/bootstrap.sh after installing Otto" >> "$LOG_FILE" 2>/dev/null || true
-          exit 0
+          "$BOOTSTRAP" >> "$LOG_FILE" 2>&1
           EOF
           chmod +x dist/installers/macos/scripts/postinstall
 

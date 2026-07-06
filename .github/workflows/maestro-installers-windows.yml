@@ -33,6 +33,37 @@ jobs:
           if (Test-Path dist/installers/windows/stage/Maestro/installer/windows/bootstrap.ps1) {
             Unblock-File dist/installers/windows/stage/Maestro/installer/windows/bootstrap.ps1
           }
+          if (Test-Path dist/installers/windows/stage/Maestro/otto/bin/otto) {
+            Unblock-File dist/installers/windows/stage/Maestro/otto/bin/otto
+          }
+          if (Test-Path dist/installers/windows/stage/Maestro/otto/bin/command-service) {
+            Unblock-File dist/installers/windows/stage/Maestro/otto/bin/command-service
+          }
+
+      - name: Build and embed Otto core
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path dist/installers/windows/stage/Maestro/otto/runtime | Out-Null
+          New-Item -ItemType Directory -Force -Path dist/installers/windows/stage/Maestro/otto/manifests | Out-Null
+          New-Item -ItemType Directory -Force -Path dist/installers/windows/stage/Maestro/otto/extensions | Out-Null
+          New-Item -ItemType Directory -Force -Path dist/installers/windows/stage/Maestro/otto/update | Out-Null
+
+          git clone --depth 1 https://github.com/otto-systems/otto-command-service.git $env:TEMP/otto-command-service
+          git clone --depth 1 https://github.com/otto-systems/otto-update.git $env:TEMP/otto-update
+
+          npm --prefix $env:TEMP/otto-command-service ci
+          npm --prefix $env:TEMP/otto-command-service run build
+          npm --prefix $env:TEMP/otto-update ci
+          npm --prefix $env:TEMP/otto-update run build
+
+          New-Item -ItemType Directory -Force -Path dist/installers/windows/stage/Maestro/otto/runtime/otto-command-service/dist | Out-Null
+          New-Item -ItemType Directory -Force -Path dist/installers/windows/stage/Maestro/otto/runtime/otto-update/dist | Out-Null
+          robocopy $env:TEMP/otto-command-service/dist dist/installers/windows/stage/Maestro/otto/runtime/otto-command-service/dist /E | Out-Null
+          if ($LASTEXITCODE -ge 8) { exit $LASTEXITCODE }
+          robocopy $env:TEMP/otto-update/dist dist/installers/windows/stage/Maestro/otto/runtime/otto-update/dist /E | Out-Null
+          if ($LASTEXITCODE -ge 8) { exit $LASTEXITCODE }
+          robocopy $env:TEMP/otto-update/manifests dist/installers/windows/stage/Maestro/otto/manifests /E | Out-Null
+          if ($LASTEXITCODE -ge 8) { exit $LASTEXITCODE }
 
       - name: Install PS2EXE
         shell: pwsh
@@ -79,10 +110,13 @@ jobs:
           path: dist/installers/maestro-installer-windows.exe
 
       - name: Publish durable latest release artifact
-        uses: ncipollo/release-action@v1
-        with:
-          tag: latest
-          name: Latest Maestro Installers
-          allowUpdates: true
-          replacesArtifacts: true
-          artifacts: dist/installers/maestro-installer-windows.exe
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release view latest --repo ronaldarroyowatson/Maestro *> $null
+          if ($LASTEXITCODE -eq 0) {
+            gh release upload latest dist/installers/maestro-installer-windows.exe --repo ronaldarroyowatson/Maestro --clobber
+          } else {
+            gh release create latest dist/installers/maestro-installer-windows.exe --repo ronaldarroyowatson/Maestro --title "Latest Maestro Installers" --notes "Durable latest installer assets"
+          }

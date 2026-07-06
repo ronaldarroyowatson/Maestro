@@ -2,6 +2,29 @@
 
 ## Unreleased
 
+## 0.1.9
+
+### Added
+
+- Added embedded Otto runtime launchers and runtime entrypoints:
+  - `otto/bin/otto`
+  - `otto/bin/command-service`
+  - `otto/runtime/otto-bootstrap.mjs`
+  - `otto/runtime/command-service-cli.mjs`
+  - `otto/payload.json`
+- Added dedicated package workflows:
+  - `.github/workflows/maestro-packages-linux.yml` for `.deb` and `.rpm`
+  - `.github/workflows/maestro-packages-windows-msi.yml` for `.msi`
+- Added architecture and validation reports:
+  - `docs/maestro-embedded-otto-diagnostic-report.md`
+  - `docs/maestro-embedded-otto-final-report.md`
+
+### Changed
+
+- Reworked platform bootstrap scripts to use embedded Otto pathing and payloads only (no PATH-based Otto lookup).
+- Updated installer workflows to embed Otto runtime components and publish durable `latest` release assets with idempotent GitHub CLI upload/create logic.
+- Updated installer docs and durable URL docs to include MSI/DEB/RPM targets.
+
 ### Added
 
 - Added Otto integration discovery and planning docs:
