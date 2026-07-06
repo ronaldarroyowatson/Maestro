@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0.0",
   "payloadId": "maestro-embedded-otto-core",
-  "payloadVersion": "0.1.8",
+  "payloadVersion": "0.1.9",
   "embeddedCore": {
     "ottoUpdateVersion": "0.2.4",
     "commandServiceVersion": "0.2.1"

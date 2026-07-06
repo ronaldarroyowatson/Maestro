@@ -2,7 +2,7 @@
   "$schema": "./schemas/maestro-payload.schema.json",
   "schemaVersion": "1.0.0",
   "payloadId": "maestro-runtime-stable",
-  "payloadVersion": "0.1.8",
+  "payloadVersion": "0.1.9",
   "product": {
     "id": "maestro",
     "name": "Maestro Runtime",
@@ -15,6 +15,13 @@
   },
   "artifacts": [
     {
+      "id": "otto-protocol",
+      "type": "git",
+      "uri": "https://github.com/otto-systems/otto-protocol.git",
+      "ref": "main",
+      "installPath": "{otto.dataDir}/otto-protocol"
+    },
+    {
       "id": "otto-command-service",
       "type": "git",
       "uri": "https://github.com/otto-systems/otto-command-service.git",
@@ -25,7 +32,7 @@
     {
       "id": "maestro-source",
       "type": "git",
-      "uri": "https://github.com/otto-systems/maestro.git",
+      "uri": "https://github.com/ronaldarroyowatson/Maestro.git",
       "ref": "main",
       "installPath": "{otto.dataDir}/maestro"
     },
