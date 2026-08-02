@@ -11,7 +11,7 @@
     "validate:command-service": "node --import tsx ./src/shared/utils/commandServiceContract.ts"
   },
   "dependencies": {
-    "@otto/command-service": "file:../Otto/otto-command-service",
+    "@otto/command-service": "file:../otto-command-service",
     "ajv": "^8.17.1",
     "better-sqlite3": "^11.8.1",
     "tsx": "^4.19.2"
