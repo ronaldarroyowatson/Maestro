@@ -129,6 +129,8 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\installer\windows\minimal-
 
 ### Additional Failure/Trace Coverage (2026-10-16 Follow-up)
 
+- **Manifest open verification:**
+  - Ran installer with `-OpenManifest` and confirmed Notepad launched the manifest file path.
 - **Permission failure (Program Files, non-elevated):**
   - Running install root under `C:\Program Files\Maestro-Otto-Live` failed as expected.
   - Installer now fails fast with explicit remediation guidance:
