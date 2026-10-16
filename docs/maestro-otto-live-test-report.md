@@ -199,3 +199,9 @@ Observed result:
 
 Signing note:
 - current local script signature status remains `NotSigned` (warning), expected in local development and non-blocking for tracer bullet validation.
+
+Observability baseline update:
+- Otto debug/diagnostics support is now explicitly wired into install contracts:
+  - `otto-extensions/otto-debug-extension`
+  - required payload module contract: `debug.module` (alias: `diagnostics.module`)
+  - diagnostics path contract: `{otto.dataDir}/diagnostics/maestro`

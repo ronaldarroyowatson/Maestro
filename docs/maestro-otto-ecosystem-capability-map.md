@@ -23,6 +23,7 @@ This document records the Otto-ecosystem-first backend mapping for Maestro so in
 | UI shell integration | `otto-systems/otto-ui` (`@otto/ui`) | Maestro node graph/log/telemetry panels via contracts | Extend Otto module first |
 | Extension loader/runtime | `otto-systems/otto-extensions` (`@otto/extensions`) | required logging/tracing/metrics modules | Extend Otto module first |
 | Extension discovery/index | `otto-extensions/otto-extension-index` | module discovery/compatibility metadata | Extend Otto module first |
+| Diagnostics/debugging support | `otto-extensions/otto-debug-extension` | runtime diagnostics and issue triage support | Extend Otto extension first |
 | Auth/API/CLI/Data extension surfaces | `otto-extensions/otto-auth-extension`, `otto-extensions/otto-api-extension`, `otto-extensions/otto-cli-extension`, `otto-extensions/otto-data-extension` | optional feature integration points as Maestro requirements expand | Add as needed via Otto extension model |
 | Edge profile/service/tls extension surfaces | `ronaldarroyowatson/otto-edge-profile-extension`, `ronaldarroyowatson/otto-edge-service-extension`, `ronaldarroyowatson/otto-tls-automation-extension` | optional deployment/runtime profiles for specialized environments | Add as needed via Otto extension model |
 
@@ -36,6 +37,7 @@ This document records the Otto-ecosystem-first backend mapping for Maestro so in
 - Otto command-service, server, update, kernel, protocol, UI
 - Otto extensions core
 - Otto extension index
+- Otto debug extension
 
 ### Maestro Otto payload
 

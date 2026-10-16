@@ -57,6 +57,13 @@
       "installPath": "{otto.dataDir}/otto-extension-index"
     },
     {
+      "id": "otto-debug-extension",
+      "type": "git",
+      "uri": "https://github.com/otto-extensions/otto-debug-extension.git",
+      "ref": "main",
+      "installPath": "{otto.dataDir}/otto-debug-extension"
+    },
+    {
       "id": "otto-command-service",
       "type": "git",
       "uri": "https://github.com/otto-systems/otto-command-service.git",
@@ -106,7 +113,8 @@
     "paths": {
       "logs": "{otto.dataDir}/logs/maestro",
       "traces": "{otto.dataDir}/traces/maestro",
-      "telemetry": "{otto.dataDir}/telemetry/maestro"
+      "telemetry": "{otto.dataDir}/telemetry/maestro",
+      "diagnostics": "{otto.dataDir}/diagnostics/maestro"
     }
   },
   "extensions": {
@@ -123,6 +131,11 @@
         "id": "metrics.module",
         "source": "@otto/extensions",
         "alias": "telemetry.module"
+      },
+      {
+        "id": "debug.module",
+        "source": "@otto/extensions",
+        "alias": "diagnostics.module"
       }
     ],
     "optional": []

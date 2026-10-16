@@ -86,6 +86,7 @@ Current core repo hydration set includes:
 - `otto-systems/otto-ui`
 - `otto-systems/otto-extensions`
 - `otto-extensions/otto-extension-index`
+- `otto-extensions/otto-debug-extension`
 
 ### Usage
 

@@ -12,6 +12,8 @@
   - `src/shared/utils/ottoUiContract.ts`
   - `scripts/otto-ui-tracer-bullet.ts`
   - `tests/shared/otto-ui-contract.test.ts`
+- Added observability baseline validation test:
+  - `tests/shared/otto-observability-modules.test.ts`
 - Added Otto ecosystem capability mapping doc:
   - `docs/maestro-otto-ecosystem-capability-map.md`
 - Added repository-level Copilot source-of-truth instructions:
@@ -25,12 +27,14 @@
   - `otto-systems/otto-ui`
   - `otto-systems/otto-extensions`
   - `otto-extensions/otto-extension-index`
+  - `otto-extensions/otto-debug-extension`
 - Hardened Windows minimal installer diagnostics with:
   - install-root writeability preflight
   - transcript tracing (`-TracePath`)
   - signature status reporting (`-VerifySignatures`)
 - Updated installer and Otto installation docs to reflect current Windows minimal installer flow and ecosystem-first backend reuse strategy.
 - Added `validate:otto-ui-contract` npm script for install/deploy/module/UI-entry tracer bullet checks.
+- Expanded Maestro Otto payload observability baseline with required `debug.module` and diagnostics path contract.
 
 ## 0.1.9
 

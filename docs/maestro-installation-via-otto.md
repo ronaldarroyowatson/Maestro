@@ -108,5 +108,6 @@ Current install artifacts/manifest coverage includes:
 - `otto-systems/otto-ui`
 - `otto-systems/otto-extensions`
 - `otto-extensions/otto-extension-index`
+- `otto-extensions/otto-debug-extension`
 
 Maestro-specific orchestration/runtime logic remains in this repository; shared backend concerns should preferentially evolve in Otto modules.

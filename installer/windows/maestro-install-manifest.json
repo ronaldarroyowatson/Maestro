@@ -88,6 +88,15 @@
       "requiredFiles": [
         "package.json"
       ]
+    },
+    {
+      "id": "otto-debug-extension",
+      "url": "https://github.com/otto-extensions/otto-debug-extension.git",
+      "ref": "main",
+      "installSubPath": "repos/otto-debug-extension",
+      "requiredFiles": [
+        "package.json"
+      ]
     }
   ],
   "contracts": [
