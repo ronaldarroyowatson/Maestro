@@ -5,7 +5,9 @@ param(
   [string]$Mode = "Install",
   [switch]$OpenManifest,
   [switch]$PrintManifest,
-  [switch]$DryRun
+  [switch]$DryRun,
+  [string]$TracePath = "",
+  [switch]$VerifySignatures
 )
 
 $ErrorActionPreference = "Stop"
@@ -49,6 +51,24 @@ function Ensure-Tool {
   $cmd = Get-Command $Name -ErrorAction SilentlyContinue
   if (-not $cmd) {
     throw "Required tool '$Name' was not found in PATH."
+  }
+}
+
+function Ensure-InstallRootWritable {
+  param(
+    [Parameter(Mandatory = $true)]
+    [string]$RootPath
+  )
+
+  try {
+    New-Item -ItemType Directory -Force -Path $RootPath | Out-Null
+    $probe = Join-Path $RootPath ".maestro-write-probe.tmp"
+    "ok" | Set-Content -Path $probe -Encoding UTF8
+    Remove-Item -Force $probe
+  } catch [System.UnauthorizedAccessException] {
+    throw "Install path is not writable: '$RootPath'. Run elevated (Administrator) or choose a writable path (for example under `$env:USERPROFILE)."
+  } catch {
+    throw "Install path validation failed for '$RootPath': $($_.Exception.Message)"
   }
 }
 
@@ -287,53 +307,101 @@ function Write-InstallState {
   Write-Log "Wrote install state: $statePath" "OK"
 }
 
-$maestroRoot = Resolve-MaestroRoot
-$resolvedManifest = Get-ManifestPath -InputPath $ManifestPath -MaestroRoot $maestroRoot
+function Report-SigningStatus {
+  param(
+    [Parameter(Mandatory = $true)]
+    [string[]]$Paths
+  )
 
-if (-not (Test-Path $resolvedManifest)) {
-  throw "Manifest file not found: $resolvedManifest"
+  foreach ($target in $Paths) {
+    if (-not (Test-Path -LiteralPath $target)) {
+      Write-Log "Signature check skipped (missing file): $target" "WARN"
+      continue
+    }
+    try {
+      $signature = Get-AuthenticodeSignature -FilePath $target
+      $status = [string]$signature.Status
+      if ($status -eq "Valid") {
+        Write-Log "Signature valid: $target" "OK"
+      } else {
+        Write-Log "Signature status '$status' for: $target" "WARN"
+      }
+    } catch {
+      Write-Log "Signature check failed for '$target': $($_.Exception.Message)" "WARN"
+    }
+  }
 }
 
-if ($OpenManifest) {
-  $process = Start-Process notepad.exe $resolvedManifest -PassThru
-  Write-Log "Opened manifest in Notepad: $resolvedManifest (PID: $($process.Id))"
+$transcriptStarted = $false
+if (-not [string]::IsNullOrWhiteSpace($TracePath)) {
+  $traceDir = Split-Path -Parent $TracePath
+  if (-not [string]::IsNullOrWhiteSpace($traceDir) -and -not (Test-Path -LiteralPath $traceDir)) {
+    New-Item -ItemType Directory -Force -Path $traceDir | Out-Null
+  }
+  Start-Transcript -Path $TracePath -Force | Out-Null
+  $transcriptStarted = $true
 }
 
-if ($PrintManifest) {
-  Write-Host "Manifest path: $resolvedManifest"
-  Get-Content $resolvedManifest
+try {
+  $maestroRoot = Resolve-MaestroRoot
+  $resolvedManifest = Get-ManifestPath -InputPath $ManifestPath -MaestroRoot $maestroRoot
+
+  if (-not (Test-Path $resolvedManifest)) {
+    throw "Manifest file not found: $resolvedManifest"
+  }
+
+  if ($OpenManifest) {
+    $process = Start-Process notepad.exe $resolvedManifest -PassThru
+    Write-Log "Opened manifest in Notepad: $resolvedManifest (PID: $($process.Id))"
+  }
+
+  if ($PrintManifest) {
+    Write-Host "Manifest path: $resolvedManifest"
+    Get-Content $resolvedManifest
+  }
+
+  $manifest = Get-Content $resolvedManifest -Raw | ConvertFrom-Json
+  if (-not $manifest.repositories -or $manifest.repositories.Count -eq 0) {
+    throw "Manifest has no repositories: $resolvedManifest"
+  }
+
+  Ensure-Tool -Name "git"
+
+  if ($Mode -eq "Install" -or $Mode -eq "Repair") {
+    Ensure-Tool -Name "node"
+    Ensure-Tool -Name "npm"
+  }
+
+  Write-Log "Starting mode '$Mode' using manifest '$resolvedManifest'"
+  Write-Log "Install root: $InstallRoot"
+
+  if (-not $DryRun) {
+    Ensure-InstallRootWritable -RootPath $InstallRoot
+  }
+
+  foreach ($repo in $manifest.repositories) {
+    $repoPath = [string](Ensure-Repository -Repo $repo -RootPath $InstallRoot)
+    Write-Log "Resolved repository path for '$($repo.id)': [$repoPath]"
+    Write-Log "Repository path exists for '$($repo.id)': $(Test-Path -LiteralPath $repoPath)"
+    Assert-RequiredFiles -Repo $repo -RepoPath $repoPath -AllowRepair:($Mode -ne "Validate")
+  }
+
+  Validate-Contracts -Manifest $manifest -RootPath $InstallRoot
+
+  if ($VerifySignatures) {
+    $signingTargets = @(
+      (Join-Path $InstallRoot "repos/maestro/installer/windows/bootstrap.ps1")
+    )
+    Report-SigningStatus -Paths $signingTargets
+  }
+
+  if (-not $DryRun) {
+    Write-InstallState -RootPath $InstallRoot -ManifestFile $resolvedManifest -ModeUsed $Mode
+  }
+
+  Write-Log "Minimal Otto + Maestro installation flow completed successfully." "OK"
+} finally {
+  if ($transcriptStarted) {
+    Stop-Transcript | Out-Null
+  }
 }
-
-$manifest = Get-Content $resolvedManifest -Raw | ConvertFrom-Json
-if (-not $manifest.repositories -or $manifest.repositories.Count -eq 0) {
-  throw "Manifest has no repositories: $resolvedManifest"
-}
-
-Ensure-Tool -Name "git"
-
-if ($Mode -eq "Install" -or $Mode -eq "Repair") {
-  Ensure-Tool -Name "node"
-  Ensure-Tool -Name "npm"
-}
-
-Write-Log "Starting mode '$Mode' using manifest '$resolvedManifest'"
-Write-Log "Install root: $InstallRoot"
-
-if (-not $DryRun) {
-  New-Item -ItemType Directory -Force -Path $InstallRoot | Out-Null
-}
-
-foreach ($repo in $manifest.repositories) {
-  $repoPath = [string](Ensure-Repository -Repo $repo -RootPath $InstallRoot)
-  Write-Log "Resolved repository path for '$($repo.id)': [$repoPath]"
-  Write-Log "Repository path exists for '$($repo.id)': $(Test-Path -LiteralPath $repoPath)"
-  Assert-RequiredFiles -Repo $repo -RepoPath $repoPath -AllowRepair:($Mode -ne "Validate")
-}
-
-Validate-Contracts -Manifest $manifest -RootPath $InstallRoot
-
-if (-not $DryRun) {
-  Write-InstallState -RootPath $InstallRoot -ManifestFile $resolvedManifest -ModeUsed $Mode
-}
-
-Write-Log "Minimal Otto + Maestro installation flow completed successfully." "OK"

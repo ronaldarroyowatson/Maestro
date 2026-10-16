@@ -127,6 +127,22 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\installer\windows\minimal-
   - corrupted repository metadata (missing `.git`) triggered rebuild and fresh clone,
   - repair run completed with successful contract validation.
 
+### Additional Failure/Trace Coverage (2026-10-16 Follow-up)
+
+- **Permission failure (Program Files, non-elevated):**
+  - Running install root under `C:\Program Files\Maestro-Otto-Live` failed as expected.
+  - Installer now fails fast with explicit remediation guidance:
+    - run elevated (Administrator), or
+    - choose a user-writable path (for example under `%USERPROFILE%`).
+- **Manifest integrity failure:**
+  - Injected an invalid required file (`docs/DOES-NOT-EXIST.md`) into a temporary manifest.
+  - Validate mode correctly failed with a clear missing-file error.
+- **Transcript tracing:**
+  - Installer supports `-TracePath` and writes a full PowerShell transcript for each run.
+- **Signing trace:**
+  - Installer supports `-VerifySignatures` and logs Authenticode status for the Windows bootstrap script.
+  - Current local status observed: `NotSigned` (warning surfaced as expected, installation still succeeds in local development).
+
 ### Conclusion
 
-Windows-first minimal installer flow is operational for repo hydration + contract validation + recovery from common local install failure modes.
+Windows-first minimal installer flow is operational for repo hydration + contract validation + recovery from common local install failure modes, with traceable diagnostics for permissions, manifest integrity, and signature status.

@@ -110,12 +110,24 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\installer\windows\minimal-
   -Mode Validate
 ```
 
+Enable transcript tracing and signature-status checks:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\installer\windows\minimal-installer.ps1 `
+  -InstallRoot "$env:TEMP\maestro-otto-e2e" `
+  -Mode Install `
+  -TracePath "$env:TEMP\maestro-installer-trace.log" `
+  -VerifySignatures
+```
+
 ### Failure Detection and Healing
 
 - Missing required files in a repository are detected from manifest `requiredFiles`.
 - Corrupt repository state (missing `.git`) is detected and healed by remove + re-clone.
 - Existing repository drift is healed by `fetch + checkout + hard reset` to manifest ref.
 - Contract file validation fails fast when required contract files are absent.
+- Non-writable install paths (for example `C:\Program Files` without elevation) fail fast with explicit guidance to run as Administrator or use a user-writable path.
+- `-TracePath` captures full transcript logs for troubleshooting failed installation runs.
 
 ## macOS Signing and Notarization
 
