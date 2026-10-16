@@ -70,6 +70,11 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\installer\windows\minimal-
   -Mode Repair
 ```
 
+```powershell
+# Tracer bullet: install/deploy integrity + UI entry-route readiness
+npm run validate:otto-ui-contract
+```
+
 ## Lifecycle Hooks
 
 - Pre-install: `installer/hooks/pre-install.sh`
@@ -88,6 +93,8 @@ These hooks are declared in `otto/maestro-payload.json` and executed by Otto.
 - Validate repository runtime health with:
   - `npm run typecheck`
   - `npm test`
+- Validate install/deploy/UI contract readiness with:
+  - `npm run validate:otto-ui-contract`
 
 ## Otto ecosystem modules currently wired for backend bootstrap
 

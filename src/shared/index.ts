@@ -42,3 +42,7 @@ export {
   requiredMaestroCommandNames,
   validateMaestroCommandServiceContract
 } from './utils/commandServiceContract.js';
+export {
+  loadMaestroOttoUiContract,
+  validateMaestroOttoUiContract
+} from './utils/ottoUiContract.js';

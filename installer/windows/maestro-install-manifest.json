@@ -12,6 +12,7 @@
       "requiredFiles": [
         "otto/maestro-payload.json",
         "otto/maestro-commands.json",
+        "otto/manifests/maestro-ui-contract.json",
         "installer/windows/bootstrap.ps1",
         "docs/MAESTRO-SETUP-PLAYBOOK.md"
       ]

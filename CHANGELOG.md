@@ -7,6 +7,11 @@
 - Added Windows manifest-driven installer assets:
   - `installer/windows/minimal-installer.ps1`
   - `installer/windows/maestro-install-manifest.json`
+- Added Otto UI contract + tracer bullet validation assets:
+  - `otto/manifests/maestro-ui-contract.json`
+  - `src/shared/utils/ottoUiContract.ts`
+  - `scripts/otto-ui-tracer-bullet.ts`
+  - `tests/shared/otto-ui-contract.test.ts`
 - Added Otto ecosystem capability mapping doc:
   - `docs/maestro-otto-ecosystem-capability-map.md`
 - Added repository-level Copilot source-of-truth instructions:
@@ -25,6 +30,7 @@
   - transcript tracing (`-TracePath`)
   - signature status reporting (`-VerifySignatures`)
 - Updated installer and Otto installation docs to reflect current Windows minimal installer flow and ecosystem-first backend reuse strategy.
+- Added `validate:otto-ui-contract` npm script for install/deploy/module/UI-entry tracer bullet checks.
 
 ## 0.1.9
 

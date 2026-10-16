@@ -48,6 +48,12 @@ This document records the Otto-ecosystem-first backend mapping for Maestro so in
 - `otto-extension-index`
 - existing `otto-protocol`, `otto-command-service`, and Maestro source/build artifacts
 
+### Otto UI contract tracer bullet
+
+- Contract artifact: `otto/manifests/maestro-ui-contract.json`
+- Validation utility: `src/shared/utils/ottoUiContract.ts`
+- End-to-end tracer command: `npm run validate:otto-ui-contract`
+
 ## Gap classification policy
 
 When a backend capability is missing:

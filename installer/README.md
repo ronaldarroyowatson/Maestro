@@ -73,6 +73,7 @@ It performs:
 3. required-file verification per repository,
 4. contract-file verification from the manifest contract list,
 5. state writeout to `install-state.json`.
+6. Otto UI contract readiness checks via `otto/manifests/maestro-ui-contract.json`.
 
 Current core repo hydration set includes:
 
@@ -130,6 +131,12 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\installer\windows\minimal-
   -Mode Install `
   -TracePath "$env:TEMP\maestro-installer-trace.log" `
   -VerifySignatures
+```
+
+Run the Windows tracer-bullet validation (install + module integrity + UI entry route):
+
+```powershell
+npm run validate:otto-ui-contract
 ```
 
 ### Failure Detection and Healing

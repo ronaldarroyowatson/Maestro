@@ -1,0 +1,44 @@
+{
+  "schemaVersion": "1.0.0",
+  "contractId": "maestro-otto-ui-contract",
+  "version": "1.0.0",
+  "runtime": "maestro",
+  "entryPageId": "maestro.install-status",
+  "source": {
+    "navigation": "ui/navigation/maestro-panels.json",
+    "nodeGraphs": "ui/nodes/maestro-node-graphs.json",
+    "settings": "ui/settings/maestro-ui-settings.json"
+  },
+  "pages": [
+    {
+      "id": "maestro.install-status",
+      "label": "Install Status",
+      "route": "/maestro/install-status",
+      "panel": "install-status"
+    },
+    {
+      "id": "maestro.runtime-status",
+      "label": "Runtime Status",
+      "route": "/maestro/runtime-status",
+      "panel": "runtime-status"
+    },
+    {
+      "id": "maestro.node-graph",
+      "label": "Node Graph",
+      "route": "/maestro/node-graph",
+      "panel": "node-graph"
+    },
+    {
+      "id": "maestro.logs",
+      "label": "Logs",
+      "route": "/maestro/logs",
+      "panel": "logs"
+    },
+    {
+      "id": "maestro.telemetry",
+      "label": "Telemetry",
+      "route": "/maestro/telemetry",
+      "panel": "telemetry"
+    }
+  ]
+}

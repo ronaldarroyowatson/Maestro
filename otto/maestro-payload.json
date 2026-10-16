@@ -97,6 +97,10 @@
       {
         "source": "ui/nodes/maestro-node-graphs.json",
         "target": "{otto.configDir}/maestro/node-graphs.json"
+      },
+      {
+        "source": "otto/manifests/maestro-ui-contract.json",
+        "target": "{otto.configDir}/maestro/ui-contract.json"
       }
     ],
     "paths": {
@@ -124,6 +128,7 @@
     "optional": []
   },
   "ui": {
+    "contract": "otto/manifests/maestro-ui-contract.json",
     "nodeGraphs": "ui/nodes/maestro-node-graphs.json",
     "settings": "ui/settings/maestro-ui-settings.json",
     "navigation": "ui/navigation/maestro-panels.json"
