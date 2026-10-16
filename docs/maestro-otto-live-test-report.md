@@ -205,3 +205,11 @@ Observability baseline update:
   - `otto-extensions/otto-debug-extension`
   - required payload module contract: `debug.module` (alias: `diagnostics.module`)
   - diagnostics path contract: `{otto.dataDir}/diagnostics/maestro`
+
+Maestro module registration update:
+- Added explicit module registration contract:
+  - `otto/manifests/maestro-module-registration.json`
+- Added validation to enforce consistency between:
+  - module registration entry route/panels,
+  - UI contract pages,
+  - observability path contracts.

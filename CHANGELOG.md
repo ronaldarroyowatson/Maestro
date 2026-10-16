@@ -9,9 +9,12 @@
   - `installer/windows/maestro-install-manifest.json`
 - Added Otto UI contract + tracer bullet validation assets:
   - `otto/manifests/maestro-ui-contract.json`
+  - `otto/manifests/maestro-module-registration.json`
   - `src/shared/utils/ottoUiContract.ts`
+  - `src/shared/utils/ottoModuleRegistration.ts`
   - `scripts/otto-ui-tracer-bullet.ts`
   - `tests/shared/otto-ui-contract.test.ts`
+  - `tests/shared/otto-module-registration.test.ts`
 - Added observability baseline validation test:
   - `tests/shared/otto-observability-modules.test.ts`
 - Added Otto ecosystem capability mapping doc:

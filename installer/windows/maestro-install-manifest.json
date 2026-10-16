@@ -13,6 +13,7 @@
         "otto/maestro-payload.json",
         "otto/maestro-commands.json",
         "otto/manifests/maestro-ui-contract.json",
+        "otto/manifests/maestro-module-registration.json",
         "installer/windows/bootstrap.ps1",
         "docs/MAESTRO-SETUP-PLAYBOOK.md"
       ]

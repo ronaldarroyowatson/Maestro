@@ -35,8 +35,9 @@ This section is intentionally added before major implementation changes.
 
 ### Missing UI Integration
 
-- No Maestro node graph UI definition file for Otto UI consumption.
-- No Maestro-specific UI settings schema/defaults file for Otto UI persistence.
+- ~~No Maestro node graph UI definition file for Otto UI consumption.~~
+- ~~No Maestro-specific UI settings schema/defaults file for Otto UI persistence.~~
+- Remaining: full Otto UI module registration consumption and live Maestro panel rendering from contract metadata.
 
 ### Missing Installer CI/CD
 
@@ -48,3 +49,24 @@ This section is intentionally added before major implementation changes.
 - Otto command service registration remains external to this repo.
 - Otto UI internals remain external to this repo.
 - This repo will provide stable contracts, bootstrap scripts, payload metadata, and docs for clean Otto-side integration.
+
+## Current Phase Status (2026-10-16)
+
+### Completed
+
+1. Installer/bootstrap baseline with repair/healing and live validation.
+2. Otto ecosystem-first artifact wiring for core backend modules.
+3. Otto UI tracer-bullet validation path with explicit UI contract and entry route verification.
+4. Observability baseline contracts (logging/tracing/metrics/debug + diagnostics path).
+5. Maestro module registration contract + registration validation.
+
+### In Progress
+
+- Otto UI-side consumption of Maestro module registration and contract-driven panel routing.
+
+### Next Step
+
+1. Add Maestro module loader in Otto UI that reads registration + UI contract manifests.
+2. Render Maestro menu section from registration metadata.
+3. Route entry page to `/maestro/install-status` and confirm panel rendering from contract.
+4. Add Otto UI smoke test for Maestro module registration ingestion.

@@ -46,3 +46,4 @@ export {
   loadMaestroOttoUiContract,
   validateMaestroOttoUiContract
 } from './utils/ottoUiContract.js';
+export { validateMaestroModuleRegistration } from './utils/ottoModuleRegistration.js';

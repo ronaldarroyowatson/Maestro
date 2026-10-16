@@ -1,0 +1,29 @@
+{
+  "schemaVersion": "1.0.0",
+  "moduleId": "maestro",
+  "displayName": "Maestro",
+  "category": "runtime",
+  "entryRoute": "/maestro/install-status",
+  "uiContract": "otto/manifests/maestro-ui-contract.json",
+  "panels": [
+    "install-status",
+    "runtime-status",
+    "node-graph",
+    "logs",
+    "telemetry"
+  ],
+  "capabilities": [
+    "maestro.install",
+    "maestro.update",
+    "maestro.repair",
+    "maestro.uninstall",
+    "maestro.tracing",
+    "maestro.diagnostics"
+  ],
+  "observability": {
+    "logsPath": "{otto.dataDir}/logs/maestro",
+    "tracesPath": "{otto.dataDir}/traces/maestro",
+    "telemetryPath": "{otto.dataDir}/telemetry/maestro",
+    "diagnosticsPath": "{otto.dataDir}/diagnostics/maestro"
+  }
+}

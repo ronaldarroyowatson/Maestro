@@ -53,7 +53,9 @@ This document records the Otto-ecosystem-first backend mapping for Maestro so in
 ### Otto UI contract tracer bullet
 
 - Contract artifact: `otto/manifests/maestro-ui-contract.json`
+- Module registration artifact: `otto/manifests/maestro-module-registration.json`
 - Validation utility: `src/shared/utils/ottoUiContract.ts`
+- Registration validator: `src/shared/utils/ottoModuleRegistration.ts`
 - End-to-end tracer command: `npm run validate:otto-ui-contract`
 
 ## Gap classification policy

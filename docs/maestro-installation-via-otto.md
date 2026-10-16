@@ -95,6 +95,7 @@ These hooks are declared in `otto/maestro-payload.json` and executed by Otto.
   - `npm test`
 - Validate install/deploy/UI contract readiness with:
   - `npm run validate:otto-ui-contract`
+  - includes module registration contract checks (`otto/manifests/maestro-module-registration.json`)
 
 ## Otto ecosystem modules currently wired for backend bootstrap
 

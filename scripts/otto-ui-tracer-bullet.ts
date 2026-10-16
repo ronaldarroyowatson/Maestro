@@ -3,6 +3,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { validateMaestroOttoUiContract } from '../src/shared/utils/ottoUiContract.js';
+import { validateMaestroModuleRegistration } from '../src/shared/utils/ottoModuleRegistration.js';
 
 interface InstallManifest {
   repositories: Array<{
@@ -90,6 +91,10 @@ function main(): void {
   const uiContract = validateMaestroOttoUiContract(installedMaestroRoot);
   if (!uiContract.ok) {
     throw new Error(`Otto UI contract validation failed: ${uiContract.problems.join(' | ')}`);
+  }
+  const registration = validateMaestroModuleRegistration(installedMaestroRoot);
+  if (!registration.ok) {
+    throw new Error(`Otto module registration validation failed: ${registration.problems.join(' | ')}`);
   }
   if (!uiContract.entryPageRoute) {
     throw new Error('Otto UI contract resolved no entry page route.');
