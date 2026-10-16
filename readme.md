@@ -1,6 +1,6 @@
 # Maestro Runtime
 
-Maestro is a modular, deterministic runtime for agent orchestration, pipelines, provider adapters, and reviewer-driven execution control.
+Maestro is a modular, runtime for agent orchestration, pipelines, provider adapters, and reviewer-driven execution control.
 
 ## Install Maestro via Otto
 
