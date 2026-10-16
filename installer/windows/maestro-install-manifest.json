@@ -22,8 +22,7 @@
       "ref": "main",
       "installSubPath": "repos/otto-command-service",
       "requiredFiles": [
-        "package.json",
-        "src/index.ts"
+        "package.json"
       ]
     },
     {
@@ -45,12 +44,21 @@
       ]
     },
     {
+      "id": "otto-server",
+      "url": "https://github.com/otto-systems/otto-server.git",
+      "ref": "main",
+      "installSubPath": "repos/otto-server",
+      "requiredFiles": [
+        "package.json"
+      ]
+    },
+    {
       "id": "otto-kernel",
       "url": "https://github.com/otto-systems/otto-kernel.git",
       "ref": "main",
       "installSubPath": "repos/otto-kernel",
       "requiredFiles": [
-        "README.md"
+        "package.json"
       ]
     },
     {
@@ -59,7 +67,25 @@
       "ref": "main",
       "installSubPath": "repos/otto-ui",
       "requiredFiles": [
-        "README.md"
+        "package.json"
+      ]
+    },
+    {
+      "id": "otto-extensions-core",
+      "url": "https://github.com/otto-systems/otto-extensions.git",
+      "ref": "main",
+      "installSubPath": "repos/otto-extensions",
+      "requiredFiles": [
+        "package.json"
+      ]
+    },
+    {
+      "id": "otto-extension-index",
+      "url": "https://github.com/otto-extensions/otto-extension-index.git",
+      "ref": "main",
+      "installSubPath": "repos/otto-extension-index",
+      "requiredFiles": [
+        "package.json"
       ]
     }
   ],

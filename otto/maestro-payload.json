@@ -22,6 +22,41 @@
       "installPath": "{otto.dataDir}/otto-protocol"
     },
     {
+      "id": "otto-server",
+      "type": "git",
+      "uri": "https://github.com/otto-systems/otto-server.git",
+      "ref": "main",
+      "installPath": "{otto.dataDir}/otto-server"
+    },
+    {
+      "id": "otto-kernel",
+      "type": "git",
+      "uri": "https://github.com/otto-systems/otto-kernel.git",
+      "ref": "main",
+      "installPath": "{otto.dataDir}/otto-kernel"
+    },
+    {
+      "id": "otto-ui",
+      "type": "git",
+      "uri": "https://github.com/otto-systems/otto-ui.git",
+      "ref": "main",
+      "installPath": "{otto.dataDir}/otto-ui"
+    },
+    {
+      "id": "otto-extensions-core",
+      "type": "git",
+      "uri": "https://github.com/otto-systems/otto-extensions.git",
+      "ref": "main",
+      "installPath": "{otto.dataDir}/otto-extensions"
+    },
+    {
+      "id": "otto-extension-index",
+      "type": "git",
+      "uri": "https://github.com/otto-extensions/otto-extension-index.git",
+      "ref": "main",
+      "installPath": "{otto.dataDir}/otto-extension-index"
+    },
+    {
       "id": "otto-command-service",
       "type": "git",
       "uri": "https://github.com/otto-systems/otto-command-service.git",

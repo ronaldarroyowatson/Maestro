@@ -148,3 +148,24 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\installer\windows\minimal-
 ### Conclusion
 
 Windows-first minimal installer flow is operational for repo hydration + contract validation + recovery from common local install failure modes, with traceable diagnostics for permissions, manifest integrity, and signature status.
+
+---
+
+## Otto Ecosystem Wiring Follow-up (2026-10-16)
+
+Expanded installer/payload wiring to align with Otto-first backend reuse:
+
+- Added core Otto backend modules to Windows install manifest:
+  - `otto-command-service`
+  - `otto-server`
+  - `otto-update`
+  - `otto-kernel`
+  - `otto-protocol`
+  - `otto-ui`
+  - `otto-extensions`
+  - `otto-extension-index`
+- Added corresponding Otto artifact wiring in `otto/maestro-payload.json`.
+- Added capability/ownership mapping document:
+  - `docs/maestro-otto-ecosystem-capability-map.md`
+
+This aligns local bootstrap/install contracts with the policy of extending Otto ecosystem modules first and limiting Maestro-local backend logic to Maestro-specific orchestration behavior.

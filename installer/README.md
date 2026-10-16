@@ -74,6 +74,18 @@ It performs:
 4. contract-file verification from the manifest contract list,
 5. state writeout to `install-state.json`.
 
+Current core repo hydration set includes:
+
+- Maestro repo
+- `otto-systems/otto-command-service`
+- `otto-systems/otto-server`
+- `otto-systems/otto-update`
+- `otto-systems/otto-kernel`
+- `otto-systems/otto-protocol`
+- `otto-systems/otto-ui`
+- `otto-systems/otto-extensions`
+- `otto-extensions/otto-extension-index`
+
 ### Usage
 
 Print manifest and validate clone/install surface:

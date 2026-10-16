@@ -2,6 +2,30 @@
 
 ## Unreleased
 
+### Added
+
+- Added Windows manifest-driven installer assets:
+  - `installer/windows/minimal-installer.ps1`
+  - `installer/windows/maestro-install-manifest.json`
+- Added Otto ecosystem capability mapping doc:
+  - `docs/maestro-otto-ecosystem-capability-map.md`
+- Added repository-level Copilot source-of-truth instructions:
+  - `.github/copilot-instructions.md`
+
+### Changed
+
+- Expanded Otto backend module wiring in install contracts to include:
+  - `otto-systems/otto-server`
+  - `otto-systems/otto-kernel`
+  - `otto-systems/otto-ui`
+  - `otto-systems/otto-extensions`
+  - `otto-extensions/otto-extension-index`
+- Hardened Windows minimal installer diagnostics with:
+  - install-root writeability preflight
+  - transcript tracing (`-TracePath`)
+  - signature status reporting (`-VerifySignatures`)
+- Updated installer and Otto installation docs to reflect current Windows minimal installer flow and ecosystem-first backend reuse strategy.
+
 ## 0.1.9
 
 ### Added
