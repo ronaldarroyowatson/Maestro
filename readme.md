@@ -64,3 +64,24 @@ Configured runtime paths (resolved by Otto):
 - `pnpm typecheck`
 - `pnpm test`
 - Installer dry-run instructions are in `installer/README.md`
+
+## Mirror-Ready Workspace Setup
+
+This repository is designed to be reproduced across machines with a consistent setup flow. The mirrored environment should preserve:
+
+- the Maestro repo and feature layout
+- the Otto runtime backbone and embedded payload contracts
+- the toolchain and validation commands
+- any required MCP server integrations and local extension repos
+- the recovery procedure needed for machine replacement
+
+The full setup and recovery playbook lives at `docs/MAESTRO-SETUP-PLAYBOOK.md`.
+The toolchain and MCP inventory lives at `docs/MAESTRO-TOOLCHAIN-MCP-REGISTRY.md`.
+
+Core setup principles:
+
+- treat Otto as the backbone runtime and extension platform
+- keep Maestro feature modules modular and explicit
+- use TypeScript as the default for orchestration and feature logic
+- reserve Rust for measured hot paths only
+- document every tool, repo, and configuration change so it can be replayed on another machine
