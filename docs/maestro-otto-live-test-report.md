@@ -169,3 +169,33 @@ Expanded installer/payload wiring to align with Otto-first backend reuse:
   - `docs/maestro-otto-ecosystem-capability-map.md`
 
 This aligns local bootstrap/install contracts with the policy of extending Otto ecosystem modules first and limiting Maestro-local backend logic to Maestro-specific orchestration behavior.
+
+---
+
+## Otto UI Contract Tracer Bullet (2026-10-16)
+
+Objective:
+- verify install + deploy integrity with the expanded Otto module set, and
+- confirm Maestro resolves to a concrete Otto UI entry route.
+
+Command:
+
+```powershell
+npm run validate:otto-ui-contract
+```
+
+What the tracer validates:
+- runs Windows minimal installer in `Validate` and `Install` modes,
+- verifies all manifest repositories and required files are installed,
+- validates payload/command/schema contract files,
+- validates Maestro Otto UI contract coherence against navigation/settings/node graph assets,
+- resolves and prints UI entry page route.
+
+Observed result:
+- tracer passed end-to-end,
+- install/deploy checks passed with all modules intact,
+- UI entry route resolved to:
+  - `/maestro/install-status`
+
+Signing note:
+- current local script signature status remains `NotSigned` (warning), expected in local development and non-blocking for tracer bullet validation.
