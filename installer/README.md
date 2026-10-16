@@ -14,6 +14,7 @@ Bootstrap flow:
 ## Platform Entry Points
 
 - Windows: `installer/windows/bootstrap.ps1`
+- Windows minimal installer (workspace/bootstrap + healing): `installer/windows/minimal-installer.ps1`
 - Linux: `installer/linux/bootstrap.sh`
 - macOS: `installer/macos/bootstrap.sh`
 
@@ -57,6 +58,64 @@ Use dry-run mode for local checks when Otto binary is unavailable:
   - `OTTO_DRY_RUN=1 installer/macos/bootstrap.sh`
 - Windows PowerShell:
   - `$env:OTTO_DRY_RUN = "1"; ./installer/windows/bootstrap.ps1`
+
+## Windows Minimal Installer (Manifest-Driven)
+
+The Windows minimal installer is a manifest-driven bootstrap flow for Otto + Maestro repo hydration.
+
+- Installer: `installer/windows/minimal-installer.ps1`
+- Manifest: `installer/windows/maestro-install-manifest.json`
+
+It performs:
+
+1. tool checks (`git`, plus `node`/`npm` for install/repair modes),
+2. repository clone/update into a single install root,
+3. required-file verification per repository,
+4. contract-file verification from the manifest contract list,
+5. state writeout to `install-state.json`.
+
+### Usage
+
+Print manifest and validate clone/install surface:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\installer\windows\minimal-installer.ps1 `
+  -InstallRoot "$env:TEMP\maestro-otto-e2e" `
+  -PrintManifest `
+  -Mode Validate
+```
+
+Run install/refresh:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\installer\windows\minimal-installer.ps1 `
+  -InstallRoot "$env:TEMP\maestro-otto-e2e" `
+  -Mode Install
+```
+
+Repair mode (self-heal):
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\installer\windows\minimal-installer.ps1 `
+  -InstallRoot "$env:TEMP\maestro-otto-e2e" `
+  -Mode Repair
+```
+
+Open the manifest file in Notepad from installer flow:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\installer\windows\minimal-installer.ps1 `
+  -InstallRoot "$env:TEMP\maestro-otto-e2e" `
+  -OpenManifest `
+  -Mode Validate
+```
+
+### Failure Detection and Healing
+
+- Missing required files in a repository are detected from manifest `requiredFiles`.
+- Corrupt repository state (missing `.git`) is detected and healed by remove + re-clone.
+- Existing repository drift is healed by `fetch + checkout + hard reset` to manifest ref.
+- Contract file validation fails fast when required contract files are absent.
 
 ## macOS Signing and Notarization
 

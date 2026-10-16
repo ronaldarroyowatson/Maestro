@@ -1,25 +1,26 @@
 {
-    "name":  "maestro",
-    "version":  "0.1.10",
-    "private":  true,
-    "type":  "module",
-    "scripts":  {
-                    "build":  "tsc -p tsconfig.json",
-                    "test":  "vitest run",
-                    "test:watch":  "vitest",
-                    "typecheck":  "tsc -p tsconfig.json --noEmit",
-                    "validate:command-service":  "node --import tsx ./src/shared/utils/commandServiceContract.ts"
-                },
-    "dependencies":  {
-                         "@otto/command-service":  "file:../otto-command-service",
-                         "ajv":  "^8.17.1",
-                         "better-sqlite3":  "^11.8.1",
-                         "tsx":  "^4.19.2"
-                     },
-    "devDependencies":  {
-                            "@types/better-sqlite3":  "^7.6.12",
-                            "@types/node":  "^22.16.5",
-                            "typescript":  "^5.8.3",
-                            "vitest":  "^2.1.8"
-                        }
+    "name": "maestro",
+    "version": "0.1.10",
+    "private": true,
+    "type": "module",
+    "scripts": {
+        "build": "tsc -p tsconfig.json",
+        "test": "vitest run",
+        "test:watch": "vitest",
+        "typecheck": "tsc -p tsconfig.json --noEmit",
+        "validate:command-service": "node --import tsx ./src/shared/utils/commandServiceContract.ts"
+    },
+    "dependencies": {
+        "@otto/command-service": "file:../otto-command-service",
+        "ajv": "^8.17.1",
+        "better-sqlite3": "^11.8.1",
+        "tsx": "^4.19.2"
+    },
+    "devDependencies": {
+        "@types/better-sqlite3": "^7.6.12",
+        "@types/node": "^22.16.5",
+        "typescript": "^5.8.3",
+        "vitest": "^2.1.8"
+    },
+    "allowScripts": {}
 }

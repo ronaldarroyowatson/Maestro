@@ -1,76 +1,82 @@
-# Maestro Source-of-Truth Instructions
+# Maestro Copilot Instructions (Source of Truth)
 
-This file is the global instruction set for Maestro and all Maestro agents.
-All agent-specific instructions are layered on top of this file and must never contradict it.
+These instructions apply to all AI-assisted changes in this repository.
+If a task-specific instruction conflicts with this file, this file wins.
 
-## 1) Coding Philosophy
+## 1) Engineering Principles
 
-All contributors and agents must follow these principles:
+Follow these principles in code and architecture decisions:
 
-- DRY (Don't Repeat Yourself): avoid duplicate logic, duplicate business rules, and duplicated process definitions.
-- Pragmatic Programmer principles: prioritize practical, resilient, maintainable solutions and continuous improvement.
-- SOLID design principles: maintain composable, testable, and replaceable modules.
-- Feature-based folder architecture: organize code by feature, not by technical layer across the whole app.
-- Modularity and replaceability: design components so implementations can be swapped with minimal impact.
-- Deterministic behavior: ensure consistent outputs for the same inputs and execution context.
-- Minimal external dependencies: prefer internal implementations when feasible and reliable.
-- Explicit contracts between modules: use clear interfaces, models, and validation boundaries.
-- Strict separation of concerns: isolate UI, orchestration, domain logic, infrastructure, and test utilities.
-- Clean, readable, maintainable code: prefer clarity over cleverness.
-- Self-documenting code practices: use meaningful names, simple control flow, and explicit intent.
-- Test-first mindset: design for testability, then implement with validation in mind.
+- DRY (Don't Repeat Yourself): avoid duplicated logic, business rules, and workflows.
+- ETC (Easier To Change): prefer designs that reduce coupling and make future change safe.
+- Pragmatic Programmer mindset: choose practical, maintainable solutions over cleverness.
+- SOLID principles: keep modules composable, testable, and replaceable.
+- Feature-first organization: group by business capability, not global technical layers.
+- Determinism first: equal inputs and context should produce equal outputs.
+- Explicit contracts: use clear interfaces, models, and boundaries between modules.
+- Separation of concerns: keep orchestration, domain logic, infrastructure, and UI isolated.
+- Simplicity over novelty: prefer clear code, obvious control flow, and readable intent.
+- Testability by design: implement with unit/integration validation in mind.
 
-## 2) Architectural Rules
+## 2) Repository Architecture Rules
 
-### 2.1 System Model
+### 2.1 System model
 
-- Maestro is a modular, agent-driven system.
-- All agents must obey this file first.
-- Agent-specific rules are layered on top of this file.
+- Maestro is a modular orchestration runtime with explicit feature boundaries.
+- Agent-specific instructions may extend this file, but must not contradict it.
 
-### 2.2 Repository Structure
+### 2.2 Feature-based folder system
 
-Maestro uses this feature-based structure:
+Maestro follows a feature-first structure:
 
 ```text
 /features/<feature-name>/
-    /components/
-    /services/
+    index.ts
     /models/
+    /services/
     /tests/
     /docs/
 ```
 
 Rules:
 
-- New feature code must live inside the matching feature folder.
-- Tests and documentation are required parts of each feature.
-- Cross-feature dependencies must go through explicit contracts.
+- New runtime behavior belongs in the relevant feature folder.
+- Feature tests and docs are first-class parts of the feature.
+- Cross-feature communication must happen through explicit contracts/types.
+- Shared code belongs in `src/shared` (or another documented shared boundary), not ad hoc duplication.
 
-### 2.3 Platform and Capability Rules
+### 2.3 Dependency and integration rules
 
-- Maestro uses extension-based capabilities (similar to Otto).
-- External libraries should be avoided unless absolutely required.
-- Maestro uses internal providers for persistence, schema validation, hashing, and mocking.
-- Maestro uses deterministic update manifests and release metadata.
-- Maestro uses a unified testing architecture.
+- Prefer internal abstractions before introducing external dependencies.
+- Introduce a new dependency only when it clearly improves reliability or maintainability.
+- Keep provider- and platform-specific code behind adapters/contracts.
+- Preserve deterministic manifests and stable integration boundaries with Otto ecosystem components.
 
-## 3) Agent Behavior Rules
+## 3) Implementation Standards
 
-Every Maestro agent must obey the following execution order and constraints:
+- Make small, cohesive, reversible changes.
+- Name things for domain intent, not implementation trivia.
+- Avoid hidden side effects and implicit coupling.
+- Do not mix unrelated refactors with task-specific fixes.
+- Keep error handling explicit; avoid silent fallbacks.
+- Keep docs aligned when behavior, setup, or contracts change.
 
-1. Follow this source-of-truth file first.
-2. Follow role-specific instructions second.
-3. Never contradict this source-of-truth file.
-4. Maintain DRY compliance across all repositories.
-5. Maintain consistent coding style and architecture.
+## 4) Quality Gates
 
-## 4) Decision Priority
+Before completion, verify the smallest relevant set of checks:
 
-When rules conflict, use this priority order:
+- Type safety checks (`typecheck`)
+- Targeted tests (and integration tests when behavior crosses feature boundaries)
+- Build validation when packaging/runtime surfaces are affected
 
-1. Maestro source-of-truth instructions (this file)
-2. Role-specific agent instructions
-3. Task-local execution details
+If a check fails, fix root causes or clearly document blockers.
 
-If a lower-priority rule conflicts with a higher-priority rule, the higher-priority rule wins.
+## 5) Decision Priority
+
+When guidance conflicts, use this order:
+
+1. This file (`.github/copilot-instructions.md`)
+2. More specific repository instruction files (scoped by path/task)
+3. Task-local implementation details
+
+Higher-priority guidance always takes precedence.

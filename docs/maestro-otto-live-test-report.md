@@ -59,3 +59,74 @@ The following require a runnable Otto GUI/CLI distribution rather than repositor
 - Execute the full GUI-backed E2E run on a machine with installable Otto binary.
 - Capture screenshots for splash, install telemetry, node graph panel, and Maestro settings panel.
 - Append screenshot evidence and exact Otto build/version IDs to this report.
+
+---
+
+## Windows Minimal Installer Live Test (2026-10-16)
+
+Environment: Windows local development workspace
+
+### Goal
+
+Validate a Windows-first minimal installer flow that:
+
+1. opens/prints the installation manifest listing all repos/files/contracts,
+2. fetches and installs all declared repositories,
+3. validates declared contract files,
+4. detects failure modes and self-heals.
+
+### Installer and Manifest Under Test
+
+- `installer/windows/minimal-installer.ps1`
+- `installer/windows/maestro-install-manifest.json`
+
+### Commands Executed
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\installer\windows\minimal-installer.ps1 `
+  -InstallRoot "$env:TEMP\maestro-otto-e2e" `
+  -PrintManifest `
+  -Mode Validate
+```
+
+```powershell
+# Failure simulation 1: delete required contract file
+Remove-Item -Force "$env:TEMP\maestro-otto-e2e\repos\maestro\otto\maestro-payload.json"
+powershell -NoProfile -ExecutionPolicy Bypass -File .\installer\windows\minimal-installer.ps1 `
+  -InstallRoot "$env:TEMP\maestro-otto-e2e" `
+  -Mode Repair
+```
+
+```powershell
+# Failure simulation 2: corrupt repo metadata
+Remove-Item -Recurse -Force "$env:TEMP\maestro-otto-e2e\repos\otto-update\.git"
+powershell -NoProfile -ExecutionPolicy Bypass -File .\installer\windows\minimal-installer.ps1 `
+  -InstallRoot "$env:TEMP\maestro-otto-e2e" `
+  -Mode Repair
+```
+
+### Observed Results
+
+- Manifest was printed successfully and included:
+  - all required repos for minimal Maestro/Otto setup,
+  - required files per repo,
+  - contract files and descriptions.
+- Validate mode successfully cloned and verified all manifest repositories:
+  - maestro
+  - otto-command-service
+  - otto-protocol
+  - otto-update
+  - otto-kernel
+  - otto-ui
+- Contract validation passed for:
+  - `otto/maestro-payload.json`
+  - `otto/maestro-commands.json`
+  - payload and command schemas
+- Self-heal behavior was confirmed:
+  - deleted required file was restored during repair via git reset/update,
+  - corrupted repository metadata (missing `.git`) triggered rebuild and fresh clone,
+  - repair run completed with successful contract validation.
+
+### Conclusion
+
+Windows-first minimal installer flow is operational for repo hydration + contract validation + recovery from common local install failure modes.

@@ -1,0 +1,92 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "maestro-otto-windows-minimal",
+  "channel": "stable",
+  "description": "Minimal Windows install plan for Maestro + Otto core repos and contract files.",
+  "repositories": [
+    {
+      "id": "maestro",
+      "url": "https://github.com/ronaldarroyowatson/Maestro.git",
+      "ref": "main",
+      "installSubPath": "repos/maestro",
+      "requiredFiles": [
+        "otto/maestro-payload.json",
+        "otto/maestro-commands.json",
+        "installer/windows/bootstrap.ps1",
+        "docs/MAESTRO-SETUP-PLAYBOOK.md"
+      ]
+    },
+    {
+      "id": "otto-command-service",
+      "url": "https://github.com/otto-systems/otto-command-service.git",
+      "ref": "main",
+      "installSubPath": "repos/otto-command-service",
+      "requiredFiles": [
+        "package.json",
+        "src/index.ts"
+      ]
+    },
+    {
+      "id": "otto-protocol",
+      "url": "https://github.com/otto-systems/otto-protocol.git",
+      "ref": "main",
+      "installSubPath": "repos/otto-protocol",
+      "requiredFiles": [
+        "README.md"
+      ]
+    },
+    {
+      "id": "otto-update",
+      "url": "https://github.com/otto-systems/otto-update.git",
+      "ref": "main",
+      "installSubPath": "repos/otto-update",
+      "requiredFiles": [
+        "package.json"
+      ]
+    },
+    {
+      "id": "otto-kernel",
+      "url": "https://github.com/otto-systems/otto-kernel.git",
+      "ref": "main",
+      "installSubPath": "repos/otto-kernel",
+      "requiredFiles": [
+        "README.md"
+      ]
+    },
+    {
+      "id": "otto-ui",
+      "url": "https://github.com/otto-systems/otto-ui.git",
+      "ref": "main",
+      "installSubPath": "repos/otto-ui",
+      "requiredFiles": [
+        "README.md"
+      ]
+    }
+  ],
+  "contracts": [
+    {
+      "id": "maestro-payload-contract",
+      "repository": "maestro",
+      "path": "otto/maestro-payload.json",
+      "description": "Declares all Otto install artifacts, hooks, commands, and telemetry contracts."
+    },
+    {
+      "id": "maestro-command-contract",
+      "repository": "maestro",
+      "path": "otto/maestro-commands.json",
+      "description": "Defines command contracts used by Otto command-service integration."
+    },
+    {
+      "id": "maestro-payload-schema",
+      "repository": "maestro",
+      "path": "otto/schemas/maestro-payload.schema.json",
+      "description": "Schema validation boundary for maestro-payload.json."
+    },
+    {
+      "id": "maestro-command-schema",
+      "repository": "maestro",
+      "path": "otto/schemas/maestro-commands.schema.json",
+      "description": "Schema validation boundary for maestro-commands.json."
+    }
+  ]
+}
