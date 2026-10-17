@@ -1,0 +1,125 @@
+import { describe, expect, it } from 'vitest';
+import type { Pipeline } from '../../../src/shared/index.js';
+import { ContextEngine } from '../../context-engine/index.js';
+import { PromptEngine } from '../../prompt-engine/index.js';
+import { Reviewer } from '../../reviewer/index.js';
+import { RulesEngine } from '../../rules-engine/index.js';
+import { Conductor, OttoObservabilityBridge } from '../index.js';
+
+function observabilityPipeline(): Pipeline {
+  const now = new Date();
+  return {
+    id: 'p-observability',
+    version: '1.0.0',
+    contentHash: 'hash',
+    status: 'active',
+    createdAt: now,
+    updatedAt: now,
+    changelog: 'init',
+    metadata: { name: 'observability-test', description: 'deterministic observability trace', tags: [], createdAt: now, updatedAt: now },
+    graph: {
+      graphId: 'g-observability',
+      nodes: [
+        { instanceId: 'n1', nodeTypeId: 'trigger', config: { role: 'entry' }, position: { x: 0, y: 0 } },
+        { instanceId: 'n2', nodeTypeId: 'service', config: {}, position: { x: 1, y: 0 } },
+        { instanceId: 'n3', nodeTypeId: 'agent', config: { providerId: 'mock', agentDescriptorId: 'mock:a', promptTemplateId: 't1' }, position: { x: 2, y: 0 } },
+        { instanceId: 'n4', nodeTypeId: 'trigger', config: { role: 'exit' }, position: { x: 3, y: 0 } },
+        { instanceId: 'r1', nodeTypeId: 'reviewer', config: { schema: { type: 'object' }, ruleIds: [], ruleStrategy: 'all', maxRevisionAttempts: 1 }, position: { x: 2, y: 1 } }
+      ],
+      edges: [
+        { edgeId: 'e1', fromNodeId: 'n1', fromPort: 'out', toNodeId: 'n2', toPort: 'in' },
+        { edgeId: 'e2', fromNodeId: 'n2', fromPort: 'out', toNodeId: 'n3', toPort: 'in', reviewerNodeId: 'r1' }
+      ]
+    }
+  };
+}
+
+describe('conductor + otto observability bridge', () => {
+  it('emits deterministic runtime observability traces for conductor execution', async () => {
+    const prompt = new PromptEngine();
+    const context = new ContextEngine();
+    const rules = new RulesEngine();
+    const reviewer = new Reviewer(rules, prompt);
+    prompt.registerTemplate({
+      id: 't1',
+      version: '1.0.0',
+      contentHash: 'h',
+      status: 'active',
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      changelog: 'init',
+      title: 't',
+      template: 'Echo: {{output}}',
+      variables: ['output']
+    });
+
+    const telemetryEvents: string[] = [];
+    const telemetryRunIds: string[] = [];
+    const telemetryEnvironments: string[] = [];
+    const traceEvents: string[] = [];
+    const logEvents: string[] = [];
+
+    const bridge = new OttoObservabilityBridge({
+      runtimeContext: {
+        environment: 'test',
+        deploymentChannel: 'stable',
+        hostOs: 'windows'
+      },
+      logging: {
+        info: async (_message, attributes) => {
+          logEvents.push(String(attributes?.sourceEvent ?? 'unknown'));
+        },
+        error: async (_message, attributes) => {
+          logEvents.push(String(attributes?.sourceEvent ?? 'unknown'));
+        }
+      },
+      tracing: {
+        startSpan: async (name) => {
+          traceEvents.push(name);
+          return {
+            annotate: async () => {},
+            end: async () => {}
+          };
+        }
+      },
+      telemetry: {
+        emit: async (eventName, payload) => {
+          telemetryEvents.push(eventName);
+          telemetryRunIds.push(String(payload?.runId ?? 'missing'));
+          telemetryEnvironments.push(String(payload?.environment ?? 'missing'));
+        }
+      }
+    });
+
+    const conductor = new Conductor(
+      {
+        promptEngine: prompt,
+        contextEngine: context,
+        reviewer,
+        providerRegistry: {
+          run: async () => ({ text: 'agent-output', tokensUsed: 1, latencyMs: 1, rawResponse: {} })
+        },
+        serviceRegistry: new Map([['service', async (_config, executionContext) => String(executionContext.metadata.input ?? '').toUpperCase()]])
+      },
+      {
+        generateRunId: () => 'run-obs-001'
+      }
+    );
+
+    bridge.bind(conductor.eventBus);
+    const result = await conductor.run(observabilityPipeline(), 'hello');
+    await bridge.flush();
+
+    expect(result.status === 'completed' || result.status === 'partial').toBe(true);
+    expect(telemetryEvents[0]).toBe('maestro.pipeline.started');
+    expect(telemetryEvents[telemetryEvents.length - 1]).toBe('maestro.pipeline.completed');
+    expect(telemetryEvents).toContain('maestro.reviewer.decision');
+    expect(telemetryEvents).not.toContain('maestro.pipeline.failed');
+    expect(traceEvents).toEqual(telemetryEvents);
+    expect(logEvents[0]).toBe('PipelineStarted');
+    expect(logEvents[logEvents.length - 1]).toBe('PipelineCompleted');
+    expect(logEvents).toContain('ReviewerDecision');
+    expect(telemetryRunIds.every((id) => id === 'run-obs-001')).toBe(true);
+    expect(telemetryEnvironments.every((value) => value === 'test')).toBe(true);
+  });
+});

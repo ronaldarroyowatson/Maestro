@@ -1,4 +1,5 @@
 import type { AgentDescriptor, ProviderAdapter, VersionedArtifact } from '../../../src/shared/index.js';
+import type { ProviderHealth } from '../../../src/shared/index.js';
 
 /** Discrete artifact types managed by component registry. */
 export type ArtifactType =
@@ -40,4 +41,27 @@ export interface PipelineConfig extends VersionedArtifact {
 export interface DiscoveryCache {
   catalog: { entries: AgentDescriptor[]; lastDiscoveredAt: Date };
   expiresAt: number;
+}
+
+/** Provider health entry normalized for deterministic snapshots. */
+export interface ProviderHealthEntry {
+  providerId: string;
+  displayName: string;
+  health: ProviderHealth;
+}
+
+/** Aggregated provider health summary counts. */
+export interface ProviderHealthSummary {
+  total: number;
+  healthy: number;
+  degraded: number;
+  unreachable: number;
+}
+
+/** Deterministic provider health snapshot for orchestration routing decisions. */
+export interface ProviderHealthSnapshot {
+  generatedAt: Date;
+  entries: ProviderHealthEntry[];
+  summary: ProviderHealthSummary;
+  preferredProviderId?: string;
 }

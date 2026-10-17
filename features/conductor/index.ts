@@ -1,6 +1,13 @@
 import { randomUUID } from 'node:crypto';
 import { EVENT_NAMES } from '../../src/shared/index.js';
-import type { ExecutablePipeline, ConductorDependencies, ExecutionContext, ExecutionResult, RetryConfig } from './models/types.js';
+import type {
+  ExecutablePipeline,
+  ConductorDependencies,
+  ConductorRuntimeOptions,
+  ExecutionContext,
+  ExecutionResult,
+  RetryConfig
+} from './models/types.js';
 import { EventBus } from './services/event-bus/index.js';
 export type {
   OttoLoggingExtension,
@@ -13,7 +20,7 @@ import { Executor } from './services/executor/index.js';
 import { Scheduler } from './services/scheduler/index.js';
 import { NodeGraph } from '../node-graph/index.js';
 
-export type { ConductorDependencies, ExecutionContext, ExecutionResult, NodeResult, RetryConfig } from './models/types.js';
+export type { ConductorDependencies, ConductorRuntimeOptions, ExecutionContext, ExecutionResult, NodeResult, RetryConfig } from './models/types.js';
 
 /** Conductor runtime for DAG pipeline execution with event streaming. */
 export class Conductor {
@@ -21,17 +28,22 @@ export class Conductor {
   readonly scheduler: Scheduler;
   private readonly runs = new Map<string, ExecutionResult>();
   private readonly nodeGraph = new NodeGraph();
+  private readonly runtimeOptions: Required<Pick<ConductorRuntimeOptions, 'generateRunId' | 'now'>>;
 
-  constructor(private readonly deps: ConductorDependencies) {
+  constructor(private readonly deps: ConductorDependencies, runtimeOptions: ConductorRuntimeOptions = {}) {
     this.eventBus = new EventBus();
     this.scheduler = new Scheduler(this.eventBus, new Executor(this.deps, this.eventBus));
+    this.runtimeOptions = {
+      generateRunId: runtimeOptions.generateRunId ?? (() => randomUUID()),
+      now: runtimeOptions.now ?? (() => Date.now())
+    };
   }
 
   /** Executes a pipeline (or snapshot) against input payload and returns execution result. */
   async run(pipelineInput: ExecutablePipeline, input: unknown): Promise<ExecutionResult> {
     const pipeline = 'pipeline' in pipelineInput ? pipelineInput.pipeline : pipelineInput;
-    const runId = randomUUID();
-    const started = Date.now();
+    const runId = this.runtimeOptions.generateRunId();
+    const started = this.runtimeOptions.now();
 
     const context: ExecutionContext = {
       pipelineId: pipeline.id,
@@ -68,7 +80,7 @@ export class Conductor {
         status: outcome.status,
         output: context.metadata.output,
         nodeResults: context.nodeResults,
-        durationMs: Date.now() - started
+        durationMs: this.runtimeOptions.now() - started
       };
 
       if (outcome.status === 'failed') {
@@ -89,7 +101,7 @@ export class Conductor {
         status: 'failed',
         error: error instanceof Error ? error : new Error(String(error)),
         nodeResults: context.nodeResults,
-        durationMs: Date.now() - started
+        durationMs: this.runtimeOptions.now() - started
       };
       this.eventBus.emit(EVENT_NAMES.PIPELINE_FAILED, {
         runId,

@@ -7,8 +7,14 @@ describe('OttoObservabilityBridge', () => {
     const logCalls: string[] = [];
     const traceCalls: string[] = [];
     const telemetryCalls: string[] = [];
+    const telemetryPayloads: Array<Record<string, unknown> | undefined> = [];
 
     const bridge = new OttoObservabilityBridge({
+      runtimeContext: {
+        environment: 'local-dev',
+        deploymentChannel: 'stable',
+        hostOs: 'windows'
+      },
       logging: {
         info: async (_message, attributes) => {
           logCalls.push(String(attributes?.sourceEvent ?? 'unknown'));
@@ -27,8 +33,9 @@ describe('OttoObservabilityBridge', () => {
         }
       },
       telemetry: {
-        emit: async (eventName) => {
+        emit: async (eventName, payload) => {
           telemetryCalls.push(eventName);
+          telemetryPayloads.push(payload);
         }
       }
     });
@@ -47,5 +54,7 @@ describe('OttoObservabilityBridge', () => {
     expect(traceCalls).toContain('maestro.pipeline.completed');
     expect(telemetryCalls).toContain('maestro.pipeline.started');
     expect(telemetryCalls).toContain('maestro.pipeline.completed');
+    expect(telemetryPayloads.some((payload) => payload?.environment === 'local-dev')).toBe(true);
+    expect(telemetryPayloads.some((payload) => payload?.deploymentChannel === 'stable')).toBe(true);
   });
 });

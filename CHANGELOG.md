@@ -38,6 +38,31 @@
 - Updated installer and Otto installation docs to reflect current Windows minimal installer flow and ecosystem-first backend reuse strategy.
 - Added `validate:otto-ui-contract` npm script for install/deploy/module/UI-entry tracer bullet checks.
 - Expanded Maestro Otto payload observability baseline with required `debug.module` and diagnostics path contract.
+- Updated Otto integration planning/reporting docs with 2026-10-17 phase progress:
+  - Otto UI preload contract ingestion implemented in `otto-ui`
+  - initial Maestro contract-driven navigation/page surface validated
+  - dynamic Maestro route navigation sourced from `maestro-ui-contract.pages` with passing test/typecheck/build validation
+  - richer contract-panel route surfaces added for install/runtime/node-graph/logs/telemetry views
+  - live Otto UI Electron launch verification completed; contract-ingestion phase promoted to completed
+- Began Maestro backbone implementation in conductor feature:
+  - added deterministic runtime options (`generateRunId`, `now`)
+  - added deterministic conductor execution test coverage
+- Improved Otto bootstrap resilience for local Windows development:
+  - added degraded service-stage handling in `@otto/update` bootstrap
+  - enabled degraded-stage diagnostics in Otto UI Electron bootstrap (`OTTO_BOOTSTRAP_DEGRADED`)
+- Added bootstrap diagnostics visibility in Otto UI Maestro panel:
+  - preload + IPC bridge for bootstrap status
+  - degraded-stage badges rendered in-app for operator visibility
+- Extended conductor observability runtime behavior:
+  - in-order queued event forwarding for deterministic trace sequencing
+  - new conductor + observability integration test for deterministic run/event propagation
+- Extended conductor observability telemetry contract payloads with runtime context metadata:
+  - `environment`, `deploymentChannel`, and `hostOs`
+  - updated observability tests to validate metadata propagation
+- Added provider-registry deterministic health snapshots:
+  - `getHealthSnapshot(providerIds?)` with sorted entries, isolated failures, summary counts
+  - deterministic preferred-provider selection (latency, then provider id tie-break)
+- Added end-of-day documentation checkpoint updates for integration status and next-session execution handoff.
 
 ## 0.1.9
 

@@ -55,4 +55,10 @@ export interface ConductorDependencies {
   serviceRegistry: ServiceRegistry;
 }
 
+/** Runtime options for deterministic execution behavior in tests and controlled environments. */
+export interface ConductorRuntimeOptions {
+  generateRunId?: () => string;
+  now?: () => number;
+}
+
 export type ExecutablePipeline = Pipeline | PipelineSnapshot;

@@ -8,6 +8,7 @@ import { OllamaAdapter } from '../services/adapters/ollama/index.js';
 import { OpenAiAdapter } from '../services/adapters/openai/index.js';
 import { PaddleOcrAdapter } from '../services/adapters/paddleocr/index.js';
 import { AgentDiscovery } from '../services/discovery/index.js';
+import { ProviderRegistry } from '../index.js';
 
 function installFetchMock(handlers: Record<string, unknown>) {
   const originalFetch = globalThis.fetch;
@@ -202,5 +203,49 @@ describe('provider-registry modules', () => {
     expect(response.text).toBe('ocr-output');
     expect(response.rawResponse).toEqual({ text: 'ocr-output', regions: [{ x: 1, y: 2 }] });
     mock.restore();
+  });
+
+  it('provider-registry health snapshot is deterministic and isolates adapter failures', async () => {
+    const registry = new ProviderRegistry();
+
+    const alpha: ProviderAdapter = {
+      providerId: 'alpha',
+      displayName: 'Alpha',
+      discover: async () => [],
+      run: async () => ({ text: 'ok', tokensUsed: 0, latencyMs: 1, rawResponse: {} }),
+      healthCheck: async () => ({ status: 'healthy', latencyMs: 12 })
+    };
+    const beta: ProviderAdapter = {
+      providerId: 'beta',
+      displayName: 'Beta',
+      discover: async () => [],
+      run: async () => ({ text: 'ok', tokensUsed: 0, latencyMs: 1, rawResponse: {} }),
+      healthCheck: async () => ({ status: 'healthy', latencyMs: 12 })
+    };
+    const gamma: ProviderAdapter = {
+      providerId: 'gamma',
+      displayName: 'Gamma',
+      discover: async () => [],
+      run: async () => ({ text: 'ok', tokensUsed: 0, latencyMs: 1, rawResponse: {} }),
+      healthCheck: async () => {
+        throw new Error('network unavailable');
+      }
+    };
+
+    registry.register(alpha);
+    registry.register(beta);
+    registry.register(gamma);
+
+    const snapshot = await registry.getHealthSnapshot(['gamma', 'beta', 'alpha']);
+
+    expect(snapshot.entries.map((entry) => entry.providerId)).toEqual(['alpha', 'beta', 'gamma']);
+    expect(snapshot.summary).toEqual({
+      total: 3,
+      healthy: 2,
+      degraded: 0,
+      unreachable: 1
+    });
+    expect(snapshot.preferredProviderId).toBe('alpha');
+    expect(snapshot.entries.find((entry) => entry.providerId === 'gamma')?.health.message).toContain('network unavailable');
   });
 });

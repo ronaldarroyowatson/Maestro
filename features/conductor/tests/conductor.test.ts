@@ -81,4 +81,54 @@ describe('conductor', () => {
     expect(events[0]).toBe('PipelineStarted');
     expect(events).toContain('PipelineCompleted');
   });
+
+  it('supports deterministic runtime options for run id and duration', async () => {
+    const prompt = new PromptEngine();
+    const context = new ContextEngine();
+    const rules = new RulesEngine();
+    const reviewer = new Reviewer(rules, prompt);
+
+    prompt.registerTemplate({
+      id: 't1',
+      version: '1.0.0',
+      contentHash: 'h',
+      status: 'active',
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      changelog: 'init',
+      title: 't',
+      template: 'Echo: {{output}}',
+      variables: ['output']
+    });
+
+    let tick = 1000;
+    const conductor = new Conductor(
+      {
+        promptEngine: prompt,
+        contextEngine: context,
+        reviewer,
+        providerRegistry: {
+          run: async () => ({ text: 'agent-output', tokensUsed: 1, latencyMs: 1, rawResponse: {} })
+        },
+        serviceRegistry: new Map([
+          [
+            'service',
+            async (_config, executionContext) => String(executionContext.metadata.input ?? '').toUpperCase()
+          ]
+        ])
+      },
+      {
+        generateRunId: () => 'run-deterministic-001',
+        now: () => {
+          tick += 10;
+          return tick;
+        }
+      }
+    );
+
+    const result = await conductor.run(samplePipeline(), 'hello');
+
+    expect(result.runId).toBe('run-deterministic-001');
+    expect(result.durationMs).toBe(10);
+  });
 });

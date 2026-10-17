@@ -50,7 +50,11 @@ This section is intentionally added before major implementation changes.
 - Otto UI internals remain external to this repo.
 - This repo will provide stable contracts, bootstrap scripts, payload metadata, and docs for clean Otto-side integration.
 
-## Current Phase Status (2026-10-16)
+## Current Phase Status (2026-10-17)
+
+## Execution Rule (Active)
+
+- For ongoing implementation sessions, when instructed to "continue", update relevant project docs first, then proceed with the next implementation step unless explicitly overridden.
 
 ### Completed
 
@@ -59,14 +63,33 @@ This section is intentionally added before major implementation changes.
 3. Otto UI tracer-bullet validation path with explicit UI contract and entry route verification.
 4. Observability baseline contracts (logging/tracing/metrics/debug + diagnostics path).
 5. Maestro module registration contract + registration validation.
+6. Otto UI contract-ingestion step completed: preload contract loading, dynamic route generation, and panel-level contract surfaces validated.
 
 ### In Progress
 
-- Otto UI-side consumption of Maestro module registration and contract-driven panel routing.
+- Backbone feature implementation phase in Maestro.
+- First backbone slice started in `features/conductor`: deterministic runtime options for run ID/time and reproducible execution checks.
+- Otto UI bootstrap diagnostics surfaced in Maestro panel with degraded-stage badges for local service failure visibility.
+- Conductor observability runtime trace wiring and deterministic event-trace integration coverage implemented with passing integration tests.
+- Conductor observability payload contracts now include runtime/deployment metadata for environment-aware diagnostics.
+- Second backbone slice implemented in `features/provider-registry`: deterministic provider-health snapshot contract with failure isolation and preferred-provider selection.
 
 ### Next Step
 
-1. Add Maestro module loader in Otto UI that reads registration + UI contract manifests.
-2. Render Maestro menu section from registration metadata.
-3. Route entry page to `/maestro/install-status` and confirm panel rendering from contract.
-4. Add Otto UI smoke test for Maestro module registration ingestion.
+1. Add end-to-end conductor-to-provider-registry routing test that consumes health snapshot preferred-provider decisions.
+2. Add live diagnostics artifact verification in workflow for provider health + observability traces.
+3. Prepare commit/push batch and phase checkpoint after integrated validation run.
+
+## End-of-Day Checkpoint (2026-10-17)
+
+Session stop state:
+
+- Otto UI contract-ingestion + degraded bootstrap diagnostics are implemented and validated.
+- Backbone Slice 1 (`features/conductor`) deterministic runtime and observability trace coverage is implemented and validated.
+- Backbone Slice 2 (`features/provider-registry`) deterministic health snapshot contract is implemented and validated.
+
+Resume-first actions for next session:
+
+1. Implement conductor-to-provider-registry routing integration test using `preferredProviderId`.
+2. Add workflow-level diagnostics artifact verification for observability and provider-health outputs.
+3. Prepare consolidated commit/push batch once integrated validation passes.

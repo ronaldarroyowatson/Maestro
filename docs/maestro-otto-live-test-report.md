@@ -213,3 +213,203 @@ Maestro module registration update:
   - module registration entry route/panels,
   - UI contract pages,
   - observability path contracts.
+
+---
+
+## Otto UI Contract Ingestion Progress (2026-10-17)
+
+Implementation progress in `otto-ui`:
+
+- Added Electron preload bridge loading for:
+  - `otto/manifests/maestro-module-registration.json`
+  - `otto/manifests/maestro-ui-contract.json`
+- Added renderer service wrapper for contract loading.
+- Added conditional Maestro navigation surface in Otto UI when contract loading succeeds.
+- Added Maestro module page that renders:
+  - module display metadata,
+  - resolved entry route,
+  - registered routes from contract pages.
+
+Validation run:
+
+- `npm --prefix D:\OneDrive\Documents\GitHub\otto-ui run typecheck` ✅
+- `npm --prefix D:\OneDrive\Documents\GitHub\otto-ui test` ✅
+- `npm --prefix D:\OneDrive\Documents\GitHub\otto-ui run build` ✅
+
+Current status:
+
+- Contract ingestion path is operational and visible in the UI shell.
+- Remaining for full completion: wire contract pages into full route dispatch and add smoke tests for success/failure loading states.
+
+### Dynamic contract-route mapping update
+
+Otto UI progress update:
+
+- navigation now derives Maestro page items from `maestro-ui-contract.pages`,
+- selection of a contract route renders a route-specific Maestro panel surface,
+- base "Maestro" view remains available for load/error status visibility.
+
+Validation rerun after route updates:
+
+- `npm --prefix D:\OneDrive\Documents\GitHub\otto-ui test` ✅ (includes preload success/failure + route derivation checks)
+- `npm --prefix D:\OneDrive\Documents\GitHub\otto-ui run typecheck` ✅
+- `npm --prefix D:\OneDrive\Documents\GitHub\otto-ui run build` ✅
+- `npm --prefix D:\OneDrive\Documents\GitHub\Maestro run validate:otto-ui-contract` ✅
+  - tracer route resolution remains stable: `/maestro/install-status`
+
+### Rich panel-level binding update
+
+Otto UI progress update:
+
+- added contract-panel binding service to provide route-specific panel data,
+- `install-status` and `telemetry` routes now render timeline surfaces,
+- `runtime-status` and `node-graph` routes now render module-state surfaces,
+- `logs` route now renders recent event surfaces.
+
+Validation rerun after panel-level binding updates:
+
+- `npm --prefix D:\OneDrive\Documents\GitHub\otto-ui test` ✅ (9 tests total)
+- `npm --prefix D:\OneDrive\Documents\GitHub\otto-ui run typecheck` ✅
+- `npm --prefix D:\OneDrive\Documents\GitHub\otto-ui run build` ✅
+- `npm --prefix D:\OneDrive\Documents\GitHub\Maestro run validate:otto-ui-contract` ✅
+  - tracer route resolution remains stable: `/maestro/install-status`
+
+### Otto UI live launch verification
+
+Validation executed:
+
+- launched Electron app via `npm --prefix D:\OneDrive\Documents\GitHub\otto-ui run electron`,
+- verified active Electron process tree includes main, renderer, and utility process roles for `otto-ui`,
+- re-ran tracer bullet validation after launch verification.
+
+Observed result:
+
+- Otto UI launch is operational for current contract-ingestion implementation.
+- Tracer bullet remains passing with stable route resolution to `/maestro/install-status`.
+
+### Otto UI bootstrap degradation handling update
+
+Issue observed during launch:
+
+- local Windows service operations (`service.status`, `service.install`, `service.start`) can fail in dev environments where the Otto service is not installed or elevation is unavailable.
+
+Fix implemented:
+
+- `@otto/update` bootstrap now supports `allowDegradedServiceStages` and normalizes known local service/permission failures to degraded-success stage results.
+- Otto UI Electron bootstrap now enables degraded mode in development and emits explicit `OTTO_BOOTSTRAP_DEGRADED` diagnostics with affected stage names.
+
+Validation:
+
+- Otto UI startup now reports `OTTO_BOOTSTRAP_RESULT` with stage `ok: true` and per-stage `degraded: true` markers for expected local-service failure modes.
+- Degraded summary log emitted:
+  - `OTTO_BOOTSTRAP_DEGRADED {"degradedStageCount":5,...}`
+- `npm --prefix D:\OneDrive\Documents\GitHub\Maestro run validate:otto-ui-contract` rerun ✅
+  - tracer route remains stable at `/maestro/install-status`
+
+UI diagnostics enhancement:
+
+- Otto UI now exposes bootstrap status from Electron main process to renderer via preload bridge.
+- Maestro panel renders bootstrap health section with degraded-stage badges when present.
+- This makes expected local-dev service degradation visible in-app instead of only in console output.
+
+---
+
+## Backbone Slice Kickoff: Deterministic Conductor Runtime (2026-10-17)
+
+Objective:
+
+- begin backbone implementation with a deterministic orchestration primitive in `features/conductor`.
+
+Changes:
+
+- added conductor runtime options for deterministic run behavior:
+  - `generateRunId`
+  - `now`
+- wired conductor execution to use runtime options for run ID and duration calculation.
+- added conductor test coverage for deterministic run ID and duration.
+
+Validation:
+
+- `npm --prefix D:\OneDrive\Documents\GitHub\Maestro test -- features/conductor/tests/conductor.test.ts` ✅
+- `npm --prefix D:\OneDrive\Documents\GitHub\Maestro run typecheck` ✅
+
+### Conductor observability deterministic trace coverage (2026-10-17)
+
+Objective:
+
+- extend conductor observability runtime behavior with deterministic event-trace guarantees and integration coverage.
+
+Changes:
+
+- `OttoObservabilityBridge` now queues runtime event forwarding in-order to preserve deterministic trace sequencing.
+- Added bridge `flush()` helper for deterministic integration assertions.
+- Added conductor + observability integration test:
+  - `features/conductor/tests/conductor-otto-observability.integration.test.ts`
+  - validates pipeline/runtime event forwarding ordering invariants and deterministic run ID propagation.
+
+Validation:
+
+- `npm --prefix D:\OneDrive\Documents\GitHub\Maestro test -- features/conductor/tests/conductor.test.ts features/conductor/tests/otto-observability.test.ts features/conductor/tests/conductor-otto-observability.integration.test.ts` ✅
+- `npm --prefix D:\OneDrive\Documents\GitHub\Maestro run typecheck` ✅
+
+Runtime metadata extension:
+
+- observability telemetry payloads now carry runtime context metadata:
+  - `environment`
+  - `deploymentChannel`
+  - `hostOs`
+- integration tests now assert deterministic run ID propagation and runtime-context propagation through telemetry emissions.
+
+Validation rerun:
+
+- `npm --prefix D:\OneDrive\Documents\GitHub\Maestro test -- features/conductor/tests/otto-observability.test.ts features/conductor/tests/conductor-otto-observability.integration.test.ts` ✅
+- `npm --prefix D:\OneDrive\Documents\GitHub\Maestro run typecheck` ✅
+
+---
+
+## Backbone Slice 2: Provider Registry Deterministic Health Snapshot (2026-10-17)
+
+Objective:
+
+- implement deterministic provider-health snapshot behavior with explicit failure isolation and preferred-provider selection.
+
+Changes:
+
+- added provider-health snapshot contracts in provider-registry models:
+  - `ProviderHealthEntry`
+  - `ProviderHealthSummary`
+  - `ProviderHealthSnapshot`
+- added `ProviderRegistry.getHealthSnapshot(providerIds?)`:
+  - deterministic provider-id sorted output
+  - failure isolation (throws converted to `unreachable` health with explicit message)
+  - summary counts (`healthy`, `degraded`, `unreachable`, `total`)
+  - deterministic `preferredProviderId` selection by latency then provider id.
+- added provider-registry test coverage for deterministic ordering and failure isolation.
+
+Validation:
+
+- `npm --prefix D:\OneDrive\Documents\GitHub\Maestro test -- features/provider-registry/tests/provider-registry.test.ts` ✅
+- `npm --prefix D:\OneDrive\Documents\GitHub\Maestro run typecheck` ✅
+
+---
+
+## End-of-Day Summary (2026-10-17)
+
+Completed today:
+
+- Otto UI contract-driven navigation/panel surfacing + bootstrap degradation diagnostics.
+- Conductor deterministic runtime controls and deterministic observability event-trace coverage.
+- Provider-registry deterministic health snapshot capability with failure isolation and preferred-provider selection.
+
+Validated today:
+
+- Otto UI tests/typecheck/build ✅
+- Maestro conductor/provider-registry targeted tests ✅
+- Maestro typecheck ✅
+- Tracer bullet validation (`validate:otto-ui-contract`) ✅
+
+Next-session first actions:
+
+1. Add conductor-to-provider-registry routing integration test based on health snapshot selection.
+2. Add diagnostics artifact verification to workflow-level validation.
+3. Bundle and push integrated change set after final validation pass.

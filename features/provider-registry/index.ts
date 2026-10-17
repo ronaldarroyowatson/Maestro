@@ -1,4 +1,5 @@
 import type { AgentCatalog, InferenceRequest, InferenceResponse, ProviderAdapter, ProviderHealth } from '../../src/shared/index.js';
+import type { ProviderHealthSnapshot } from './models/types.js';
 import { AdapterFactory } from './services/adapter-factory/index.js';
 import { AzureOpenAiAdapter, type AzureOpenAiAdapterOptions } from './services/adapters/azure-openai/index.js';
 import { LmStudioAdapter, type LmStudioAdapterOptions } from './services/adapters/lm-studio/index.js';
@@ -8,7 +9,16 @@ import { OpenAiAdapter, type OpenAiAdapterOptions } from './services/adapters/op
 import { PaddleOcrAdapter, type PaddleOcrAdapterOptions } from './services/adapters/paddleocr/index.js';
 import { AgentDiscovery } from './services/discovery/index.js';
 
-export type { AdapterRegistration, ArtifactType, PipelineConfig, ProviderRegistryOptions, UpdatePolicy } from './models/types.js';
+export type {
+  AdapterRegistration,
+  ArtifactType,
+  PipelineConfig,
+  ProviderHealthEntry,
+  ProviderHealthSnapshot,
+  ProviderHealthSummary,
+  ProviderRegistryOptions,
+  UpdatePolicy
+} from './models/types.js';
 export {
   AzureOpenAiAdapter,
   LmStudioAdapter,
@@ -84,5 +94,70 @@ export class ProviderRegistry {
   /** Runs provider health check by provider id. */
   async health(providerId: string): Promise<ProviderHealth> {
     return this.adapterFactory.get(providerId).healthCheck();
+  }
+
+  /** Returns deterministic provider-health snapshot, optionally scoped to selected providers. */
+  async getHealthSnapshot(providerIds?: string[]): Promise<ProviderHealthSnapshot> {
+    const providerIdFilter = providerIds ? new Set(providerIds) : undefined;
+    const adapters = this.adapterFactory
+      .listAdapters()
+      .filter((adapter) => !providerIdFilter || providerIdFilter.has(adapter.providerId));
+
+    const entries = await Promise.all(
+      adapters.map(async (adapter) => {
+        try {
+          const health = await adapter.healthCheck();
+          return {
+            providerId: adapter.providerId,
+            displayName: adapter.displayName,
+            health
+          };
+        } catch (error) {
+          return {
+            providerId: adapter.providerId,
+            displayName: adapter.displayName,
+            health: {
+              status: 'unreachable' as const,
+              latencyMs: Number.POSITIVE_INFINITY,
+              message: error instanceof Error ? error.message : String(error)
+            }
+          };
+        }
+      })
+    );
+
+    entries.sort((a, b) => a.providerId.localeCompare(b.providerId));
+
+    const summary = entries.reduce(
+      (acc, entry) => {
+        acc.total += 1;
+        if (entry.health.status === 'healthy') {
+          acc.healthy += 1;
+        } else if (entry.health.status === 'degraded') {
+          acc.degraded += 1;
+        } else {
+          acc.unreachable += 1;
+        }
+        return acc;
+      },
+      { total: 0, healthy: 0, degraded: 0, unreachable: 0 }
+    );
+
+    const healthyOrDegraded = entries
+      .filter((entry) => entry.health.status === 'healthy' || entry.health.status === 'degraded')
+      .sort((a, b) => {
+        const latencyDelta = a.health.latencyMs - b.health.latencyMs;
+        if (latencyDelta !== 0) {
+          return latencyDelta;
+        }
+        return a.providerId.localeCompare(b.providerId);
+      });
+
+    return {
+      generatedAt: new Date(),
+      entries,
+      summary,
+      preferredProviderId: healthyOrDegraded[0]?.providerId
+    };
   }
 }
