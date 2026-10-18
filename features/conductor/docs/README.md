@@ -29,6 +29,8 @@ Governance mutation-path checks also cover cooldown and blocked-state transition
 deterministic mutation shape continuity in `maestro.node.failed` telemetry metadata.
 Reserve-budget pressure paths are also covered, asserting deterministic budget preservation
 when preferred-provider selection is constrained by `reserveBudget` and fallback execution fails.
+Cross-run mixed-mutation paths also assert consistent fallback warning shape (`preferred-provider-unavailable`
+with fallback id) across cooldown, blocked, and reserve-budget constrained permutations.
 
 ## Structure
 - models/: runtime contracts and execution result models

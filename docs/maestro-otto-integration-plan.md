@@ -87,12 +87,13 @@ This section is intentionally added before major implementation changes.
 - Additional governance trace hardening implemented: governance policy-state drift telemetry coverage across repeated failure runs with deterministic budget-sequence assertions.
 - Additional governance trace hardening implemented: cooldown/blocked-state transition telemetry coverage under repeated failure pressure with deterministic transition-shape assertions.
 - Additional governance trace hardening implemented: mixed governance mutation telemetry coverage for `reserveBudget` interactions with cooldown/blocked transitions and deterministic budget-preservation assertions under reserve pressure.
-- Current execution focus: expanding continuity invariants for cross-run governance mutation permutations and fallback warning consistency.
+- Additional governance trace hardening implemented: cross-run mixed-mutation telemetry coverage with consistent fallback warning assertions across cooldown/blocked/budget-reserve permutations.
+- Current execution focus: expanding continuity invariants for broader governance mutation combinations and warning/error-shape determinism.
 
 ### Next Step
 
-1. Expand telemetry assertions for cross-run governance mutation permutations (combined budget/cooldown/blocked overlays with fallback warnings).
-2. Extend diagnostics artifact checks for continuity guarantees and warning consistency across mixed mutation permutations.
+1. Expand telemetry assertions for broader governance mutation combinations (including resolver-error vs unavailable warning-shape determinism).
+2. Extend diagnostics artifact checks for warning/error-shape consistency across mixed mutation and fallback permutations.
 3. Run integrated validation pass and prepare commit/push checkpoint.
 
 ## End-of-Day Checkpoint (2026-10-17)

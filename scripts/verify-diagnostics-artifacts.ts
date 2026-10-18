@@ -1248,6 +1248,158 @@ async function main(): Promise<void> {
     throw new Error('Diagnostics verification failed: reserve-pressure governance state drifted unexpectedly.');
   }
 
+  let mixedMutationGovernanceState: ProviderGovernanceState = {
+    blockedProviderIds: [],
+    cooldownUntilByProviderId: {},
+    budgetRemaining: 1,
+    reserveBudget: 1
+  };
+  let mixedMutationRunCount = 0;
+  const runtimeMixedMutationSnapshots: Array<{ budget: number | undefined; blockedCount: number; cooldownCount: number; warning: string }> = [];
+  const runtimeMixedMutationBridge = new OttoObservabilityBridge({
+    runtimeContext: {
+      environment: 'ci',
+      deploymentChannel: 'stable',
+      hostOs: process.platform
+    },
+    logging: {
+      info: async () => {},
+      error: async () => {}
+    },
+    tracing: {
+      startSpan: async () => ({
+        annotate: async () => {},
+        end: async () => {}
+      })
+    },
+    telemetry: {
+      emit: async (eventName, payload) => {
+        if (eventName === 'maestro.node.failed' && String(payload?.nodeId ?? '') === 'n2') {
+          const metadata = payload?.metadata as Record<string, unknown> | undefined;
+          const state = metadata?.governanceState as Record<string, unknown> | undefined;
+          const blocked = state?.blockedProviderIds as unknown[] | undefined;
+          const cooldown = state?.cooldownUntilByProviderId as Record<string, unknown> | undefined;
+          runtimeMixedMutationSnapshots.push({
+            budget: typeof state?.budgetRemaining === 'number' ? state.budgetRemaining : undefined,
+            blockedCount: Array.isArray(blocked) ? blocked.length : 0,
+            cooldownCount: cooldown ? Object.keys(cooldown).length : 0,
+            warning: String(metadata?.providerRoutingWarning ?? '')
+          });
+        }
+      }
+    }
+  });
+  const runtimeMixedMutationConductor = new Conductor({
+    promptEngine: prompt,
+    contextEngine: context,
+    reviewer,
+    providerRegistry: {
+      run: async () => {
+        throw new Error('intentional mixed mutation warning failure');
+      }
+    },
+    providerRouting: {
+      resolvePreferredProviderId: async ({ context: executionContext }) => {
+        mixedMutationRunCount += 1;
+        const policyByRun: Array<{ evaluatedAt: Date; policy: ProviderSelectionPolicy }> = [
+          {
+            evaluatedAt: new Date('2026-10-18T00:00:00.000Z'),
+            policy: {
+              providerCostByProviderId: { 'diag-alpha': 2 },
+              reserveBudget: 1,
+              cooldownUntilByProviderId: { shadow: '2026-10-18T00:10:00.000Z' }
+            }
+          },
+          {
+            evaluatedAt: new Date('2026-10-18T00:20:00.000Z'),
+            policy: {
+              providerCostByProviderId: { 'diag-alpha': 2 },
+              reserveBudget: 1,
+              blockedProviderIds: ['diag-alpha']
+            }
+          },
+          {
+            evaluatedAt: new Date('2026-10-18T00:40:00.000Z'),
+            policy: {
+              providerCostByProviderId: { 'diag-alpha': 2 },
+              reserveBudget: 1
+            }
+          }
+        ];
+        const selectedPolicy = policyByRun[Math.min(mixedMutationRunCount - 1, policyByRun.length - 1)];
+        const policy = providerRegistry.createSelectionPolicyWithGovernance(
+          selectedPolicy.policy,
+          mixedMutationGovernanceState,
+          selectedPolicy.evaluatedAt
+        );
+        executionContext.metadata.governancePolicy = policy;
+        executionContext.metadata.governanceState = mixedMutationGovernanceState;
+
+        const selectedProviderId = await providerRegistry.resolvePreferredProviderId(policy, ['diag-alpha']);
+        mixedMutationGovernanceState = providerRegistry.createNextGovernanceState({
+          previousState: mixedMutationGovernanceState,
+          policy,
+          selectedProviderId,
+          evaluatedAt: selectedPolicy.evaluatedAt
+        });
+        executionContext.metadata.governanceState = mixedMutationGovernanceState;
+        return selectedProviderId;
+      }
+    },
+    serviceRegistry: new Map([['service', async () => 'noop']])
+  });
+  runtimeMixedMutationBridge.bind(runtimeMixedMutationConductor.eventBus);
+  const runtimeMixedMutationFirstResult = await runtimeMixedMutationConductor.run(
+    diagnosticsRuntimeGovernanceMutationFailurePipelineWithGovernanceMetadata(),
+    'hello-mixed-1'
+  );
+  const runtimeMixedMutationSecondResult = await runtimeMixedMutationConductor.run(
+    diagnosticsRuntimeGovernanceMutationFailurePipelineWithGovernanceMetadata(),
+    'hello-mixed-2'
+  );
+  const runtimeMixedMutationThirdResult = await runtimeMixedMutationConductor.run(
+    diagnosticsRuntimeGovernanceMutationFailurePipelineWithGovernanceMetadata(),
+    'hello-mixed-3'
+  );
+  await runtimeMixedMutationBridge.flush();
+  if (
+    runtimeMixedMutationFirstResult.status !== 'partial' ||
+    runtimeMixedMutationSecondResult.status !== 'partial' ||
+    runtimeMixedMutationThirdResult.status !== 'partial'
+  ) {
+    throw new Error('Diagnostics verification failed: mixed-mutation failure runs did not produce partial status.');
+  }
+  if (runtimeMixedMutationSnapshots.length !== 3) {
+    throw new Error('Diagnostics verification failed: mixed-mutation expected exactly three node-failed snapshots.');
+  }
+  if (
+    runtimeMixedMutationSnapshots[0].budget !== 1 ||
+    runtimeMixedMutationSnapshots[0].blockedCount !== 0 ||
+    runtimeMixedMutationSnapshots[0].cooldownCount !== 1
+  ) {
+    throw new Error('Diagnostics verification failed: mixed-mutation first snapshot mismatch.');
+  }
+  if (
+    runtimeMixedMutationSnapshots[1].budget !== 1 ||
+    runtimeMixedMutationSnapshots[1].blockedCount !== 1 ||
+    runtimeMixedMutationSnapshots[1].cooldownCount !== 0
+  ) {
+    throw new Error('Diagnostics verification failed: mixed-mutation second snapshot mismatch.');
+  }
+  if (
+    runtimeMixedMutationSnapshots[2].budget !== 1 ||
+    runtimeMixedMutationSnapshots[2].blockedCount !== 1 ||
+    runtimeMixedMutationSnapshots[2].cooldownCount !== 0
+  ) {
+    throw new Error('Diagnostics verification failed: mixed-mutation third snapshot mismatch.');
+  }
+  if (
+    !runtimeMixedMutationSnapshots.every((snapshot) => snapshot.warning.includes('preferred-provider-unavailable')) ||
+    !runtimeMixedMutationSnapshots.every((snapshot) => snapshot.warning.includes('fallback=diag-alpha'))
+  ) {
+    throw new Error('Diagnostics verification failed: mixed-mutation warnings were not consistently preserved.');
+  }
+
   const diagnosticsDir = path.resolve('dist', 'diagnostics');
   await mkdir(diagnosticsDir, { recursive: true });
 
@@ -1274,6 +1426,7 @@ async function main(): Promise<void> {
     runtimePolicyStateDriftBudgets,
     runtimeGovernanceMutationNodeFailureSnapshots: runtimeGovernanceMutationSnapshots,
     runtimeReservePressureNodeFailureSnapshots: runtimeReservePressureSnapshots,
+    runtimeMixedMutationNodeFailureSnapshots: runtimeMixedMutationSnapshots,
     emittedMetadata: emittedGovernanceMetadata,
     telemetryEvents,
     routedProviders

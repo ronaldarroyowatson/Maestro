@@ -104,6 +104,8 @@
   - expanded diagnostics artifact verification for cooldown/blocked governance-mutation continuity invariants
   - added reserve-budget mutation telemetry assertions (`reserveBudget`) for deterministic budget-preservation under fallback pressure
   - expanded diagnostics artifact verification for reserve-budget continuity invariants across repeated mutation failures
+  - added cross-run mixed-mutation telemetry assertions for consistent fallback warning shape across cooldown/blocked/budget-reserve permutations
+  - expanded diagnostics artifact verification for warning consistency across mixed governance mutation permutations
 
 ## 0.1.9
 

@@ -3,6 +3,7 @@ import type { Pipeline } from '../../../src/shared/index.js';
 import { ContextEngine } from '../../context-engine/index.js';
 import { PromptEngine } from '../../prompt-engine/index.js';
 import type { ProviderGovernanceState } from '../../provider-registry/index.js';
+import type { ProviderSelectionPolicy } from '../../provider-registry/index.js';
 import { ProviderRegistry } from '../../provider-registry/index.js';
 import { Reviewer } from '../../reviewer/index.js';
 import { RulesEngine } from '../../rules-engine/index.js';
@@ -1235,5 +1236,145 @@ describe('conductor + otto observability bridge', () => {
     expect(nodeFailedSnapshots[1].warning).toContain('fallback=alpha');
     expect(governanceState.budgetRemaining).toBe(3);
     expect(governanceState.reserveBudget).toBe(2);
+  });
+
+  it('preserves fallback warning consistency across mixed governance mutation permutations', async () => {
+    const prompt = new PromptEngine();
+    const context = new ContextEngine();
+    const rules = new RulesEngine();
+    const reviewer = new Reviewer(rules, prompt);
+    prompt.registerTemplate({
+      id: 't1',
+      version: '1.0.0',
+      contentHash: 'h',
+      status: 'active',
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      changelog: 'init',
+      title: 't',
+      template: 'Echo: {{output}}',
+      variables: ['output']
+    });
+
+    const providerRegistry = new ProviderRegistry();
+    providerRegistry.register({
+      providerId: 'alpha',
+      displayName: 'alpha',
+      discover: async () => [],
+      run: async () => ({ text: 'ignored', tokensUsed: 1, latencyMs: 1, rawResponse: {} }),
+      healthCheck: async () => ({ status: 'healthy', latencyMs: 5 })
+    });
+
+    let governanceState: ProviderGovernanceState = {
+      blockedProviderIds: [],
+      cooldownUntilByProviderId: {},
+      budgetRemaining: 1,
+      reserveBudget: 1
+    };
+    let runCount = 0;
+    const nodeFailedSnapshots: Array<{ budget: number | undefined; blockedCount: number; cooldownCount: number; warning: string }> = [];
+
+    const bridge = new OttoObservabilityBridge({
+      runtimeContext: { environment: 'test', deploymentChannel: 'stable', hostOs: 'windows' },
+      logging: { info: async () => {}, error: async () => {} },
+      tracing: {
+        startSpan: async () => ({
+          annotate: async () => {},
+          end: async () => {}
+        })
+      },
+      telemetry: {
+        emit: async (eventName, payload) => {
+          if (eventName === 'maestro.node.failed' && String(payload?.nodeId ?? '') === 'n2') {
+            const metadata = payload?.metadata as Record<string, unknown> | undefined;
+            const state = metadata?.governanceState as Record<string, unknown> | undefined;
+            const blocked = state?.blockedProviderIds as unknown[] | undefined;
+            const cooldown = state?.cooldownUntilByProviderId as Record<string, unknown> | undefined;
+            nodeFailedSnapshots.push({
+              budget: typeof state?.budgetRemaining === 'number' ? state.budgetRemaining : undefined,
+              blockedCount: Array.isArray(blocked) ? blocked.length : 0,
+              cooldownCount: cooldown ? Object.keys(cooldown).length : 0,
+              warning: String(metadata?.providerRoutingWarning ?? '')
+            });
+          }
+        }
+      }
+    });
+
+    const conductor = new Conductor({
+      promptEngine: prompt,
+      contextEngine: context,
+      reviewer,
+      providerRegistry: {
+        run: async () => {
+          throw new Error('intentional mixed mutation warning failure');
+        }
+      },
+      providerRouting: {
+        resolvePreferredProviderId: async ({ context: executionContext }) => {
+          runCount += 1;
+          const policyByRun: Array<{ evaluatedAt: Date; policy: ProviderSelectionPolicy }> = [
+            {
+              evaluatedAt: new Date('2026-10-18T00:00:00.000Z'),
+              policy: {
+                providerCostByProviderId: { alpha: 2 },
+                reserveBudget: 1,
+                cooldownUntilByProviderId: { shadow: '2026-10-18T00:10:00.000Z' }
+              }
+            },
+            {
+              evaluatedAt: new Date('2026-10-18T00:20:00.000Z'),
+              policy: {
+                providerCostByProviderId: { alpha: 2 },
+                reserveBudget: 1,
+                blockedProviderIds: ['alpha']
+              }
+            },
+            {
+              evaluatedAt: new Date('2026-10-18T00:40:00.000Z'),
+              policy: {
+                providerCostByProviderId: { alpha: 2 },
+                reserveBudget: 1
+              }
+            }
+          ];
+          const selectedPolicy = policyByRun[Math.min(runCount - 1, policyByRun.length - 1)];
+          const policy = providerRegistry.createSelectionPolicyWithGovernance(
+            selectedPolicy.policy,
+            governanceState,
+            selectedPolicy.evaluatedAt
+          );
+          executionContext.metadata.governancePolicy = policy;
+          executionContext.metadata.governanceState = governanceState;
+
+          const selectedProviderId = await providerRegistry.resolvePreferredProviderId(policy, ['alpha']);
+          governanceState = providerRegistry.createNextGovernanceState({
+            previousState: governanceState,
+            policy,
+            selectedProviderId,
+            evaluatedAt: selectedPolicy.evaluatedAt
+          });
+          executionContext.metadata.governanceState = governanceState;
+          return selectedProviderId;
+        }
+      },
+      serviceRegistry: new Map([['service', async () => 'noop']])
+    });
+
+    bridge.bind(conductor.eventBus);
+    const first = await conductor.run(runtimeGovernanceMutationFailurePipelineWithGovernanceMetadata(), 'hello-mixed-1');
+    const second = await conductor.run(runtimeGovernanceMutationFailurePipelineWithGovernanceMetadata(), 'hello-mixed-2');
+    const third = await conductor.run(runtimeGovernanceMutationFailurePipelineWithGovernanceMetadata(), 'hello-mixed-3');
+    await bridge.flush();
+
+    expect(first.status).toBe('partial');
+    expect(second.status).toBe('partial');
+    expect(third.status).toBe('partial');
+    expect(nodeFailedSnapshots).toHaveLength(3);
+    expect(nodeFailedSnapshots[0]).toMatchObject({ budget: 1, blockedCount: 0, cooldownCount: 1 });
+    expect(nodeFailedSnapshots[1]).toMatchObject({ budget: 1, blockedCount: 1, cooldownCount: 0 });
+    expect(nodeFailedSnapshots[2]).toMatchObject({ budget: 1, blockedCount: 1, cooldownCount: 0 });
+    expect(nodeFailedSnapshots.every((snapshot) => snapshot.warning.includes('preferred-provider-unavailable'))).toBe(true);
+    expect(nodeFailedSnapshots.every((snapshot) => snapshot.warning.includes('fallback=alpha'))).toBe(true);
   });
 });
