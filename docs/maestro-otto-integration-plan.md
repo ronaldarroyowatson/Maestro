@@ -78,12 +78,13 @@ This section is intentionally added before major implementation changes.
 - Conductor-provider orchestration policy hardening is implemented (latency/status constrained preferred-provider selection and fallback recovery coverage).
 - Additional hardening implemented: weighted latency/cost provider selection, transient outage recovery via last-known healthy snapshots with max-age constraints, budget/circuit-breaker policy controls (`blockedProviderIds`, `budgetRemaining`, `reserveBudget`) with fallback recovery coverage, deterministic cooldown/decay-window policy controls (`cooldownUntilByProviderId`, `evaluationTime`), and cross-run governance state handoff scaffolding.
 - Additional governance trace hardening implemented: fallback/error permutation metadata assertions and workflow-level governance trace contract checks in diagnostics verification.
-- Current execution focus: widening governance metadata checks across broader failure permutations.
+- Additional governance trace hardening implemented: early pipeline-failure metadata continuity coverage with seeded governance metadata in failure telemetry.
+- Current execution focus: broadening failure-permutation metadata assertions beyond current routing and validation failure paths.
 
 ### Next Step
 
-1. Expand governance metadata assertions for additional pipeline-failure permutations beyond routing fallback paths.
-2. Add regression checks for governance metadata continuity when pipeline execution fails early.
+1. Expand governance metadata assertions for additional pipeline-failure permutations beyond routing fallback and graph-validation paths.
+2. Add broader workflow-level checks for pipeline-failure metadata continuity in diagnostics artifacts.
 3. Run integrated validation pass and prepare commit/push checkpoint.
 
 ## End-of-Day Checkpoint (2026-10-17)

@@ -34,6 +34,39 @@ function observabilityPipeline(): Pipeline {
   };
 }
 
+function invalidObservabilityPipelineWithGovernanceMetadata(): Pipeline {
+  const now = new Date();
+  return {
+    id: 'p-observability-invalid',
+    version: '1.0.0',
+    contentHash: 'hash-invalid',
+    status: 'active',
+    createdAt: now,
+    updatedAt: now,
+    changelog: 'init',
+    metadata: {
+      name: 'observability-invalid',
+      description: 'invalid pipeline for failure metadata checks',
+      tags: [],
+      createdAt: now,
+      updatedAt: now,
+      governanceState: {
+        budgetRemaining: 3,
+        reserveBudget: 1
+      },
+      governancePolicy: {
+        selectionStrategy: 'weighted'
+      },
+      providerRoutingWarning: 'seeded-warning'
+    } as unknown as Pipeline['metadata'],
+    graph: {
+      graphId: 'g-observability-invalid',
+      nodes: [{ instanceId: 'n1', nodeTypeId: 'trigger', config: { role: 'entry' }, position: { x: 0, y: 0 } }],
+      edges: [{ edgeId: 'e-invalid', fromNodeId: 'n1', fromPort: 'out', toNodeId: 'missing-node', toPort: 'in' }]
+    }
+  };
+}
+
 describe('conductor + otto observability bridge', () => {
   it('emits deterministic runtime observability traces for conductor execution', async () => {
     const prompt = new PromptEngine();
@@ -131,5 +164,81 @@ describe('conductor + otto observability bridge', () => {
           typeof (metadata.selectedProvidersByNode as Record<string, unknown> | undefined)?.n3 === 'string'
       )
     ).toBe(true);
+  });
+
+  it('preserves seeded governance metadata in early pipeline-failure observability traces', async () => {
+    const prompt = new PromptEngine();
+    const context = new ContextEngine();
+    const rules = new RulesEngine();
+    const reviewer = new Reviewer(rules, prompt);
+    prompt.registerTemplate({
+      id: 't1',
+      version: '1.0.0',
+      contentHash: 'h',
+      status: 'active',
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      changelog: 'init',
+      title: 't',
+      template: 'Echo: {{output}}',
+      variables: ['output']
+    });
+
+    const telemetryEvents: string[] = [];
+    const telemetryPayloads: Array<Record<string, unknown> | undefined> = [];
+    const bridge = new OttoObservabilityBridge({
+      runtimeContext: {
+        environment: 'test',
+        deploymentChannel: 'stable',
+        hostOs: 'windows'
+      },
+      logging: {
+        info: async () => {},
+        error: async () => {}
+      },
+      tracing: {
+        startSpan: async () => ({
+          annotate: async () => {},
+          end: async () => {}
+        })
+      },
+      telemetry: {
+        emit: async (eventName, payload) => {
+          telemetryEvents.push(eventName);
+          telemetryPayloads.push(payload);
+        }
+      }
+    });
+
+    const conductor = new Conductor({
+      promptEngine: prompt,
+      contextEngine: context,
+      reviewer,
+      providerRegistry: {
+        run: async () => ({ text: 'agent-output', tokensUsed: 1, latencyMs: 1, rawResponse: {} })
+      },
+      serviceRegistry: new Map([['service', async (_config, executionContext) => String(executionContext.metadata.input ?? '').toUpperCase()]])
+    });
+
+    bridge.bind(conductor.eventBus);
+    const result = await conductor.run(invalidObservabilityPipelineWithGovernanceMetadata(), 'hello');
+    await bridge.flush();
+
+    expect(result.status).toBe('failed');
+    expect(telemetryEvents).toContain('maestro.pipeline.failed');
+
+    const failedPayload = telemetryPayloads.find(
+      (payload) => typeof payload?.error === 'string' && String(payload.error).includes('Pipeline graph validation failed')
+    );
+    expect(failedPayload).toBeDefined();
+    expect((failedPayload?.metadata as Record<string, unknown> | undefined)?.providerRoutingWarning).toBe('seeded-warning');
+    expect(
+      ((failedPayload?.metadata as Record<string, unknown> | undefined)?.governanceState as Record<string, unknown> | undefined)
+        ?.budgetRemaining
+    ).toBe(3);
+    expect(
+      ((failedPayload?.metadata as Record<string, unknown> | undefined)?.governancePolicy as Record<string, unknown> | undefined)
+        ?.selectionStrategy
+    ).toBe('weighted');
   });
 });

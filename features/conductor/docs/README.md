@@ -14,6 +14,8 @@ to keep deployment diagnostics explicit across Otto telemetry surfaces.
 Pipeline lifecycle emissions also include optional governance-routing metadata
 (`governancePolicy`, `governanceState`, `providerRoutingWarning`, `selectedProvidersByNode`)
 for cross-run provider-policy diagnostics.
+When provided in pipeline metadata, governance metadata is seeded into runtime context
+so early validation failures still emit continuity diagnostics on pipeline-failed events.
 
 ## Structure
 - models/: runtime contracts and execution result models

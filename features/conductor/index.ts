@@ -52,6 +52,17 @@ export class Conductor {
     const pipeline = 'pipeline' in pipelineInput ? pipelineInput.pipeline : pipelineInput;
     const runId = this.runtimeOptions.generateRunId();
     const started = this.runtimeOptions.now();
+    const pipelineMetadataRecord = pipeline.metadata as unknown as Record<string, unknown>;
+    const seededGovernanceMetadata: Record<string, unknown> = {};
+    if (pipelineMetadataRecord.governanceState && typeof pipelineMetadataRecord.governanceState === 'object') {
+      seededGovernanceMetadata.governanceState = pipelineMetadataRecord.governanceState;
+    }
+    if (pipelineMetadataRecord.governancePolicy && typeof pipelineMetadataRecord.governancePolicy === 'object') {
+      seededGovernanceMetadata.governancePolicy = pipelineMetadataRecord.governancePolicy;
+    }
+    if (typeof pipelineMetadataRecord.providerRoutingWarning === 'string') {
+      seededGovernanceMetadata.providerRoutingWarning = pipelineMetadataRecord.providerRoutingWarning;
+    }
 
     const context: ExecutionContext = {
       pipelineId: pipeline.id,
@@ -61,7 +72,8 @@ export class Conductor {
       metadata: {
         input,
         documentId: `${pipeline.id}:${runId}`,
-        documentText: typeof input === 'string' ? input : JSON.stringify(input)
+        documentText: typeof input === 'string' ? input : JSON.stringify(input),
+        ...seededGovernanceMetadata
       }
     };
 

@@ -604,3 +604,30 @@ Validation:
 - `npm --prefix D:\OneDrive\Documents\GitHub\Maestro run verify:diagnostics-artifacts` ✅
 - `npm --prefix D:\OneDrive\Documents\GitHub\Maestro run validate:otto-ui-contract` ✅
 - `npm --prefix D:\OneDrive\Documents\GitHub\Maestro test` ✅ (62 files / 144 tests passed)
+
+---
+
+## Session Continuation: Early Failure Governance-Metadata Continuity (2026-10-18)
+
+Objective:
+
+- ensure governance metadata continuity is preserved in observability traces when pipeline execution fails early (before node execution).
+
+Changes:
+
+- conductor runtime now seeds governance metadata from pipeline metadata into runtime context so `PipelineFailed` events can carry continuity diagnostics even on graph-validation failures.
+- conductor observability integration coverage expanded with an invalid-graph scenario that asserts:
+  - failed pipeline status,
+  - failed observability emission,
+  - propagated `providerRoutingWarning`,
+  - propagated `governanceState`,
+  - propagated `governancePolicy`.
+- diagnostics verifier expanded with an invalid-pipeline sub-run to enforce workflow-level failure telemetry contract checks.
+
+Validation:
+
+- `npm --prefix D:\OneDrive\Documents\GitHub\Maestro test -- features/conductor/tests/conductor-otto-observability.integration.test.ts features/conductor/tests/conductor-provider-routing.integration.test.ts features/conductor/tests/otto-observability.test.ts` ✅
+- `npm --prefix D:\OneDrive\Documents\GitHub\Maestro run typecheck` ✅
+- `npm --prefix D:\OneDrive\Documents\GitHub\Maestro run verify:diagnostics-artifacts` ✅
+- `npm --prefix D:\OneDrive\Documents\GitHub\Maestro run validate:otto-ui-contract` ✅
+- `npm --prefix D:\OneDrive\Documents\GitHub\Maestro test` ✅ (62 files / 145 tests passed)

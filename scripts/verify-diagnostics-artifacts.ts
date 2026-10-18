@@ -46,6 +46,39 @@ function diagnosticsPipeline(): Pipeline {
   };
 }
 
+function diagnosticsInvalidPipelineWithGovernanceMetadata(): Pipeline {
+  const now = new Date();
+  return {
+    id: 'p-diagnostics-invalid',
+    version: '1.0.0',
+    contentHash: 'hash-invalid',
+    status: 'active',
+    createdAt: now,
+    updatedAt: now,
+    changelog: 'init',
+    metadata: {
+      name: 'diagnostics-invalid',
+      description: 'diagnostics invalid pipeline metadata continuity check',
+      tags: [],
+      createdAt: now,
+      updatedAt: now,
+      governanceState: {
+        budgetRemaining: 3,
+        reserveBudget: 1
+      },
+      governancePolicy: {
+        selectionStrategy: 'weighted'
+      },
+      providerRoutingWarning: 'seeded-warning'
+    } as unknown as Pipeline['metadata'],
+    graph: {
+      graphId: 'g-diagnostics-invalid',
+      nodes: [{ instanceId: 'n1', nodeTypeId: 'trigger', config: { role: 'entry' }, position: { x: 0, y: 0 } }],
+      edges: [{ edgeId: 'e-invalid', fromNodeId: 'n1', fromPort: 'out', toNodeId: 'missing-node', toPort: 'in' }]
+    }
+  };
+}
+
 function adapter(providerId: string, latencyMs: number): ProviderAdapter {
   return {
     providerId,
@@ -223,6 +256,49 @@ async function main(): Promise<void> {
     throw new Error('Diagnostics verification failed: routing selection diverged from policy selection baseline.');
   }
 
+  const failureTelemetryPayloads: Array<Record<string, unknown> | undefined> = [];
+  const failureBridge = new OttoObservabilityBridge({
+    runtimeContext: {
+      environment: 'ci',
+      deploymentChannel: 'stable',
+      hostOs: process.platform
+    },
+    logging: {
+      info: async () => {},
+      error: async () => {}
+    },
+    tracing: {
+      startSpan: async () => ({
+        annotate: async () => {},
+        end: async () => {}
+      })
+    },
+    telemetry: {
+      emit: async (_eventName, payload) => {
+        failureTelemetryPayloads.push(payload);
+      }
+    }
+  });
+  const failureConductor = new Conductor({
+    promptEngine: prompt,
+    contextEngine: context,
+    reviewer,
+    providerRegistry: {
+      run: async (providerId, request) => providerRegistry.run(providerId, request)
+    },
+    serviceRegistry: new Map([['service', async (_config, executionContext) => String(executionContext.metadata.input ?? '').toUpperCase()]])
+  });
+  failureBridge.bind(failureConductor.eventBus);
+  const failureResult = await failureConductor.run(diagnosticsInvalidPipelineWithGovernanceMetadata(), 'hello');
+  await failureBridge.flush();
+  if (failureResult.status !== 'failed') {
+    throw new Error('Diagnostics verification failed: invalid pipeline did not produce failed result.');
+  }
+  const failedPayload = failureTelemetryPayloads.find(
+    (payload) => typeof payload?.error === 'string' && String(payload.error).includes('Pipeline graph validation failed')
+  );
+  assertEarlyFailureGovernanceMetadataShape(failedPayload);
+
   const diagnosticsDir = path.resolve('dist', 'diagnostics');
   await mkdir(diagnosticsDir, { recursive: true });
 
@@ -239,6 +315,7 @@ async function main(): Promise<void> {
       initial: initialGovernanceState,
       afterSelection: governanceStateAfterSelection
     },
+    earlyFailure: failedPayload,
     emittedMetadata: emittedGovernanceMetadata,
     telemetryEvents,
     routedProviders
@@ -326,5 +403,29 @@ function assertEmittedGovernanceMetadataShape(
   const policyBudgetRemaining = (governancePolicy as Record<string, unknown>).budgetRemaining;
   if (typeof policyBudgetRemaining !== 'number') {
     throw new Error('Diagnostics verification failed: emitted metadata governancePolicy.budgetRemaining must be a number.');
+  }
+}
+
+function assertEarlyFailureGovernanceMetadataShape(payload: Record<string, unknown> | undefined): void {
+  if (!payload) {
+    throw new Error('Diagnostics verification failed: missing telemetry payload for invalid pipeline failure.');
+  }
+  if (typeof payload.error !== 'string' || !payload.error.includes('Pipeline graph validation failed')) {
+    throw new Error('Diagnostics verification failed: invalid pipeline failure error payload mismatch.');
+  }
+  const metadata = payload.metadata;
+  if (!metadata || typeof metadata !== 'object') {
+    throw new Error('Diagnostics verification failed: invalid pipeline failure metadata is missing.');
+  }
+  const metadataRecord = metadata as Record<string, unknown>;
+  if (metadataRecord.providerRoutingWarning !== 'seeded-warning') {
+    throw new Error('Diagnostics verification failed: invalid pipeline providerRoutingWarning mismatch.');
+  }
+  const governanceState = metadataRecord.governanceState;
+  if (!governanceState || typeof governanceState !== 'object') {
+    throw new Error('Diagnostics verification failed: invalid pipeline governanceState metadata is missing.');
+  }
+  if ((governanceState as Record<string, unknown>).budgetRemaining !== 3) {
+    throw new Error('Diagnostics verification failed: invalid pipeline governanceState budget mismatch.');
   }
 }

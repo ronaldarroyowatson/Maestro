@@ -86,6 +86,9 @@
   - expanded observability bridge tests for pipeline-failure governance metadata forwarding
   - expanded resolver-error fallback assertions to require emitted `providerRoutingWarning` + selected provider metadata
   - tightened diagnostics artifact governance-contract checks for emitted metadata shape and policy/state presence
+  - seeded governance metadata from pipeline metadata into conductor runtime context for early failure-path telemetry continuity
+  - added invalid-pipeline observability regression coverage for governance metadata propagation on `PipelineFailed`
+  - expanded diagnostics artifact verification with invalid-pipeline failure metadata contract assertions
 
 ## 0.1.9
 
