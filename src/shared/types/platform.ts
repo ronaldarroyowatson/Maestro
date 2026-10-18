@@ -185,6 +185,11 @@ export interface EventBusSubscription<TEvent = Record<string, unknown>> {
   handler: (event: MaestroEventEnvelope<TEvent>) => void | Promise<void>;
 }
 
+export interface ObservabilityBridgeAdapter {
+  forwardEvent(event: MaestroEventEnvelope<Record<string, unknown>>): Promise<void>;
+  flush?(): Promise<void>;
+}
+
 export interface GraphServiceRequest<TRequest = Record<string, unknown>> {
   operation: 'create' | 'update' | 'get' | 'list' | 'query' | 'traverse' | 'delete';
   requestId: string;

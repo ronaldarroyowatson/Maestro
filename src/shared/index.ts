@@ -47,6 +47,7 @@ export type {
   GraphTraversalResult,
   GraphVersionRecord,
   MaestroEventEnvelope,
+  ObservabilityBridgeAdapter,
   ResourceCapabilityTag,
   ResourceHealthRecord,
   ResourceLifecycleStatus,

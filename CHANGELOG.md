@@ -45,6 +45,10 @@
 - Added live upstream verification automation (default-branch content parity checks):
   - `scripts/verify-otto-upstreams-live.ts`
   - `verify:otto-upstreams-live` npm script
+- Added dedicated Maestro-to-Otto observability bridge module:
+  - `features/otto-observability-bridge/index.ts`
+  - `features/otto-observability-bridge/tests/otto-observability-extension-bridge.test.ts`
+  - conductor observability forwarding now routes through this adapter boundary
 - Added Otto ecosystem capability mapping doc:
   - `docs/maestro-otto-ecosystem-capability-map.md`
 - Added repository-level Copilot source-of-truth instructions:

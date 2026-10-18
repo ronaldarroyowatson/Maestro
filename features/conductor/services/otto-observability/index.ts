@@ -1,29 +1,27 @@
 import { EVENT_NAMES } from '../../../../src/shared/index.js';
 import type { ConductorEventPayloads, EventBus } from '../event-bus/index.js';
-
-export interface OttoLoggingExtension {
-  info(message: string, attributes?: Record<string, unknown>): Promise<void>;
-  error(message: string, attributes?: Record<string, unknown>): Promise<void>;
-}
-
-export interface OttoTraceSpan {
-  annotate(attributes?: Record<string, unknown>): Promise<void>;
-  end(status?: 'ok' | 'error'): Promise<void>;
-}
-
-export interface OttoTracingExtension {
-  startSpan(name: string, attributes?: Record<string, unknown>): Promise<OttoTraceSpan>;
-}
-
-export interface OttoTelemetryExtension {
-  emit(eventName: string, payload?: Record<string, unknown>): Promise<void>;
-}
+import {
+  type OttoBridgeErrorRecord,
+  OttoObservabilityExtensionBridge
+} from '../../../otto-observability-bridge/index.js';
+export type {
+  OttoLoggingExtension,
+  OttoTelemetryExtension,
+  OttoTraceSpan,
+  OttoTracingExtension
+} from '../../../otto-observability-bridge/index.js';
+import type {
+  OttoLoggingExtension,
+  OttoTelemetryExtension,
+  OttoTracingExtension
+} from '../../../otto-observability-bridge/index.js';
 
 export interface OttoObservabilityBridgeDependencies {
   logging: OttoLoggingExtension;
   tracing: OttoTracingExtension;
   telemetry: OttoTelemetryExtension;
   runtimeContext?: OttoObservabilityRuntimeContext;
+  onBridgeError?: (record: OttoBridgeErrorRecord) => void;
 }
 
 export interface OttoObservabilityRuntimeContext {
@@ -37,9 +35,17 @@ export interface OttoObservabilityRuntimeContext {
  * The bridge is best-effort and never throws into conductor flow.
  */
 export class OttoObservabilityBridge {
-  private eventQueue: Promise<void> = Promise.resolve();
+  private readonly extensionBridge: OttoObservabilityExtensionBridge;
 
-  constructor(private readonly deps: OttoObservabilityBridgeDependencies) {}
+  constructor(deps: OttoObservabilityBridgeDependencies) {
+    this.extensionBridge = new OttoObservabilityExtensionBridge({
+      logging: deps.logging,
+      tracing: deps.tracing,
+      telemetry: deps.telemetry,
+      runtimeContext: deps.runtimeContext,
+      onBridgeError: deps.onBridgeError
+    });
+  }
 
   bind(eventBus: EventBus): void {
     eventBus.subscribe(EVENT_NAMES.PIPELINE_STARTED, (payload) => {
@@ -72,61 +78,47 @@ export class OttoObservabilityBridge {
   }
 
   async emitInstallerEvent(eventName: string, payload: Record<string, unknown>): Promise<void> {
-    await this.safe(async () => {
-      const enrichedPayload = withRuntimeContext(payload, this.deps.runtimeContext);
-      const span = await this.deps.tracing.startSpan(eventName, { scope: 'installer', ...enrichedPayload });
-      await this.deps.logging.info('installer event', { eventName, ...enrichedPayload });
-      await this.deps.telemetry.emit(eventName, enrichedPayload);
-      await span.annotate(enrichedPayload);
-      await span.end('ok');
-    });
+    await this.extensionBridge.forwardEvent(
+      this.extensionBridge.createEventEnvelope({
+        eventType: eventName,
+        source: 'maestro',
+        payload: {
+          scope: 'installer',
+          ...payload
+        },
+        correlationId: typeof payload.correlationId === 'string' ? payload.correlationId : undefined
+      })
+    );
   }
 
   async flush(): Promise<void> {
-    await this.eventQueue;
+    await this.extensionBridge.flush();
   }
 
-  private async handleEvent(
-    telemetryEventName: string,
-    payload: ConductorEventPayloads[keyof ConductorEventPayloads],
-    eventName: string
-  ): Promise<void> {
-    await this.safe(async () => {
-      const span = await this.deps.tracing.startSpan(telemetryEventName, {
-        sourceEvent: eventName,
-        runId: payload.runId,
-        ...this.deps.runtimeContext
-      });
-
-      if (eventName === EVENT_NAMES.NODE_FAILED || eventName === EVENT_NAMES.PIPELINE_FAILED) {
-        await this.deps.logging.error('runtime event', { sourceEvent: eventName, ...toLogPayload(payload) });
-      } else {
-        await this.deps.logging.info('runtime event', { sourceEvent: eventName, ...toLogPayload(payload) });
-      }
-
-      const telemetryPayload = withRuntimeContext(toTelemetryPayload(payload), this.deps.runtimeContext);
-      await this.deps.telemetry.emit(telemetryEventName, telemetryPayload);
-      await span.annotate(telemetryPayload);
-      await span.end(eventName === EVENT_NAMES.NODE_FAILED || eventName === EVENT_NAMES.PIPELINE_FAILED ? 'error' : 'ok');
-    });
-  }
-
-  private enqueueEvent(
+  private handleEvent(
     telemetryEventName: string,
     payload: ConductorEventPayloads[keyof ConductorEventPayloads],
     eventName: string
   ): void {
-    this.eventQueue = this.eventQueue.then(() => this.handleEvent(telemetryEventName, payload, eventName)).catch(() => {
-      // Observability must not break runtime execution.
-    });
+    const pipelineId = 'pipelineId' in payload ? payload.pipelineId : undefined;
+    this.extensionBridge.enqueueForward(
+      this.extensionBridge.createEventEnvelope({
+        eventType: telemetryEventName,
+        source: 'maestro',
+        correlationId: payload.runId,
+        runId: payload.runId,
+        pipelineId,
+        payload: {
+          sourceEvent: eventName,
+          ...toTelemetryPayload(payload),
+          ...toLogPayload(payload)
+        }
+      })
+    );
   }
 
-  private async safe(operation: () => Promise<void>): Promise<void> {
-    try {
-      await operation();
-    } catch {
-      // Observability must not break runtime execution.
-    }
+  private enqueueEvent(telemetryEventName: string, payload: ConductorEventPayloads[keyof ConductorEventPayloads], eventName: string): void {
+    this.handleEvent(telemetryEventName, payload, eventName);
   }
 }
 
@@ -142,26 +134,12 @@ function toTelemetryPayload(payload: ConductorEventPayloads[keyof ConductorEvent
 
 function toLogPayload(payload: ConductorEventPayloads[keyof ConductorEventPayloads]): Record<string, unknown> {
   if ('error' in payload) {
+    const { error: _error, ...rest } = payload;
     return {
-      ...payload,
+      ...rest,
       errorName: payload.error.name,
       errorMessage: payload.error.message
     };
   }
   return { ...payload };
-}
-
-function withRuntimeContext(
-  payload: Record<string, unknown>,
-  runtimeContext: OttoObservabilityRuntimeContext | undefined
-): Record<string, unknown> {
-  if (!runtimeContext) {
-    return payload;
-  }
-  return {
-    ...payload,
-    environment: runtimeContext.environment,
-    deploymentChannel: runtimeContext.deploymentChannel,
-    hostOs: runtimeContext.hostOs
-  };
 }
