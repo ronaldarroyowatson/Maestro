@@ -141,6 +141,7 @@ describe('conductor provider routing integration', () => {
     providerRegistry.register(providerAdapter('alpha', 20));
 
     const routedProviders: string[] = [];
+    let completedMetadata: ConductorRuntimeTelemetryMetadata | undefined;
     const conductor = new Conductor({
       promptEngine: prompt,
       contextEngine: context,
@@ -158,6 +159,9 @@ describe('conductor provider routing integration', () => {
       },
       serviceRegistry: new Map([['service', async (_config, executionContext) => String(executionContext.metadata.input ?? '').toUpperCase()]])
     });
+    conductor.eventBus.subscribe('PipelineCompleted', (payload) => {
+      completedMetadata = payload.metadata;
+    });
 
     const result = await conductor.run(routingPipeline(), 'hello');
 
@@ -165,6 +169,8 @@ describe('conductor provider routing integration', () => {
     expect(routedProviders).toContain('alpha');
     const agentOutput = result.nodeResults.get('n3')?.output as { text: string } | undefined;
     expect(agentOutput?.text).toBe('response:alpha');
+    expect(String(completedMetadata?.providerRoutingWarning ?? '')).toContain('preferred-provider-error');
+    expect((completedMetadata?.selectedProvidersByNode as Record<string, unknown> | undefined)?.n3).toBe('alpha');
   });
 
   it('recovers to fallback when orchestration policy excludes all preferred providers', async () => {

@@ -84,6 +84,8 @@
   - added conductor pipeline-event governance metadata emission for runtime trace visibility
   - expanded routing integration assertions for fallback warning metadata and non-preferred selected-provider visibility
   - expanded observability bridge tests for pipeline-failure governance metadata forwarding
+  - expanded resolver-error fallback assertions to require emitted `providerRoutingWarning` + selected provider metadata
+  - tightened diagnostics artifact governance-contract checks for emitted metadata shape and policy/state presence
 
 ## 0.1.9
 

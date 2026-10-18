@@ -595,6 +595,7 @@ Next implementation slice (active):
 Completion:
 
 - completed with expanded conductor + observability assertions for fallback warning propagation and non-preferred routing metadata visibility.
+- completed with additional resolver-error fallback metadata assertions and stricter diagnostics contract checks for emitted governance metadata (`selectedProvidersByNode`, `governanceState`, `governancePolicy`).
 
 Validation:
 

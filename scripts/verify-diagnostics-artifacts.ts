@@ -216,13 +216,9 @@ async function main(): Promise<void> {
   }
   assertGovernanceStateShape(initialGovernanceState, 'initialGovernanceState');
   assertGovernanceStateShape(governanceStateAfterSelection, 'governanceStateAfterSelection');
-  if (
-    !emittedGovernanceMetadata ||
-    typeof emittedGovernanceMetadata.selectedProvidersByNode !== 'object' ||
-    emittedGovernanceMetadata.selectedProvidersByNode === null
-  ) {
-    throw new Error('Diagnostics verification failed: missing emitted governance metadata in pipeline completed event.');
-  }
+  assertEmittedGovernanceMetadataShape(emittedGovernanceMetadata, {
+    expectedSelectedProviderId: policyPreferredProviderId
+  });
   if (selectedProviderIdFromRouting !== policyPreferredProviderId) {
     throw new Error('Diagnostics verification failed: routing selection diverged from policy selection baseline.');
   }
@@ -298,4 +294,37 @@ function assertObservabilityTraceShape(trace: {
   }
   assertGovernanceStateShape(trace.governanceState.initial, 'observabilityTrace.governanceState.initial');
   assertGovernanceStateShape(trace.governanceState.afterSelection, 'observabilityTrace.governanceState.afterSelection');
+}
+
+function assertEmittedGovernanceMetadataShape(
+  metadata: Record<string, unknown> | undefined,
+  options: { expectedSelectedProviderId: string }
+): void {
+  if (!metadata) {
+    throw new Error('Diagnostics verification failed: emitted governance metadata is missing.');
+  }
+
+  const selectedProvidersByNode = metadata.selectedProvidersByNode;
+  if (!selectedProvidersByNode || typeof selectedProvidersByNode !== 'object') {
+    throw new Error('Diagnostics verification failed: emitted metadata selectedProvidersByNode is missing.');
+  }
+  const selectedN3 = (selectedProvidersByNode as Record<string, unknown>).n3;
+  if (selectedN3 !== options.expectedSelectedProviderId) {
+    throw new Error('Diagnostics verification failed: emitted metadata selectedProvidersByNode.n3 mismatch.');
+  }
+
+  const governanceState = metadata.governanceState;
+  if (!governanceState || typeof governanceState !== 'object') {
+    throw new Error('Diagnostics verification failed: emitted metadata governanceState is missing.');
+  }
+  assertGovernanceStateShape(governanceState as ProviderGovernanceState, 'emittedMetadata.governanceState');
+
+  const governancePolicy = metadata.governancePolicy;
+  if (!governancePolicy || typeof governancePolicy !== 'object') {
+    throw new Error('Diagnostics verification failed: emitted metadata governancePolicy is missing.');
+  }
+  const policyBudgetRemaining = (governancePolicy as Record<string, unknown>).budgetRemaining;
+  if (typeof policyBudgetRemaining !== 'number') {
+    throw new Error('Diagnostics verification failed: emitted metadata governancePolicy.budgetRemaining must be a number.');
+  }
 }
