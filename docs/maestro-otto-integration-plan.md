@@ -1,5 +1,7 @@
 # Maestro Otto Integration Plan
 
+> Architecture supersession note: the long-range source-of-truth architecture and phased execution strategy is now captured in [maestro-master-architecture-plan.md](./maestro-master-architecture-plan.md). This integration plan remains the operational tracker for ongoing incremental execution.
+
 ## Initial Plan (Pre-Implementation)
 
 This section is intentionally added before major implementation changes.
