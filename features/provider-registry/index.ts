@@ -1,5 +1,5 @@
 import type { AgentCatalog, InferenceRequest, InferenceResponse, ProviderAdapter, ProviderHealth } from '../../src/shared/index.js';
-import type { ProviderHealthSnapshot, ProviderSelectionPolicy } from './models/types.js';
+import type { ProviderGovernanceState, ProviderHealthSnapshot, ProviderSelectionPolicy } from './models/types.js';
 import { AdapterFactory } from './services/adapter-factory/index.js';
 import { AzureOpenAiAdapter, type AzureOpenAiAdapterOptions } from './services/adapters/azure-openai/index.js';
 import { LmStudioAdapter, type LmStudioAdapterOptions } from './services/adapters/lm-studio/index.js';
@@ -13,6 +13,7 @@ export type {
   AdapterRegistration,
   ArtifactType,
   PipelineConfig,
+  ProviderGovernanceState,
   ProviderHealthEntry,
   ProviderHealthSnapshot,
   ProviderHealthSummary,
@@ -260,6 +261,79 @@ export class ProviderRegistry {
     return undefined;
   }
 
+  /** Creates a runtime policy by overlaying cross-run governance state onto a base policy. */
+  createSelectionPolicyWithGovernance(
+    basePolicy: ProviderSelectionPolicy = {},
+    governanceState?: ProviderGovernanceState,
+    evaluationTime: Date = new Date()
+  ): ProviderSelectionPolicy {
+    const blockedProviderIds = new Set([
+      ...(governanceState?.blockedProviderIds ?? []),
+      ...(basePolicy.blockedProviderIds ?? [])
+    ]);
+
+    return {
+      ...basePolicy,
+      blockedProviderIds: Array.from(blockedProviderIds),
+      cooldownUntilByProviderId: {
+        ...(governanceState?.cooldownUntilByProviderId ?? {}),
+        ...(basePolicy.cooldownUntilByProviderId ?? {})
+      },
+      budgetRemaining: basePolicy.budgetRemaining ?? governanceState?.budgetRemaining,
+      reserveBudget: basePolicy.reserveBudget ?? governanceState?.reserveBudget,
+      evaluationTime: basePolicy.evaluationTime ?? evaluationTime
+    };
+  }
+
+  /** Creates deterministic next-run governance state from prior state and current selection outcome. */
+  createNextGovernanceState(input: {
+    previousState?: ProviderGovernanceState;
+    policy?: ProviderSelectionPolicy;
+    selectedProviderId?: string;
+    evaluatedAt?: Date;
+  }): ProviderGovernanceState {
+    const evaluatedAt = input.evaluatedAt ?? new Date();
+    const policy = input.policy ?? {};
+    const previousState = input.previousState;
+
+    const blockedProviderIds = Array.from(
+      new Set([...(previousState?.blockedProviderIds ?? []), ...(policy.blockedProviderIds ?? [])])
+    );
+
+    const mergedCooldownMap = {
+      ...(previousState?.cooldownUntilByProviderId ?? {}),
+      ...(policy.cooldownUntilByProviderId ?? {})
+    };
+
+    const activeCooldownMap = Object.fromEntries(
+      Object.entries(mergedCooldownMap)
+        .map(([providerId, cooldownUntil]) => [providerId, normalizeCooldownTimestamp(cooldownUntil)] as const)
+        .filter((entry): entry is [string, number] => typeof entry[1] === 'number')
+        .filter(([, cooldownUntilMs]) => cooldownUntilMs > evaluatedAt.getTime())
+        .map(([providerId, cooldownUntilMs]) => [providerId, new Date(cooldownUntilMs).toISOString()])
+    );
+
+    const baselineBudget = policy.budgetRemaining ?? previousState?.budgetRemaining;
+    const selectedProviderCost =
+      input.selectedProviderId !== undefined
+        ? policy.providerCostByProviderId?.[input.selectedProviderId]
+        : undefined;
+    const budgetRemaining =
+      baselineBudget !== undefined
+        ? Math.max(
+            0,
+            baselineBudget - (selectedProviderCost !== undefined && Number.isFinite(selectedProviderCost) ? selectedProviderCost : 0)
+          )
+        : undefined;
+
+    return {
+      blockedProviderIds,
+      cooldownUntilByProviderId: activeCooldownMap,
+      budgetRemaining,
+      reserveBudget: policy.reserveBudget ?? previousState?.reserveBudget
+    };
+  }
+
   private resolveFromLastKnownHealthySnapshot(
     policy: ProviderSelectionPolicy,
     currentSnapshotTime: Date,
@@ -384,21 +458,26 @@ function isProviderCoolingDown(
   cooldownUntilByProviderId: Record<string, Date | string | number>,
   evaluationTime: Date
 ): boolean {
-  const cooldownUntil = cooldownUntilByProviderId[providerId];
-  if (cooldownUntil === undefined) {
+  const cooldownUntilMs = normalizeCooldownTimestamp(cooldownUntilByProviderId[providerId]);
+  if (cooldownUntilMs === undefined) {
     return false;
   }
 
+  return evaluationTime.getTime() < cooldownUntilMs;
+}
+
+function normalizeCooldownTimestamp(cooldownUntil: Date | string | number | undefined): number | undefined {
+  if (cooldownUntil === undefined) {
+    return undefined;
+  }
   const cooldownUntilMs =
     cooldownUntil instanceof Date
       ? cooldownUntil.getTime()
       : typeof cooldownUntil === 'number'
         ? cooldownUntil
         : new Date(cooldownUntil).getTime();
-
   if (Number.isNaN(cooldownUntilMs)) {
-    return false;
+    return undefined;
   }
-
-  return evaluationTime.getTime() < cooldownUntilMs;
+  return cooldownUntilMs;
 }

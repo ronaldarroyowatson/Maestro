@@ -594,4 +594,58 @@ describe('provider-registry modules', () => {
 
     expect(preferredFromPolicy).toBe('beta');
   });
+
+  it('createSelectionPolicyWithGovernance overlays persisted governance state onto base policy', () => {
+    const registry = new ProviderRegistry();
+    const policy = registry.createSelectionPolicyWithGovernance(
+      {
+        selectionStrategy: 'weighted',
+        blockedProviderIds: ['gamma'],
+        providerCostByProviderId: { alpha: 3, beta: 2 }
+      },
+      {
+        blockedProviderIds: ['beta'],
+        cooldownUntilByProviderId: {
+          alpha: '2026-10-18T00:10:00.000Z'
+        },
+        budgetRemaining: 9,
+        reserveBudget: 1
+      },
+      new Date('2026-10-18T00:00:00.000Z')
+    );
+
+    expect(policy.blockedProviderIds?.sort()).toEqual(['beta', 'gamma']);
+    expect(policy.cooldownUntilByProviderId?.alpha).toBe('2026-10-18T00:10:00.000Z');
+    expect(policy.budgetRemaining).toBe(9);
+    expect(policy.reserveBudget).toBe(1);
+    expect(policy.evaluationTime?.toISOString()).toBe('2026-10-18T00:00:00.000Z');
+  });
+
+  it('createNextGovernanceState decrements budget and removes expired cooldown entries', () => {
+    const registry = new ProviderRegistry();
+    const nextState = registry.createNextGovernanceState({
+      previousState: {
+        blockedProviderIds: ['beta'],
+        cooldownUntilByProviderId: {
+          alpha: '2026-10-17T23:00:00.000Z',
+          gamma: '2026-10-18T01:00:00.000Z'
+        },
+        budgetRemaining: 8,
+        reserveBudget: 1
+      },
+      policy: {
+        providerCostByProviderId: { beta: 5 },
+        blockedProviderIds: ['delta']
+      },
+      selectedProviderId: 'beta',
+      evaluatedAt: new Date('2026-10-18T00:00:00.000Z')
+    });
+
+    expect(nextState.budgetRemaining).toBe(3);
+    expect(nextState.blockedProviderIds?.sort()).toEqual(['beta', 'delta']);
+    expect(nextState.cooldownUntilByProviderId).toEqual({
+      gamma: '2026-10-18T01:00:00.000Z'
+    });
+    expect(nextState.reserveBudget).toBe(1);
+  });
 });

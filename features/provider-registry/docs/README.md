@@ -13,6 +13,9 @@ Policy governance also supports circuit-breaker exclusions (`blockedProviderIds`
 and runtime budget controls (`budgetRemaining`, `reserveBudget`).
 Cooldown/decay-window controls are supported through
 `cooldownUntilByProviderId` + `evaluationTime` to keep provider re-entry deterministic.
+Cross-run governance handoff is available through
+`createSelectionPolicyWithGovernance(...)` and `createNextGovernanceState(...)`
+for deterministic budget/circuit-breaker/cooldown state propagation between runs.
 
 ## Structure
 - models/: public feature types

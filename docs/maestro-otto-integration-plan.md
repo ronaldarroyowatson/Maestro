@@ -76,12 +76,12 @@ This section is intentionally added before major implementation changes.
 - Conductor-to-provider-registry routing integration test implemented using preferred-provider health snapshot selection with fallback recovery coverage.
 - Workflow diagnostics artifact verification is implemented in Windows installer workflow (targeted tests + diagnostics artifact generation/upload).
 - Conductor-provider orchestration policy hardening is implemented (latency/status constrained preferred-provider selection and fallback recovery coverage).
-- Additional hardening implemented: weighted latency/cost provider selection, transient outage recovery via last-known healthy snapshots with max-age constraints, budget/circuit-breaker policy controls (`blockedProviderIds`, `budgetRemaining`, `reserveBudget`) with fallback recovery coverage, and deterministic cooldown/decay-window policy controls (`cooldownUntilByProviderId`, `evaluationTime`).
-- Current execution focus: orchestration governance refinements for cross-run budget/circuit-breaker state handling.
+- Additional hardening implemented: weighted latency/cost provider selection, transient outage recovery via last-known healthy snapshots with max-age constraints, budget/circuit-breaker policy controls (`blockedProviderIds`, `budgetRemaining`, `reserveBudget`) with fallback recovery coverage, deterministic cooldown/decay-window policy controls (`cooldownUntilByProviderId`, `evaluationTime`), and cross-run governance state handoff scaffolding.
+- Current execution focus: orchestration governance refinements and diagnostics-contract coverage expansion.
 
 ### Next Step
 
-1. Add cross-run governance policy scaffolding for budget/circuit-breaker state handoff.
+1. Expand governance diagnostics assertions and metadata schema coverage in artifact outputs.
 2. Run integrated validation pass for current backbone slices (`typecheck`, targeted backbone tests, diagnostics artifact verification, tracer bullet).
 3. Prepare commit/push batch and phase checkpoint.
 

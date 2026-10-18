@@ -86,3 +86,11 @@ export interface ProviderSelectionPolicy {
   allowLastKnownHealthySnapshot?: boolean;
   lastKnownSnapshotMaxAgeMs?: number;
 }
+
+/** Cross-run governance state used to hand off policy controls between executions. */
+export interface ProviderGovernanceState {
+  blockedProviderIds?: string[];
+  cooldownUntilByProviderId?: Record<string, Date | string | number>;
+  budgetRemaining?: number;
+  reserveBudget?: number;
+}

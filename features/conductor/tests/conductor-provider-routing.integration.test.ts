@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { Pipeline, ProviderAdapter } from '../../../src/shared/index.js';
 import { ContextEngine } from '../../context-engine/index.js';
 import { PromptEngine } from '../../prompt-engine/index.js';
+import type { ProviderGovernanceState } from '../../provider-registry/index.js';
 import { ProviderRegistry } from '../../provider-registry/index.js';
 import { Reviewer } from '../../reviewer/index.js';
 import { RulesEngine } from '../../rules-engine/index.js';
@@ -382,5 +383,81 @@ describe('conductor provider routing integration', () => {
     expect(result.status === 'completed' || result.status === 'partial').toBe(true);
     expect(routedProviders).toContain('alpha');
     expect((result.nodeResults.get('n3')?.output as { text: string } | undefined)?.text).toBe('response:alpha');
+  });
+
+  it('applies cross-run governance state handoff for budget and fallback recovery', async () => {
+    const prompt = new PromptEngine();
+    const context = new ContextEngine();
+    const rules = new RulesEngine();
+    const reviewer = new Reviewer(rules, prompt);
+    prompt.registerTemplate({
+      id: 't1',
+      version: '1.0.0',
+      contentHash: 'h',
+      status: 'active',
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      changelog: 'init',
+      title: 'routing-template',
+      template: 'Echo: {{output}}',
+      variables: ['output']
+    });
+
+    const providerRegistry = new ProviderRegistry();
+    providerRegistry.register(providerAdapter('alpha', 10));
+    providerRegistry.register(providerAdapter('beta', 4));
+
+    const routedProviders: string[] = [];
+    let governanceState: ProviderGovernanceState = {
+      budgetRemaining: 6,
+      reserveBudget: 1,
+      blockedProviderIds: [],
+      cooldownUntilByProviderId: {}
+    };
+
+    const conductor = new Conductor({
+      promptEngine: prompt,
+      contextEngine: context,
+      reviewer,
+      providerRegistry: {
+        run: async (providerId, request) => {
+          routedProviders.push(providerId);
+          return providerRegistry.run(providerId, request);
+        }
+      },
+      providerRouting: {
+        resolvePreferredProviderId: async () => {
+          const policy = providerRegistry.createSelectionPolicyWithGovernance(
+            {
+              providerCostByProviderId: {
+                alpha: 7,
+                beta: 5
+              }
+            },
+            governanceState,
+            new Date('2026-10-18T00:00:00.000Z')
+          );
+
+          const resolved = await providerRegistry.resolvePreferredProviderId(policy, ['alpha', 'beta']);
+          governanceState = providerRegistry.createNextGovernanceState({
+            previousState: governanceState,
+            policy,
+            selectedProviderId: resolved,
+            evaluatedAt: new Date('2026-10-18T00:00:00.000Z')
+          });
+          return resolved;
+        }
+      },
+      serviceRegistry: new Map([['service', async (_config, executionContext) => String(executionContext.metadata.input ?? '').toUpperCase()]])
+    });
+
+    const firstResult = await conductor.run(routingPipeline(), 'first');
+    const secondResult = await conductor.run(routingPipeline(), 'second');
+
+    expect(routedProviders[0]).toBe('beta');
+    expect(routedProviders[1]).toBe('alpha');
+    expect(governanceState.budgetRemaining).toBe(1);
+    expect((firstResult.nodeResults.get('n3')?.output as { text: string } | undefined)?.text).toBe('response:beta');
+    expect((secondResult.nodeResults.get('n3')?.output as { text: string } | undefined)?.text).toBe('response:alpha');
   });
 });

@@ -78,6 +78,8 @@
   - added budget and circuit-breaker governance controls (`blockedProviderIds`, `budgetRemaining`, `reserveBudget`)
   - added conductor fallback regression coverage when circuit-breaker policy blocks all preferred candidates
   - added deterministic cooldown/decay-window controls (`cooldownUntilByProviderId`, `evaluationTime`) and recovery tests
+  - added cross-run governance state handoff scaffolding (`createSelectionPolicyWithGovernance`, `createNextGovernanceState`)
+  - added routing integration coverage for multi-run budget handoff and fallback recovery
 
 ## 0.1.9
 

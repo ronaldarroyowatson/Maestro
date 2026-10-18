@@ -4,7 +4,7 @@ import type { Pipeline, ProviderAdapter } from '../src/shared/index.js';
 import { Conductor, OttoObservabilityBridge } from '../features/conductor/index.js';
 import { ContextEngine } from '../features/context-engine/index.js';
 import { PromptEngine } from '../features/prompt-engine/index.js';
-import { ProviderRegistry } from '../features/provider-registry/index.js';
+import { ProviderRegistry, type ProviderGovernanceState, type ProviderSelectionPolicy } from '../features/provider-registry/index.js';
 import { Reviewer } from '../features/reviewer/index.js';
 import { RulesEngine } from '../features/rules-engine/index.js';
 
@@ -82,30 +82,47 @@ async function main(): Promise<void> {
   const providerRegistry = new ProviderRegistry();
   providerRegistry.register(adapter('diag-alpha', 15));
   providerRegistry.register(adapter('diag-beta', 5));
+  const basePolicy: ProviderSelectionPolicy = {
+    selectionStrategy: 'weighted',
+    allowedStatuses: ['healthy'],
+    maxLatencyMs: 20,
+    providerCostByProviderId: {
+      'diag-alpha': 10,
+      'diag-beta': 1
+    },
+    budgetRemaining: 5,
+    reserveBudget: 1,
+    cooldownUntilByProviderId: {
+      'diag-alpha': '2026-10-18T00:10:00.000Z'
+    },
+    latencyWeight: 1,
+    costWeight: 2
+  };
+  const initialGovernanceState: ProviderGovernanceState = {
+    blockedProviderIds: [] as string[],
+    cooldownUntilByProviderId: {},
+    budgetRemaining: 5,
+    reserveBudget: 1
+  };
 
   const snapshot = await providerRegistry.getHealthSnapshot(['diag-alpha', 'diag-beta']);
-  const policyPreferredProviderId = await providerRegistry.resolvePreferredProviderId(
-    {
-      selectionStrategy: 'weighted',
-      allowedStatuses: ['healthy'],
-      maxLatencyMs: 20,
-      providerCostByProviderId: {
-        'diag-alpha': 10,
-        'diag-beta': 1
-      },
-      budgetRemaining: 5,
-      reserveBudget: 1,
-      evaluationTime: new Date('2026-10-18T00:00:00.000Z'),
-      cooldownUntilByProviderId: {
-        'diag-alpha': '2026-10-18T00:10:00.000Z'
-      },
-      latencyWeight: 1,
-      costWeight: 2
-    },
-    ['diag-alpha', 'diag-beta']
+  const firstPolicy = providerRegistry.createSelectionPolicyWithGovernance(
+    basePolicy,
+    initialGovernanceState,
+    new Date('2026-10-18T00:00:00.000Z')
   );
+  const policyPreferredProviderId = await providerRegistry.resolvePreferredProviderId(firstPolicy, ['diag-alpha', 'diag-beta']);
   if (!policyPreferredProviderId) {
     throw new Error('Diagnostics verification failed: policyPreferredProviderId is missing.');
+  }
+  const nextGovernanceState = providerRegistry.createNextGovernanceState({
+    previousState: initialGovernanceState,
+    policy: firstPolicy,
+    selectedProviderId: policyPreferredProviderId,
+    evaluatedAt: new Date('2026-10-18T00:00:00.000Z')
+  });
+  if ((nextGovernanceState.budgetRemaining ?? 0) >= (initialGovernanceState.budgetRemaining ?? 0)) {
+    throw new Error('Diagnostics verification failed: governance budget did not decrease after provider selection.');
   }
 
   const telemetryEvents: string[] = [];
@@ -145,27 +162,7 @@ async function main(): Promise<void> {
         }
       },
       providerRouting: {
-        resolvePreferredProviderId: async () =>
-          providerRegistry.resolvePreferredProviderId(
-            {
-              selectionStrategy: 'weighted',
-              allowedStatuses: ['healthy'],
-              maxLatencyMs: 20,
-              providerCostByProviderId: {
-                'diag-alpha': 10,
-                'diag-beta': 1
-              },
-              budgetRemaining: 5,
-              reserveBudget: 1,
-              evaluationTime: new Date('2026-10-18T00:00:00.000Z'),
-              cooldownUntilByProviderId: {
-                'diag-alpha': '2026-10-18T00:10:00.000Z'
-              },
-              latencyWeight: 1,
-              costWeight: 2
-            },
-            ['diag-alpha', 'diag-beta']
-          )
+        resolvePreferredProviderId: async () => providerRegistry.resolvePreferredProviderId(firstPolicy, ['diag-alpha', 'diag-beta'])
       },
       serviceRegistry: new Map([['service', async (_config, executionContext) => String(executionContext.metadata.input ?? '').toUpperCase()]])
     },
@@ -203,6 +200,10 @@ async function main(): Promise<void> {
         runId: result.runId,
         status: result.status,
         policyPreferredProviderId,
+        governanceState: {
+          initial: initialGovernanceState,
+          afterSelection: nextGovernanceState
+        },
         telemetryEvents,
         routedProviders
       },

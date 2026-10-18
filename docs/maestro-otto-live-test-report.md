@@ -539,3 +539,42 @@ Next implementation slice:
 
 1. Add cross-run budget/circuit-breaker state handoff policy scaffolding.
 2. Expand diagnostics artifact assertions to cover governance-state handoff metadata once implemented.
+
+---
+
+## Session Continuation: Cross-Run Governance State Handoff (2026-10-18)
+
+Objective:
+
+- add deterministic state-handoff scaffolding for provider-governance controls across runs, and validate fallback behavior when budget state depletes preferred-provider eligibility.
+
+Changes:
+
+- provider-registry added cross-run governance helpers:
+  - `createSelectionPolicyWithGovernance(basePolicy, governanceState, evaluationTime)`
+  - `createNextGovernanceState({ previousState, policy, selectedProviderId, evaluatedAt })`
+- governance state now supports deterministic handoff for:
+  - blocked providers,
+  - active cooldown windows,
+  - remaining budget + reserve budget.
+- provider-registry tests expanded to verify:
+  - policy overlay from persisted governance state,
+  - budget decrement + cooldown expiry pruning in next-state generation.
+- conductor/provider integration tests expanded to verify:
+  - two-run governance state handoff,
+  - preferred-provider selection on run #1,
+  - fallback recovery on run #2 when carried budget no longer permits preferred-provider resolution.
+- diagnostics artifact verification expanded to emit governance handoff metadata and assert budget decrement after policy-based selection.
+
+Validation:
+
+- `npm --prefix D:\OneDrive\Documents\GitHub\Maestro test -- features/provider-registry/tests/provider-registry.test.ts` ✅
+- `npm --prefix D:\OneDrive\Documents\GitHub\Maestro test -- features/conductor/tests/conductor-provider-routing.integration.test.ts` ✅
+- `npm --prefix D:\OneDrive\Documents\GitHub\Maestro run typecheck` ✅
+- `npm --prefix D:\OneDrive\Documents\GitHub\Maestro run verify:diagnostics-artifacts` ✅
+- `npm --prefix D:\OneDrive\Documents\GitHub\Maestro run validate:otto-ui-contract` ✅
+
+Next implementation slice:
+
+1. Expand governance diagnostics metadata shape checks in CI artifact validation.
+2. Add conductor-level metadata emission for governance handoff visibility in runtime traces.
