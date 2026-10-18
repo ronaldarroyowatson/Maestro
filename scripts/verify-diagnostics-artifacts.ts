@@ -84,8 +84,16 @@ async function main(): Promise<void> {
   providerRegistry.register(adapter('diag-beta', 5));
 
   const snapshot = await providerRegistry.getHealthSnapshot(['diag-alpha', 'diag-beta']);
-  if (!snapshot.preferredProviderId) {
-    throw new Error('Diagnostics verification failed: preferredProviderId is missing.');
+  const policyPreferredProviderId = await providerRegistry.resolvePreferredProviderId(
+    {
+      allowedStatuses: ['healthy'],
+      maxLatencyMs: 10,
+      providerPriority: ['diag-beta', 'diag-alpha']
+    },
+    ['diag-alpha', 'diag-beta']
+  );
+  if (!policyPreferredProviderId) {
+    throw new Error('Diagnostics verification failed: policyPreferredProviderId is missing.');
   }
 
   const telemetryEvents: string[] = [];
@@ -125,7 +133,15 @@ async function main(): Promise<void> {
         }
       },
       providerRouting: {
-        resolvePreferredProviderId: async () => (await providerRegistry.getHealthSnapshot(['diag-alpha', 'diag-beta'])).preferredProviderId
+        resolvePreferredProviderId: async () =>
+          providerRegistry.resolvePreferredProviderId(
+            {
+              allowedStatuses: ['healthy'],
+              maxLatencyMs: 10,
+              providerPriority: ['diag-beta', 'diag-alpha']
+            },
+            ['diag-alpha', 'diag-beta']
+          )
       },
       serviceRegistry: new Map([['service', async (_config, executionContext) => String(executionContext.metadata.input ?? '').toUpperCase()]])
     },
@@ -144,8 +160,8 @@ async function main(): Promise<void> {
   if (!telemetryEvents.includes('maestro.pipeline.started') || !telemetryEvents.includes('maestro.pipeline.completed')) {
     throw new Error('Diagnostics verification failed: missing critical observability events.');
   }
-  if (!routedProviders.includes(snapshot.preferredProviderId)) {
-    throw new Error('Diagnostics verification failed: preferred provider was not used by conductor routing.');
+  if (!routedProviders.includes(policyPreferredProviderId)) {
+    throw new Error('Diagnostics verification failed: policy-preferred provider was not used by conductor routing.');
   }
 
   const diagnosticsDir = path.resolve('dist', 'diagnostics');
@@ -162,6 +178,7 @@ async function main(): Promise<void> {
       {
         runId: result.runId,
         status: result.status,
+        policyPreferredProviderId,
         telemetryEvents,
         routedProviders
       },

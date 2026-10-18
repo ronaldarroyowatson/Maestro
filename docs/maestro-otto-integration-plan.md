@@ -75,12 +75,13 @@ This section is intentionally added before major implementation changes.
 - Second backbone slice implemented in `features/provider-registry`: deterministic provider-health snapshot contract with failure isolation and preferred-provider selection.
 - Conductor-to-provider-registry routing integration test implemented using preferred-provider health snapshot selection with fallback recovery coverage.
 - Workflow diagnostics artifact verification is implemented in Windows installer workflow (targeted tests + diagnostics artifact generation/upload).
+- Conductor-provider orchestration policy hardening is implemented (latency/status constrained preferred-provider selection and fallback recovery coverage).
 
 ### Next Step
 
-1. Run integrated validation pass for current backbone slices (`typecheck`, targeted backbone tests, tracer bullet).
-2. Prepare commit/push batch and phase checkpoint with the new routing/diagnostics verification coverage.
-3. Start next backbone increment for conductor-provider orchestration policy hardening.
+1. Run integrated validation pass for current backbone slices (`typecheck`, targeted backbone tests, diagnostics artifact verification, tracer bullet).
+2. Prepare commit/push batch and phase checkpoint with policy-hardening coverage.
+3. Start next backbone increment for orchestration-policy governance (weighted/cost-aware provider selection).
 
 ## End-of-Day Checkpoint (2026-10-17)
 

@@ -69,6 +69,10 @@
 - Added workflow diagnostics artifact verification:
   - `verify:diagnostics-artifacts` script generates provider-health and observability-trace diagnostics outputs
   - Windows installer workflow now runs targeted backbone tests and uploads diagnostics artifact JSONs
+- Hardened orchestration provider-policy selection:
+  - added `resolvePreferredProviderId(policy, providerIds?)` in provider-registry
+  - added policy constraints for status, latency threshold, and priority ordering
+  - expanded routing tests for policy-excluded candidates and fallback recovery behavior
 
 ## 0.1.9
 

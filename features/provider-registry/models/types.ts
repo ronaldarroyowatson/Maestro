@@ -65,3 +65,10 @@ export interface ProviderHealthSnapshot {
   summary: ProviderHealthSummary;
   preferredProviderId?: string;
 }
+
+/** Optional policy constraints for preferred-provider selection. */
+export interface ProviderSelectionPolicy {
+  allowedStatuses?: Array<'healthy' | 'degraded'>;
+  maxLatencyMs?: number;
+  providerPriority?: string[];
+}

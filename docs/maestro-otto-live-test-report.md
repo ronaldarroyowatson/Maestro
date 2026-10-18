@@ -423,6 +423,33 @@ Validation:
 - `npm --prefix D:\OneDrive\Documents\GitHub\Maestro run validate:otto-ui-contract` ✅
   - tracer route remains stable at `/maestro/install-status`
 
+### Orchestration policy hardening follow-up (2026-10-17)
+
+Objective:
+
+- harden provider orchestration policy by introducing explicit selection constraints and validating recovery behavior when policies eliminate candidates.
+
+Changes:
+
+- provider-registry now supports policy-driven preferred-provider resolution:
+  - `resolvePreferredProviderId(policy, providerIds?)`
+  - policy supports:
+    - allowed statuses (`healthy` / `degraded`)
+    - max latency threshold
+    - explicit provider priority ordering
+- conductor/provider integration tests now cover:
+  - policy-constrained preferred-provider selection,
+  - fallback recovery when policy excludes all preferred candidates.
+- diagnostics artifact verification script now uses policy-driven provider selection invariants.
+
+Validation:
+
+- `npm --prefix D:\OneDrive\Documents\GitHub\Maestro test -- features/provider-registry/tests/provider-registry.test.ts` ✅
+- `npm --prefix D:\OneDrive\Documents\GitHub\Maestro test -- features/conductor/tests/conductor-provider-routing.integration.test.ts` ✅
+- `npm --prefix D:\OneDrive\Documents\GitHub\Maestro run typecheck` ✅
+- `npm --prefix D:\OneDrive\Documents\GitHub\Maestro run verify:diagnostics-artifacts` ✅
+- `npm --prefix D:\OneDrive\Documents\GitHub\Maestro run validate:otto-ui-contract` ✅ (route stable: `/maestro/install-status`)
+
 ---
 
 ## End-of-Day Summary (2026-10-17)

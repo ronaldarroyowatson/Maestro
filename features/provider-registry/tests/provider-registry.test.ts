@@ -248,4 +248,70 @@ describe('provider-registry modules', () => {
     expect(snapshot.preferredProviderId).toBe('alpha');
     expect(snapshot.entries.find((entry) => entry.providerId === 'gamma')?.health.message).toContain('network unavailable');
   });
+
+  it('resolvePreferredProviderId enforces orchestration policy constraints', async () => {
+    const registry = new ProviderRegistry();
+
+    registry.register({
+      providerId: 'alpha',
+      displayName: 'Alpha',
+      discover: async () => [],
+      run: async () => ({ text: 'ok', tokensUsed: 0, latencyMs: 1, rawResponse: {} }),
+      healthCheck: async () => ({ status: 'degraded', latencyMs: 6 })
+    });
+    registry.register({
+      providerId: 'beta',
+      displayName: 'Beta',
+      discover: async () => [],
+      run: async () => ({ text: 'ok', tokensUsed: 0, latencyMs: 1, rawResponse: {} }),
+      healthCheck: async () => ({ status: 'healthy', latencyMs: 15 })
+    });
+    registry.register({
+      providerId: 'gamma',
+      displayName: 'Gamma',
+      discover: async () => [],
+      run: async () => ({ text: 'ok', tokensUsed: 0, latencyMs: 1, rawResponse: {} }),
+      healthCheck: async () => ({ status: 'healthy', latencyMs: 8 })
+    });
+
+    const preferredFromPolicy = await registry.resolvePreferredProviderId(
+      {
+        allowedStatuses: ['healthy'],
+        maxLatencyMs: 10,
+        providerPriority: ['gamma', 'beta']
+      },
+      ['alpha', 'beta', 'gamma']
+    );
+
+    expect(preferredFromPolicy).toBe('gamma');
+  });
+
+  it('resolvePreferredProviderId returns undefined when policy excludes all providers', async () => {
+    const registry = new ProviderRegistry();
+
+    registry.register({
+      providerId: 'alpha',
+      displayName: 'Alpha',
+      discover: async () => [],
+      run: async () => ({ text: 'ok', tokensUsed: 0, latencyMs: 1, rawResponse: {} }),
+      healthCheck: async () => ({ status: 'degraded', latencyMs: 50 })
+    });
+    registry.register({
+      providerId: 'beta',
+      displayName: 'Beta',
+      discover: async () => [],
+      run: async () => ({ text: 'ok', tokensUsed: 0, latencyMs: 1, rawResponse: {} }),
+      healthCheck: async () => ({ status: 'healthy', latencyMs: 40 })
+    });
+
+    const preferredFromPolicy = await registry.resolvePreferredProviderId(
+      {
+        allowedStatuses: ['healthy'],
+        maxLatencyMs: 20
+      },
+      ['alpha', 'beta']
+    );
+
+    expect(preferredFromPolicy).toBeUndefined();
+  });
 });

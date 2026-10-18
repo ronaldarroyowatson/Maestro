@@ -1,5 +1,5 @@
 import type { AgentCatalog, InferenceRequest, InferenceResponse, ProviderAdapter, ProviderHealth } from '../../src/shared/index.js';
-import type { ProviderHealthSnapshot } from './models/types.js';
+import type { ProviderHealthSnapshot, ProviderSelectionPolicy } from './models/types.js';
 import { AdapterFactory } from './services/adapter-factory/index.js';
 import { AzureOpenAiAdapter, type AzureOpenAiAdapterOptions } from './services/adapters/azure-openai/index.js';
 import { LmStudioAdapter, type LmStudioAdapterOptions } from './services/adapters/lm-studio/index.js';
@@ -16,6 +16,7 @@ export type {
   ProviderHealthEntry,
   ProviderHealthSnapshot,
   ProviderHealthSummary,
+  ProviderSelectionPolicy,
   ProviderRegistryOptions,
   UpdatePolicy
 } from './models/types.js';
@@ -159,5 +160,33 @@ export class ProviderRegistry {
       summary,
       preferredProviderId: healthyOrDegraded[0]?.providerId
     };
+  }
+
+  /** Resolves preferred provider id using health snapshot and optional orchestration policy constraints. */
+  async resolvePreferredProviderId(policy: ProviderSelectionPolicy = {}, providerIds?: string[]): Promise<string | undefined> {
+    const snapshot = await this.getHealthSnapshot(providerIds);
+    const allowedStatuses = new Set(policy.allowedStatuses ?? ['healthy', 'degraded']);
+    const priorityIndex = new Map((policy.providerPriority ?? []).map((providerId, index) => [providerId, index]));
+
+    const candidates = snapshot.entries
+      .filter((entry) => allowedStatuses.has(entry.health.status) && (policy.maxLatencyMs === undefined || entry.health.latencyMs <= policy.maxLatencyMs))
+      .sort((a, b) => {
+        const priorityA = priorityIndex.get(a.providerId);
+        const priorityB = priorityIndex.get(b.providerId);
+
+        if (priorityA !== undefined || priorityB !== undefined) {
+          if (priorityA === undefined) return 1;
+          if (priorityB === undefined) return -1;
+          if (priorityA !== priorityB) return priorityA - priorityB;
+        }
+
+        const latencyDelta = a.health.latencyMs - b.health.latencyMs;
+        if (latencyDelta !== 0) {
+          return latencyDelta;
+        }
+        return a.providerId.localeCompare(b.providerId);
+      });
+
+    return candidates[0]?.providerId;
   }
 }
