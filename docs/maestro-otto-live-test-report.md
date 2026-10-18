@@ -627,6 +627,7 @@ Changes:
   - `environment`, `deploymentChannel`, `hostOs`
   - `runId`, `pipelineId`
 - additional validation-failure permutation coverage now includes cycle-detection failures with seeded governance metadata continuity assertions.
+- runtime failure telemetry coverage now includes `maestro.node.failed` contract assertions with seeded governance metadata continuity.
 
 Validation:
 
@@ -634,4 +635,4 @@ Validation:
 - `npm --prefix D:\OneDrive\Documents\GitHub\Maestro run typecheck` ✅
 - `npm --prefix D:\OneDrive\Documents\GitHub\Maestro run verify:diagnostics-artifacts` ✅
 - `npm --prefix D:\OneDrive\Documents\GitHub\Maestro run validate:otto-ui-contract` ✅
-- `npm --prefix D:\OneDrive\Documents\GitHub\Maestro test` ✅ (62 files / 145 tests passed)
+- `npm --prefix D:\OneDrive\Documents\GitHub\Maestro test` ✅ (62 files / 147 tests passed)

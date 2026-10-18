@@ -91,6 +91,8 @@
   - expanded diagnostics artifact verification with invalid-pipeline failure metadata contract assertions
   - added runtime-context + identifier assertions on failure telemetry payloads (`environment`, `deploymentChannel`, `hostOs`, `runId`, `pipelineId`)
   - expanded failure telemetry permutation coverage for cycle-validation errors with governance-metadata continuity checks
+  - added runtime node-failure telemetry assertions (`maestro.node.failed`) for governance metadata continuity
+  - expanded diagnostics artifact verification for runtime service-failure telemetry invariants
 
 ## 0.1.9
 

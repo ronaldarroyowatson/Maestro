@@ -16,6 +16,8 @@ Pipeline lifecycle emissions also include optional governance-routing metadata
 for cross-run provider-policy diagnostics.
 When provided in pipeline metadata, governance metadata is seeded into runtime context
 so early validation failures still emit continuity diagnostics on pipeline-failed events.
+Runtime node-failure emissions (`maestro.node.failed`) also propagate optional governance
+metadata when available, preserving failure-context visibility for service/node error paths.
 
 ## Structure
 - models/: runtime contracts and execution result models

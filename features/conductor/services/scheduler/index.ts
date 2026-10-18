@@ -1,6 +1,7 @@
 import type { Edge, Graph, NodeInstance } from '../../../../src/shared/index.js';
 import type { ExecutionContext, RetryConfig } from '../../models/types.js';
 import { EventBus } from '../event-bus/index.js';
+import type { ConductorRuntimeTelemetryMetadata } from '../event-bus/index.js';
 import { Executor } from '../executor/index.js';
 import { RetryManager } from '../retry-manager/index.js';
 
@@ -41,7 +42,8 @@ export class Scheduler {
               runId,
               nodeId: node.instanceId,
               error: result.error ?? new Error('Node execution failed'),
-              retriesExhausted: true
+              retriesExhausted: true,
+              metadata: runtimeTelemetryMetadata(context.metadata)
             });
           }
 
@@ -52,6 +54,28 @@ export class Scheduler {
       const failedNodeIds = new Set(results.filter((result) => result.status === 'failed').map((result) => result.instanceId));
       activeEdges = activeEdges.filter((edge) => !failedNodeIds.has(edge.fromNodeId));
       activeEdges = this.executor.applyReviewerDecisions(runId, graph, context, activeEdges);
+    }
+
+    function runtimeTelemetryMetadata(metadata: Record<string, unknown>): ConductorRuntimeTelemetryMetadata | undefined {
+      const providerEntries = Object.entries(metadata)
+        .filter(([key, value]) => key.startsWith('provider:') && typeof value === 'string')
+        .map(([key, value]) => [key.replace('provider:', ''), value] as const);
+      const output: ConductorRuntimeTelemetryMetadata = {};
+
+      if (typeof metadata.providerRoutingWarning === 'string') {
+        output.providerRoutingWarning = metadata.providerRoutingWarning;
+      }
+      if (metadata.governanceState && typeof metadata.governanceState === 'object') {
+        output.governanceState = metadata.governanceState as Record<string, unknown>;
+      }
+      if (metadata.governancePolicy && typeof metadata.governancePolicy === 'object') {
+        output.governancePolicy = metadata.governancePolicy as Record<string, unknown>;
+      }
+      if (providerEntries.length > 0) {
+        output.selectedProvidersByNode = Object.fromEntries(providerEntries) as Record<string, string>;
+      }
+
+      return Object.keys(output).length > 0 ? output : undefined;
     }
 
     if (hadFailures && context.nodeResults.size === 0) {

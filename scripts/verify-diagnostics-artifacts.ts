@@ -118,6 +118,58 @@ function diagnosticsInvalidCyclePipelineWithGovernanceMetadata(): Pipeline {
   };
 }
 
+function diagnosticsRuntimeFailurePipelineWithGovernanceMetadata(): Pipeline {
+  const now = new Date();
+  return {
+    id: 'p-diagnostics-runtime-failure',
+    version: '1.0.0',
+    contentHash: 'hash-runtime-failure',
+    status: 'active',
+    createdAt: now,
+    updatedAt: now,
+    changelog: 'init',
+    metadata: {
+      name: 'diagnostics-runtime-failure',
+      description: 'runtime service failure telemetry checks',
+      tags: [],
+      createdAt: now,
+      updatedAt: now,
+      governanceState: {
+        budgetRemaining: 4,
+        reserveBudget: 1
+      },
+      governancePolicy: {
+        selectionStrategy: 'weighted'
+      },
+      providerRoutingWarning: 'seeded-runtime-warning'
+    } as unknown as Pipeline['metadata'],
+    graph: {
+      graphId: 'g-diagnostics-runtime-failure',
+      nodes: [
+        { instanceId: 'n1', nodeTypeId: 'trigger', config: { role: 'entry' }, position: { x: 0, y: 0 } },
+        { instanceId: 'n2', nodeTypeId: 'service', config: {}, position: { x: 1, y: 0 } },
+        {
+          instanceId: 'n3',
+          nodeTypeId: 'agent',
+          config: {
+            providerId: 'preferred',
+            fallbackProviderId: 'diag-alpha',
+            agentDescriptorId: 'diag-alpha:model-a',
+            promptTemplateId: 't1'
+          },
+          position: { x: 2, y: 0 }
+        },
+        { instanceId: 'n4', nodeTypeId: 'trigger', config: { role: 'exit' }, position: { x: 3, y: 0 } },
+        { instanceId: 'r1', nodeTypeId: 'reviewer', config: { schema: { type: 'object' }, ruleIds: [], ruleStrategy: 'all', maxRevisionAttempts: 1 }, position: { x: 2, y: 1 } }
+      ],
+      edges: [
+        { edgeId: 'e1', fromNodeId: 'n1', fromPort: 'out', toNodeId: 'n2', toPort: 'in' },
+        { edgeId: 'e2', fromNodeId: 'n2', fromPort: 'out', toNodeId: 'n3', toPort: 'in', reviewerNodeId: 'r1' }
+      ]
+    }
+  };
+}
+
 function adapter(providerId: string, latencyMs: number): ProviderAdapter {
   return {
     providerId,
@@ -356,6 +408,56 @@ async function main(): Promise<void> {
     expectedBudgetRemaining: 2
   });
 
+  const runtimeFailureTelemetryEvents: Array<{ eventName: string; payload: Record<string, unknown> | undefined }> = [];
+  const runtimeFailureBridge = new OttoObservabilityBridge({
+    runtimeContext: {
+      environment: 'ci',
+      deploymentChannel: 'stable',
+      hostOs: process.platform
+    },
+    logging: {
+      info: async () => {},
+      error: async () => {}
+    },
+    tracing: {
+      startSpan: async () => ({
+        annotate: async () => {},
+        end: async () => {}
+      })
+    },
+    telemetry: {
+      emit: async (eventName, payload) => {
+        runtimeFailureTelemetryEvents.push({ eventName, payload });
+      }
+    }
+  });
+  const runtimeFailureConductor = new Conductor({
+    promptEngine: prompt,
+    contextEngine: context,
+    reviewer,
+    providerRegistry: {
+      run: async (providerId, request) => providerRegistry.run(providerId, request)
+    },
+    serviceRegistry: new Map([
+      [
+        'service',
+        async () => {
+          throw new Error('intentional runtime service failure');
+        }
+      ]
+    ])
+  });
+  runtimeFailureBridge.bind(runtimeFailureConductor.eventBus);
+  const runtimeFailureResult = await runtimeFailureConductor.run(diagnosticsRuntimeFailurePipelineWithGovernanceMetadata(), 'hello');
+  await runtimeFailureBridge.flush();
+  if (runtimeFailureResult.status !== 'partial') {
+    throw new Error('Diagnostics verification failed: runtime failure pipeline did not produce partial status.');
+  }
+  const runtimeNodeFailedPayload = runtimeFailureTelemetryEvents.find(
+    (event) => event.eventName === 'maestro.node.failed' && String(event.payload?.nodeId ?? '') === 'n2'
+  )?.payload;
+  assertRuntimeFailureNodeTelemetryShape(runtimeNodeFailedPayload);
+
   const diagnosticsDir = path.resolve('dist', 'diagnostics');
   await mkdir(diagnosticsDir, { recursive: true });
 
@@ -374,6 +476,7 @@ async function main(): Promise<void> {
     },
     earlyFailure: failedPayload,
     earlyFailureCycle: failedCyclePayload,
+    runtimeNodeFailure: runtimeNodeFailedPayload,
     emittedMetadata: emittedGovernanceMetadata,
     telemetryEvents,
     routedProviders
@@ -497,5 +600,38 @@ function assertEarlyFailureGovernanceMetadataShape(
   }
   if ((governanceState as Record<string, unknown>).budgetRemaining !== options.expectedBudgetRemaining) {
     throw new Error('Diagnostics verification failed: invalid pipeline governanceState budget mismatch.');
+  }
+}
+
+function assertRuntimeFailureNodeTelemetryShape(payload: Record<string, unknown> | undefined): void {
+  if (!payload) {
+    throw new Error('Diagnostics verification failed: missing node-failed telemetry payload for runtime service failure.');
+  }
+  if (payload.pipelineId !== undefined) {
+    throw new Error('Diagnostics verification failed: node-failed payload unexpectedly includes pipelineId.');
+  }
+  if (payload.nodeId !== 'n2') {
+    throw new Error('Diagnostics verification failed: runtime node-failed payload nodeId mismatch.');
+  }
+  if (typeof payload.error !== 'string' || !payload.error.includes('intentional runtime service failure')) {
+    throw new Error('Diagnostics verification failed: runtime node-failed payload error mismatch.');
+  }
+  if (payload.environment !== 'ci' || payload.deploymentChannel !== 'stable' || typeof payload.hostOs !== 'string') {
+    throw new Error('Diagnostics verification failed: runtime node-failed payload context metadata mismatch.');
+  }
+  const metadata = payload.metadata;
+  if (!metadata || typeof metadata !== 'object') {
+    throw new Error('Diagnostics verification failed: runtime node-failed payload metadata missing.');
+  }
+  const metadataRecord = metadata as Record<string, unknown>;
+  if (metadataRecord.providerRoutingWarning !== 'seeded-runtime-warning') {
+    throw new Error('Diagnostics verification failed: runtime node-failed providerRoutingWarning mismatch.');
+  }
+  const governanceState = metadataRecord.governanceState;
+  if (!governanceState || typeof governanceState !== 'object') {
+    throw new Error('Diagnostics verification failed: runtime node-failed governanceState missing.');
+  }
+  if ((governanceState as Record<string, unknown>).budgetRemaining !== 4) {
+    throw new Error('Diagnostics verification failed: runtime node-failed governanceState budget mismatch.');
   }
 }

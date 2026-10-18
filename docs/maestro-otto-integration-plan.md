@@ -80,12 +80,13 @@ This section is intentionally added before major implementation changes.
 - Additional governance trace hardening implemented: fallback/error permutation metadata assertions and workflow-level governance trace contract checks in diagnostics verification.
 - Additional governance trace hardening implemented: early pipeline-failure metadata continuity coverage with seeded governance metadata in failure telemetry, plus failure telemetry contract assertions for runtime context (`environment`, `deploymentChannel`, `hostOs`) and failure identifiers (`runId`, `pipelineId`).
 - Additional governance trace hardening implemented: cycle-validation failure telemetry coverage with governance-metadata continuity assertions and workflow-level diagnostics checks.
-- Current execution focus: expanding governance telemetry invariants for additional runtime failure classes beyond validation failures.
+- Additional governance trace hardening implemented: runtime service/node-failure telemetry coverage with governance metadata continuity assertions on `maestro.node.failed` payloads.
+- Current execution focus: expanding telemetry invariants across broader runtime failure classes and edge-path permutations.
 
 ### Next Step
 
-1. Expand governance telemetry assertions for runtime execution failure classes (node/service failures) in addition to validation failures.
-2. Add diagnostics artifact checks for those runtime-failure telemetry invariants.
+1. Expand telemetry assertions for additional runtime edge-path permutations (retry exhaustion variants, mixed node outcomes).
+2. Extend diagnostics artifact checks for those runtime edge-path invariants.
 3. Run integrated validation pass and prepare commit/push checkpoint.
 
 ## End-of-Day Checkpoint (2026-10-17)

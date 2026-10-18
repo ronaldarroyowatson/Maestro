@@ -106,6 +106,48 @@ function invalidObservabilityCyclePipelineWithGovernanceMetadata(): Pipeline {
   };
 }
 
+function runtimeFailureObservabilityPipelineWithGovernanceMetadata(): Pipeline {
+  const now = new Date();
+  return {
+    id: 'p-observability-runtime-failure',
+    version: '1.0.0',
+    contentHash: 'hash-runtime-failure',
+    status: 'active',
+    createdAt: now,
+    updatedAt: now,
+    changelog: 'init',
+    metadata: {
+      name: 'observability-runtime-failure',
+      description: 'runtime service failure telemetry checks',
+      tags: [],
+      createdAt: now,
+      updatedAt: now,
+      governanceState: {
+        budgetRemaining: 4,
+        reserveBudget: 1
+      },
+      governancePolicy: {
+        selectionStrategy: 'weighted'
+      },
+      providerRoutingWarning: 'seeded-runtime-warning'
+    } as unknown as Pipeline['metadata'],
+    graph: {
+      graphId: 'g-observability-runtime-failure',
+      nodes: [
+        { instanceId: 'n1', nodeTypeId: 'trigger', config: { role: 'entry' }, position: { x: 0, y: 0 } },
+        { instanceId: 'n2', nodeTypeId: 'service', config: {}, position: { x: 1, y: 0 } },
+        { instanceId: 'n3', nodeTypeId: 'agent', config: { providerId: 'mock', agentDescriptorId: 'mock:a', promptTemplateId: 't1' }, position: { x: 2, y: 0 } },
+        { instanceId: 'n4', nodeTypeId: 'trigger', config: { role: 'exit' }, position: { x: 3, y: 0 } },
+        { instanceId: 'r1', nodeTypeId: 'reviewer', config: { schema: { type: 'object' }, ruleIds: [], ruleStrategy: 'all', maxRevisionAttempts: 1 }, position: { x: 2, y: 1 } }
+      ],
+      edges: [
+        { edgeId: 'e1', fromNodeId: 'n1', fromPort: 'out', toNodeId: 'n2', toPort: 'in' },
+        { edgeId: 'e2', fromNodeId: 'n2', fromPort: 'out', toNodeId: 'n3', toPort: 'in', reviewerNodeId: 'r1' }
+      ]
+    }
+  };
+}
+
 describe('conductor + otto observability bridge', () => {
   it('emits deterministic runtime observability traces for conductor execution', async () => {
     const prompt = new PromptEngine();
@@ -342,5 +384,72 @@ describe('conductor + otto observability bridge', () => {
       ((failedPayload?.metadata as Record<string, unknown> | undefined)?.governancePolicy as Record<string, unknown> | undefined)
         ?.selectionStrategy
     ).toBe('latency-first');
+  });
+
+  it('includes governance metadata in node-failed telemetry for runtime service failures', async () => {
+    const prompt = new PromptEngine();
+    const context = new ContextEngine();
+    const rules = new RulesEngine();
+    const reviewer = new Reviewer(rules, prompt);
+
+    const telemetryEvents: Array<{ eventName: string; payload: Record<string, unknown> | undefined }> = [];
+    const bridge = new OttoObservabilityBridge({
+      runtimeContext: {
+        environment: 'test',
+        deploymentChannel: 'stable',
+        hostOs: 'windows'
+      },
+      logging: {
+        info: async () => {},
+        error: async () => {}
+      },
+      tracing: {
+        startSpan: async () => ({
+          annotate: async () => {},
+          end: async () => {}
+        })
+      },
+      telemetry: {
+        emit: async (eventName, payload) => {
+          telemetryEvents.push({ eventName, payload });
+        }
+      }
+    });
+
+    const conductor = new Conductor({
+      promptEngine: prompt,
+      contextEngine: context,
+      reviewer,
+      providerRegistry: {
+        run: async () => ({ text: 'agent-output', tokensUsed: 1, latencyMs: 1, rawResponse: {} })
+      },
+      serviceRegistry: new Map([
+        [
+          'service',
+          async () => {
+            throw new Error('intentional runtime service failure');
+          }
+        ]
+      ])
+    });
+
+    bridge.bind(conductor.eventBus);
+    const result = await conductor.run(runtimeFailureObservabilityPipelineWithGovernanceMetadata(), 'hello');
+    await bridge.flush();
+
+    expect(result.status).toBe('partial');
+    const nodeFailedEvent = telemetryEvents.find(
+      (event) => event.eventName === 'maestro.node.failed' && String(event.payload?.nodeId ?? '') === 'n2'
+    );
+    expect(nodeFailedEvent).toBeDefined();
+    expect(String(nodeFailedEvent?.payload?.error ?? '')).toContain('intentional runtime service failure');
+    expect(nodeFailedEvent?.payload?.environment).toBe('test');
+    expect(nodeFailedEvent?.payload?.deploymentChannel).toBe('stable');
+    expect(nodeFailedEvent?.payload?.hostOs).toBe('windows');
+    expect(
+      ((nodeFailedEvent?.payload?.metadata as Record<string, unknown> | undefined)?.governanceState as Record<string, unknown> | undefined)
+        ?.budgetRemaining
+    ).toBe(4);
+    expect((nodeFailedEvent?.payload?.metadata as Record<string, unknown> | undefined)?.providerRoutingWarning).toBe('seeded-runtime-warning');
   });
 });

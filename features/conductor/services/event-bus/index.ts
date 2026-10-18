@@ -10,7 +10,13 @@ export interface ConductorRuntimeTelemetryMetadata {
 export interface ConductorEventPayloads {
   [EVENT_NAMES.NODE_STARTED]: { runId: string; nodeId: string };
   [EVENT_NAMES.NODE_COMPLETED]: { runId: string; nodeId: string; output: unknown };
-  [EVENT_NAMES.NODE_FAILED]: { runId: string; nodeId: string; error: Error; retriesExhausted?: boolean };
+  [EVENT_NAMES.NODE_FAILED]: {
+    runId: string;
+    nodeId: string;
+    error: Error;
+    retriesExhausted?: boolean;
+    metadata?: ConductorRuntimeTelemetryMetadata;
+  };
   [EVENT_NAMES.REVIEWER_DECISION]: { runId: string; edgeId: string; decision: 'accepted' | 'revision-requested' | 'rejected' };
   [EVENT_NAMES.PIPELINE_STARTED]: { runId: string; pipelineId: string; metadata?: ConductorRuntimeTelemetryMetadata };
   [EVENT_NAMES.PIPELINE_COMPLETED]: { runId: string; pipelineId: string; metadata?: ConductorRuntimeTelemetryMetadata };
