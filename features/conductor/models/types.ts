@@ -46,6 +46,11 @@ export type ServiceHandler = (nodeConfig: Record<string, unknown>, context: Exec
 /** Registry of service handlers by node type id. */
 export type ServiceRegistry = Map<string, ServiceHandler>;
 
+/** Optional provider-routing strategy for agent-node execution. */
+export interface ProviderRoutingStrategy {
+  resolvePreferredProviderId(input: { nodeConfig: Record<string, unknown>; context: ExecutionContext }): Promise<string | undefined>;
+}
+
 /** Minimal conductor runtime dependencies. */
 export interface ConductorDependencies {
   providerRegistry: { run: (providerId: string, request: { agentDescriptorId: string; prompt: string; context: string; imageBuffer?: Buffer }) => Promise<{ text: string; tokensUsed: number; latencyMs: number; rawResponse: unknown }> };
@@ -53,6 +58,7 @@ export interface ConductorDependencies {
   contextEngine: { build: (input: { documentId: string; text: string; pageNumber?: number }) => { context: string } };
   reviewer: { review: (input: { output: unknown; config: { schema: Record<string, unknown>; ruleIds: string[]; ruleStrategy: 'all' | 'any'; maxRevisionAttempts?: number; revisionTemplateId?: string }; revisionAttempt: number }) => { decision: 'accepted' | 'revision-requested' | 'rejected'; correctionPrompt?: string } };
   serviceRegistry: ServiceRegistry;
+  providerRouting?: ProviderRoutingStrategy;
 }
 
 /** Runtime options for deterministic execution behavior in tests and controlled environments. */

@@ -20,7 +20,15 @@ import { Executor } from './services/executor/index.js';
 import { Scheduler } from './services/scheduler/index.js';
 import { NodeGraph } from '../node-graph/index.js';
 
-export type { ConductorDependencies, ConductorRuntimeOptions, ExecutionContext, ExecutionResult, NodeResult, RetryConfig } from './models/types.js';
+export type {
+  ConductorDependencies,
+  ConductorRuntimeOptions,
+  ExecutionContext,
+  ExecutionResult,
+  NodeResult,
+  ProviderRoutingStrategy,
+  RetryConfig
+} from './models/types.js';
 
 /** Conductor runtime for DAG pipeline execution with event streaming. */
 export class Conductor {

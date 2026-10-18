@@ -9,7 +9,8 @@
         "test:watch": "vitest",
         "typecheck": "tsc -p tsconfig.json --noEmit",
         "validate:command-service": "node --import tsx ./src/shared/utils/commandServiceContract.ts",
-        "validate:otto-ui-contract": "node --import tsx ./scripts/otto-ui-tracer-bullet.ts"
+        "validate:otto-ui-contract": "node --import tsx ./scripts/otto-ui-tracer-bullet.ts",
+        "verify:diagnostics-artifacts": "node --import tsx ./scripts/verify-diagnostics-artifacts.ts"
     },
     "dependencies": {
         "@otto/command-service": "file:../otto-command-service",

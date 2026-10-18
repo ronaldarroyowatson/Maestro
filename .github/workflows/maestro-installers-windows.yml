@@ -18,6 +18,28 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install Maestro dependencies
+        shell: pwsh
+        run: npm ci
+
+      - name: Verify backbone routing and diagnostics artifacts
+        shell: pwsh
+        run: |
+          npm test -- features/conductor/tests/conductor-provider-routing.integration.test.ts features/conductor/tests/conductor-otto-observability.integration.test.ts features/provider-registry/tests/provider-registry.test.ts
+          npm run verify:diagnostics-artifacts
+
+      - name: Upload diagnostics artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: maestro-diagnostics-artifacts
+          path: dist/diagnostics/*.json
+
       - name: Resolve version
         shell: pwsh
         run: |

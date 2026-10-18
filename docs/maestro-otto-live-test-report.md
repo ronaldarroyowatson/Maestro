@@ -391,6 +391,38 @@ Validation:
 - `npm --prefix D:\OneDrive\Documents\GitHub\Maestro test -- features/provider-registry/tests/provider-registry.test.ts` ✅
 - `npm --prefix D:\OneDrive\Documents\GitHub\Maestro run typecheck` ✅
 
+### Conductor-to-provider routing integration + diagnostics workflow verification (2026-10-17)
+
+Objective:
+
+- verify end-to-end routing from conductor agent nodes into provider-registry preferred-provider snapshots and enforce workflow-level diagnostics artifact checks.
+
+Changes:
+
+- added conductor integration routing behavior:
+  - agent node `providerId: "preferred"` now routes via optional conductor provider-routing strategy,
+  - fallback provider recovery path (`fallbackProviderId`) when preferred-provider resolution is unavailable or errors.
+- added integration test:
+  - `features/conductor/tests/conductor-provider-routing.integration.test.ts`
+  - validates preferred-provider selection and fallback recovery on resolver failure.
+- added diagnostics artifact verification script:
+  - `scripts/verify-diagnostics-artifacts.ts`
+  - emits:
+    - `dist/diagnostics/provider-health-snapshot.json`
+    - `dist/diagnostics/observability-trace.json`
+  - fails fast when provider-health/observability invariants are not satisfied.
+- updated workflow:
+  - `.github/workflows/maestro-installers-windows.yml`
+  - adds Node setup, dependency install, targeted backbone tests, diagnostics verification script execution, and diagnostics artifact upload.
+
+Validation:
+
+- `npm --prefix D:\OneDrive\Documents\GitHub\Maestro test -- features/conductor/tests/conductor-provider-routing.integration.test.ts features/conductor/tests/conductor-otto-observability.integration.test.ts features/provider-registry/tests/provider-registry.test.ts` ✅
+- `npm --prefix D:\OneDrive\Documents\GitHub\Maestro run typecheck` ✅
+- `npm --prefix D:\OneDrive\Documents\GitHub\Maestro run verify:diagnostics-artifacts` ✅
+- `npm --prefix D:\OneDrive\Documents\GitHub\Maestro run validate:otto-ui-contract` ✅
+  - tracer route remains stable at `/maestro/install-status`
+
 ---
 
 ## End-of-Day Summary (2026-10-17)

@@ -45,7 +45,7 @@ export class Executor {
       } else if (shape === 'agent') {
         const promptTemplateId = String(node.config.promptTemplateId ?? 'default');
         const descriptorId = String(node.config.agentDescriptorId ?? 'unknown');
-        const providerId = String(node.config.providerId ?? 'ollama');
+        const providerId = await this.resolveProviderId(node.config, context);
 
         const contextPayload = this.deps.contextEngine.build({
           documentId: String(context.metadata.documentId ?? randomUUID()),
@@ -59,6 +59,7 @@ export class Executor {
           context: contextPayload.context,
           imageBuffer: node.config.imageBuffer as Buffer | undefined
         });
+        context.metadata[`provider:${node.instanceId}`] = providerId;
       } else if (shape === 'conductor') {
         result.output = context.metadata.lastOutput;
       }
@@ -76,6 +77,32 @@ export class Executor {
       result.error = error instanceof Error ? error : new Error(String(error));
       context.nodeResults.set(node.instanceId, result);
       return result;
+    }
+  }
+
+  private async resolveProviderId(nodeConfig: Record<string, unknown>, context: ExecutionContext): Promise<string> {
+    const configuredProviderId = String(nodeConfig.providerId ?? 'ollama');
+    if (configuredProviderId !== 'preferred') {
+      return configuredProviderId;
+    }
+
+    const fallbackProviderId = String(nodeConfig.fallbackProviderId ?? 'ollama');
+    const routing = this.deps.providerRouting;
+    if (!routing) {
+      return fallbackProviderId;
+    }
+
+    try {
+      const resolved = await routing.resolvePreferredProviderId({ nodeConfig, context });
+      if (typeof resolved === 'string' && resolved.length > 0) {
+        return resolved;
+      }
+      context.metadata.providerRoutingWarning = `preferred-provider-unavailable: fallback=${fallbackProviderId}`;
+      return fallbackProviderId;
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      context.metadata.providerRoutingWarning = `preferred-provider-error: ${message}; fallback=${fallbackProviderId}`;
+      return fallbackProviderId;
     }
   }
 

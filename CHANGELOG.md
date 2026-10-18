@@ -63,6 +63,12 @@
   - `getHealthSnapshot(providerIds?)` with sorted entries, isolated failures, summary counts
   - deterministic preferred-provider selection (latency, then provider id tie-break)
 - Added end-of-day documentation checkpoint updates for integration status and next-session execution handoff.
+- Added conductor/provider-registry routing integration coverage:
+  - agent routing support for `providerId: "preferred"` with `fallbackProviderId` recovery behavior
+  - new conductor integration test validating preferred-provider and fallback error-mode recovery
+- Added workflow diagnostics artifact verification:
+  - `verify:diagnostics-artifacts` script generates provider-health and observability-trace diagnostics outputs
+  - Windows installer workflow now runs targeted backbone tests and uploads diagnostics artifact JSONs
 
 ## 0.1.9
 

@@ -73,12 +73,14 @@ This section is intentionally added before major implementation changes.
 - Conductor observability runtime trace wiring and deterministic event-trace integration coverage implemented with passing integration tests.
 - Conductor observability payload contracts now include runtime/deployment metadata for environment-aware diagnostics.
 - Second backbone slice implemented in `features/provider-registry`: deterministic provider-health snapshot contract with failure isolation and preferred-provider selection.
+- Conductor-to-provider-registry routing integration test implemented using preferred-provider health snapshot selection with fallback recovery coverage.
+- Workflow diagnostics artifact verification is implemented in Windows installer workflow (targeted tests + diagnostics artifact generation/upload).
 
 ### Next Step
 
-1. Add end-to-end conductor-to-provider-registry routing test that consumes health snapshot preferred-provider decisions.
-2. Add live diagnostics artifact verification in workflow for provider health + observability traces.
-3. Prepare commit/push batch and phase checkpoint after integrated validation run.
+1. Run integrated validation pass for current backbone slices (`typecheck`, targeted backbone tests, tracer bullet).
+2. Prepare commit/push batch and phase checkpoint with the new routing/diagnostics verification coverage.
+3. Start next backbone increment for conductor-provider orchestration policy hardening.
 
 ## End-of-Day Checkpoint (2026-10-17)
 
