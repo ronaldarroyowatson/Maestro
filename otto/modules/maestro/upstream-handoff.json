@@ -1,0 +1,44 @@
+{
+  "schemaVersion": "1.0.0",
+  "moduleId": "maestro",
+  "moduleManifest": "otto/modules/maestro/manifest.json",
+  "registrationContract": "otto/manifests/maestro-module-registration.json",
+  "commandManifest": "otto/maestro-commands.json",
+  "uiContract": "otto/manifests/maestro-ui-contract.json",
+  "upstreams": [
+    {
+      "id": "otto-command-service-module-manifest",
+      "targetRepo": "../otto-command-service",
+      "targetPath": "src/modules/maestro/manifest.json",
+      "sourcePath": "otto/modules/maestro/manifest.json",
+      "purpose": "Registers Maestro as an Otto module package in command-service source of truth."
+    },
+    {
+      "id": "otto-command-service-command-manifest",
+      "targetRepo": "../otto-command-service",
+      "targetPath": "src/modules/maestro/commands.json",
+      "sourcePath": "otto/maestro-commands.json",
+      "purpose": "Publishes Otto command schemas and payload expectations for Maestro lifecycle commands."
+    },
+    {
+      "id": "otto-ui-contract-manifest",
+      "targetRepo": "../otto-ui",
+      "targetPath": "src/modules/maestro/ui-contract.json",
+      "sourcePath": "otto/manifests/maestro-ui-contract.json",
+      "purpose": "Provides contract-driven page and panel metadata for Otto UI runtime ingestion."
+    },
+    {
+      "id": "otto-ui-module-registration",
+      "targetRepo": "../otto-ui",
+      "targetPath": "src/modules/maestro/module-registration.json",
+      "sourcePath": "otto/manifests/maestro-module-registration.json",
+      "purpose": "Provides module registration metadata and entry route for Otto UI module mounting."
+    }
+  ],
+  "requiredChecks": [
+    "module-id-consistency",
+    "command-service-boundary",
+    "local-source-paths-exist",
+    "required-command-schemas"
+  ]
+}

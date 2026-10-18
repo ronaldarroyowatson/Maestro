@@ -95,4 +95,8 @@ export {
   loadMaestroOttoModuleDefinition,
   validateMaestroOttoModuleDefinition
 } from './utils/ottoModuleDefinition.js';
+export {
+  loadMaestroOttoUpstreamHandoffContract,
+  validateMaestroOttoUpstreamHandoffContract
+} from './utils/ottoUpstreamIntegrationContract.js';
 export { validateMaestroModuleRegistration } from './utils/ottoModuleRegistration.js';

@@ -32,6 +32,10 @@ The workspace root appears to be the active Maestro runtime repository based on:
 - The next concrete Otto integration milestone is now formalized as a real module definition: Maestro now has a concrete module manifest under `otto/modules/maestro/manifest.json` plus validation logic in `src/shared/utils/ottoModuleDefinition.ts`. This closes the missing gap between the UI/registration contracts and an actual Otto module package definition.
 - The command-service rule remains intact: the module manifest explicitly declares the external `otto-command-service` layer as the source of command exposure, while Maestro provides the contract package, runtime logic, and manifest bootstrap metadata that Otto consumes.
 - Repository hygiene and public release readiness are now being standardized to the broader Otto ecosystem norm: canonical docs, a permissive MIT license, contribution/security policies, and a public GitHub visibility pass are being completed so the project is ready for broader adoption and open-source collaboration.
+- Repository hygiene/public release readiness has been completed for the current phase: MIT licensing, canonical OSS docs, and public repository visibility are now in place.
+- The next integration step is active: codifying the upstream handoff contract so Maestro module/command/UI manifests can be synced into the external Otto command-service and UI runtimes deterministically.
+- The upstream handoff contract phase is now complete in-repo: `otto/modules/maestro/upstream-handoff.json` defines deterministic source-to-target sync mappings for `otto-command-service` and `otto-ui`, and `src/shared/utils/ottoUpstreamIntegrationContract.ts` validates mapping integrity and command-boundary consistency.
+- The next phase is external execution: apply those mappings in the upstream Otto repositories and verify live module registration + command/UI ingestion end-to-end.
 
 ## Existing Otto Alignment
 

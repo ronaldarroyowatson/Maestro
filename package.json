@@ -9,6 +9,7 @@
         "test:watch": "vitest",
         "typecheck": "tsc -p tsconfig.json --noEmit",
         "validate:command-service": "node --import tsx ./src/shared/utils/commandServiceContract.ts",
+        "validate:otto-upstream-contract": "node --import tsx ./src/shared/utils/ottoUpstreamIntegrationContract.ts",
         "validate:otto-ui-contract": "node --import tsx ./scripts/otto-ui-tracer-bullet.ts",
         "verify:diagnostics-artifacts": "node --import tsx ./scripts/verify-diagnostics-artifacts.ts"
     },

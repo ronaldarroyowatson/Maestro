@@ -33,6 +33,11 @@
   - `tests/shared/otto-module-registration.test.ts`
 - Added observability baseline validation test:
   - `tests/shared/otto-observability-modules.test.ts`
+- Added Otto upstream handoff contract scaffolding and validation:
+  - `otto/modules/maestro/upstream-handoff.json`
+  - `src/shared/utils/ottoUpstreamIntegrationContract.ts`
+  - `tests/shared/otto-upstream-integration-contract.test.ts`
+  - `validate:otto-upstream-contract` npm script
 - Added Otto ecosystem capability mapping doc:
   - `docs/maestro-otto-ecosystem-capability-map.md`
 - Added repository-level Copilot source-of-truth instructions:
