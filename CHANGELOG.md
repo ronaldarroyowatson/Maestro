@@ -98,6 +98,8 @@
   - added multi-failure layer telemetry assertions for deterministic `maestro.node.failed` cardinality and continuity metadata
   - added fallback-cascade failure telemetry assertions for preferred-routing failure + fallback-provider execution failure
   - expanded diagnostics artifact verification for multi-failure and fallback-cascade telemetry invariants
+  - added governance policy-state drift telemetry assertions across repeated failure runs with deterministic budget-sequence checks
+  - expanded diagnostics artifact verification for policy-state drift continuity invariants
 
 ## 0.1.9
 

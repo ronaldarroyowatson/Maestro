@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest';
 import type { Pipeline } from '../../../src/shared/index.js';
 import { ContextEngine } from '../../context-engine/index.js';
 import { PromptEngine } from '../../prompt-engine/index.js';
+import type { ProviderGovernanceState } from '../../provider-registry/index.js';
+import { ProviderRegistry } from '../../provider-registry/index.js';
 import { Reviewer } from '../../reviewer/index.js';
 import { RulesEngine } from '../../rules-engine/index.js';
 import { Conductor, OttoObservabilityBridge } from '../index.js';
@@ -243,6 +245,40 @@ function runtimeFallbackCascadeFailurePipelineWithGovernanceMetadata(): Pipeline
     metadata: { name: 'observability-runtime-fallback-cascade', description: 'fallback cascade failure telemetry checks', tags: [], createdAt: now, updatedAt: now } as Pipeline['metadata'],
     graph: {
       graphId: 'g-observability-runtime-fallback-cascade',
+      nodes: [
+        { instanceId: 'n1', nodeTypeId: 'trigger', config: { role: 'entry' }, position: { x: 0, y: 0 } },
+        {
+          instanceId: 'n2',
+          nodeTypeId: 'agent',
+          config: { providerId: 'preferred', fallbackProviderId: 'alpha', agentDescriptorId: 'alpha:model-a', promptTemplateId: 't1', maxRetries: 0 },
+          position: { x: 1, y: 0 }
+        },
+        { instanceId: 'n3', nodeTypeId: 'trigger', config: { role: 'exit' }, position: { x: 2, y: 0 } }
+      ],
+      edges: [{ edgeId: 'e1', fromNodeId: 'n1', fromPort: 'out', toNodeId: 'n2', toPort: 'in' }]
+    }
+  };
+}
+
+function runtimePolicyStateDriftFailurePipelineWithGovernanceMetadata(): Pipeline {
+  const now = new Date();
+  return {
+    id: 'p-observability-runtime-policy-state-drift',
+    version: '1.0.0',
+    contentHash: 'hash-runtime-policy-state-drift',
+    status: 'active',
+    createdAt: now,
+    updatedAt: now,
+    changelog: 'init',
+    metadata: {
+      name: 'observability-runtime-policy-state-drift',
+      description: 'governance policy-state drift telemetry checks across repeated failure runs',
+      tags: [],
+      createdAt: now,
+      updatedAt: now
+    } as Pipeline['metadata'],
+    graph: {
+      graphId: 'g-observability-runtime-policy-state-drift',
       nodes: [
         { instanceId: 'n1', nodeTypeId: 'trigger', config: { role: 'entry' }, position: { x: 0, y: 0 } },
         {
@@ -802,5 +838,115 @@ describe('conductor + otto observability bridge', () => {
     expect(String((nodeFailedEvent?.payload?.metadata as Record<string, unknown> | undefined)?.providerRoutingWarning ?? '')).toContain(
       'fallback=alpha'
     );
+  });
+
+  it('emits governance policy-state drift telemetry across repeated failure runs', async () => {
+    const prompt = new PromptEngine();
+    const context = new ContextEngine();
+    const rules = new RulesEngine();
+    const reviewer = new Reviewer(rules, prompt);
+    prompt.registerTemplate({
+      id: 't1',
+      version: '1.0.0',
+      contentHash: 'h',
+      status: 'active',
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      changelog: 'init',
+      title: 't',
+      template: 'Echo: {{output}}',
+      variables: ['output']
+    });
+
+    const providerRegistry = new ProviderRegistry();
+    providerRegistry.register({
+      providerId: 'alpha',
+      displayName: 'alpha',
+      discover: async () => [],
+      run: async () => ({ text: 'ignored', tokensUsed: 1, latencyMs: 1, rawResponse: {} }),
+      healthCheck: async () => ({ status: 'healthy', latencyMs: 5 })
+    });
+
+    let governanceState: ProviderGovernanceState = {
+      blockedProviderIds: [],
+      cooldownUntilByProviderId: {},
+      budgetRemaining: 6,
+      reserveBudget: 1
+    };
+
+    const nodeFailedBudgets: number[] = [];
+    const telemetryEvents: Array<{ eventName: string; payload: Record<string, unknown> | undefined }> = [];
+    const bridge = new OttoObservabilityBridge({
+      runtimeContext: { environment: 'test', deploymentChannel: 'stable', hostOs: 'windows' },
+      logging: { info: async () => {}, error: async () => {} },
+      tracing: {
+        startSpan: async () => ({
+          annotate: async () => {},
+          end: async () => {}
+        })
+      },
+      telemetry: {
+        emit: async (eventName, payload) => {
+          telemetryEvents.push({ eventName, payload });
+          if (eventName === 'maestro.node.failed' && String(payload?.nodeId ?? '') === 'n2') {
+            const budget = Number(
+              ((payload?.metadata as Record<string, unknown> | undefined)?.governanceState as Record<string, unknown> | undefined)
+                ?.budgetRemaining
+            );
+            if (Number.isFinite(budget)) {
+              nodeFailedBudgets.push(budget);
+            }
+          }
+        }
+      }
+    });
+
+    const conductor = new Conductor({
+      promptEngine: prompt,
+      contextEngine: context,
+      reviewer,
+      providerRegistry: {
+        run: async () => {
+          throw new Error('intentional governance drift failure');
+        }
+      },
+      providerRouting: {
+        resolvePreferredProviderId: async ({ context: executionContext }) => {
+          const policy = providerRegistry.createSelectionPolicyWithGovernance(
+            {
+              providerCostByProviderId: { alpha: 2 }
+            },
+            governanceState,
+            new Date('2026-10-18T00:00:00.000Z')
+          );
+          executionContext.metadata.governancePolicy = policy;
+          executionContext.metadata.governanceState = governanceState;
+
+          const selectedProviderId = await providerRegistry.resolvePreferredProviderId(policy, ['alpha']);
+          governanceState = providerRegistry.createNextGovernanceState({
+            previousState: governanceState,
+            policy,
+            selectedProviderId,
+            evaluatedAt: new Date('2026-10-18T00:00:00.000Z')
+          });
+          executionContext.metadata.governanceState = governanceState;
+          return selectedProviderId;
+        }
+      },
+      serviceRegistry: new Map([['service', async () => 'noop']])
+    });
+
+    bridge.bind(conductor.eventBus);
+    const first = await conductor.run(runtimePolicyStateDriftFailurePipelineWithGovernanceMetadata(), 'hello-1');
+    const second = await conductor.run(runtimePolicyStateDriftFailurePipelineWithGovernanceMetadata(), 'hello-2');
+    await bridge.flush();
+
+    expect(first.status).toBe('partial');
+    expect(second.status).toBe('partial');
+    expect(nodeFailedBudgets).toEqual([4, 2]);
+    expect(governanceState.budgetRemaining).toBe(2);
+    expect(telemetryEvents.filter((event) => event.eventName === 'maestro.node.failed')).toHaveLength(2);
+    expect(telemetryEvents.filter((event) => event.eventName === 'maestro.pipeline.completed')).toHaveLength(2);
+    expect(telemetryEvents.some((event) => event.eventName === 'maestro.pipeline.failed')).toBe(false);
   });
 });

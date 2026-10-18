@@ -286,6 +286,46 @@ function diagnosticsRuntimeFallbackCascadeFailurePipelineWithGovernanceMetadata(
   };
 }
 
+function diagnosticsRuntimePolicyStateDriftFailurePipelineWithGovernanceMetadata(): Pipeline {
+  const now = new Date();
+  return {
+    id: 'p-diagnostics-runtime-policy-state-drift',
+    version: '1.0.0',
+    contentHash: 'hash-runtime-policy-state-drift',
+    status: 'active',
+    createdAt: now,
+    updatedAt: now,
+    changelog: 'init',
+    metadata: {
+      name: 'diagnostics-runtime-policy-state-drift',
+      description: 'governance policy-state drift telemetry checks across repeated failure runs',
+      tags: [],
+      createdAt: now,
+      updatedAt: now
+    } as Pipeline['metadata'],
+    graph: {
+      graphId: 'g-diagnostics-runtime-policy-state-drift',
+      nodes: [
+        { instanceId: 'n1', nodeTypeId: 'trigger', config: { role: 'entry' }, position: { x: 0, y: 0 } },
+        {
+          instanceId: 'n2',
+          nodeTypeId: 'agent',
+          config: {
+            providerId: 'preferred',
+            fallbackProviderId: 'diag-alpha',
+            agentDescriptorId: 'diag-alpha:model-a',
+            promptTemplateId: 't1',
+            maxRetries: 0
+          },
+          position: { x: 1, y: 0 }
+        },
+        { instanceId: 'n3', nodeTypeId: 'trigger', config: { role: 'exit' }, position: { x: 2, y: 0 } }
+      ],
+      edges: [{ edgeId: 'e1', fromNodeId: 'n1', fromPort: 'out', toNodeId: 'n2', toPort: 'in' }]
+    }
+  };
+}
+
 function adapter(providerId: string, latencyMs: number): ProviderAdapter {
   return {
     providerId,
@@ -802,6 +842,116 @@ async function main(): Promise<void> {
     throw new Error('Diagnostics verification failed: fallback-cascade providerRoutingWarning did not include expected fallback details.');
   }
 
+  let driftGovernanceState: ProviderGovernanceState = {
+    blockedProviderIds: [],
+    cooldownUntilByProviderId: {},
+    budgetRemaining: 6,
+    reserveBudget: 1
+  };
+  const runtimePolicyStateDriftTelemetryEvents: Array<{ eventName: string; payload: Record<string, unknown> | undefined }> = [];
+  const runtimePolicyStateDriftBudgets: number[] = [];
+  const runtimePolicyStateDriftBridge = new OttoObservabilityBridge({
+    runtimeContext: {
+      environment: 'ci',
+      deploymentChannel: 'stable',
+      hostOs: process.platform
+    },
+    logging: {
+      info: async () => {},
+      error: async () => {}
+    },
+    tracing: {
+      startSpan: async () => ({
+        annotate: async () => {},
+        end: async () => {}
+      })
+    },
+    telemetry: {
+      emit: async (eventName, payload) => {
+        runtimePolicyStateDriftTelemetryEvents.push({ eventName, payload });
+        if (eventName === 'maestro.node.failed' && String(payload?.nodeId ?? '') === 'n2') {
+          const budget = Number(
+            ((payload?.metadata as Record<string, unknown> | undefined)?.governanceState as Record<string, unknown> | undefined)
+              ?.budgetRemaining
+          );
+          if (Number.isFinite(budget)) {
+            runtimePolicyStateDriftBudgets.push(budget);
+          }
+        }
+      }
+    }
+  });
+  const runtimePolicyStateDriftConductor = new Conductor({
+    promptEngine: prompt,
+    contextEngine: context,
+    reviewer,
+    providerRegistry: {
+      run: async () => {
+        throw new Error('intentional governance drift failure');
+      }
+    },
+    providerRouting: {
+      resolvePreferredProviderId: async ({ context: executionContext }) => {
+        const policy = providerRegistry.createSelectionPolicyWithGovernance(
+          {
+            providerCostByProviderId: { 'diag-alpha': 2 }
+          },
+          driftGovernanceState,
+          new Date('2026-10-18T00:00:00.000Z')
+        );
+        executionContext.metadata.governancePolicy = policy;
+        executionContext.metadata.governanceState = driftGovernanceState;
+
+        const selectedProviderId = await providerRegistry.resolvePreferredProviderId(policy, ['diag-alpha']);
+        driftGovernanceState = providerRegistry.createNextGovernanceState({
+          previousState: driftGovernanceState,
+          policy,
+          selectedProviderId,
+          evaluatedAt: new Date('2026-10-18T00:00:00.000Z')
+        });
+        executionContext.metadata.governanceState = driftGovernanceState;
+        return selectedProviderId;
+      }
+    },
+    serviceRegistry: new Map([['service', async () => 'noop']])
+  });
+  runtimePolicyStateDriftBridge.bind(runtimePolicyStateDriftConductor.eventBus);
+  const runtimePolicyStateDriftFirstResult = await runtimePolicyStateDriftConductor.run(
+    diagnosticsRuntimePolicyStateDriftFailurePipelineWithGovernanceMetadata(),
+    'hello-drift-1'
+  );
+  const runtimePolicyStateDriftSecondResult = await runtimePolicyStateDriftConductor.run(
+    diagnosticsRuntimePolicyStateDriftFailurePipelineWithGovernanceMetadata(),
+    'hello-drift-2'
+  );
+  await runtimePolicyStateDriftBridge.flush();
+  if (runtimePolicyStateDriftFirstResult.status !== 'partial' || runtimePolicyStateDriftSecondResult.status !== 'partial') {
+    throw new Error('Diagnostics verification failed: policy-state drift failure runs did not produce partial status.');
+  }
+  if (runtimePolicyStateDriftBudgets.length !== 2 || runtimePolicyStateDriftBudgets[0] !== 4 || runtimePolicyStateDriftBudgets[1] !== 2) {
+    throw new Error('Diagnostics verification failed: policy-state drift budgets did not match expected deterministic sequence.');
+  }
+  if (driftGovernanceState.budgetRemaining !== 2) {
+    throw new Error('Diagnostics verification failed: policy-state drift governance budget did not converge to expected value.');
+  }
+  const runtimePolicyStateDriftNodeFailures = runtimePolicyStateDriftTelemetryEvents.filter(
+    (event) => event.eventName === 'maestro.node.failed' && String(event.payload?.nodeId ?? '') === 'n2'
+  );
+  if (runtimePolicyStateDriftNodeFailures.length !== 2) {
+    throw new Error('Diagnostics verification failed: policy-state drift expected exactly two node-failed telemetry events.');
+  }
+  for (const nodeFailureEvent of runtimePolicyStateDriftNodeFailures) {
+    assertRuntimeFailureNodeTelemetryShape(nodeFailureEvent.payload, {
+      expectedNodeId: 'n2',
+      expectedErrorIncludes: 'intentional governance drift failure',
+      expectedBudgetRemaining: Number(
+        ((nodeFailureEvent.payload?.metadata as Record<string, unknown> | undefined)?.governanceState as
+          | Record<string, unknown>
+          | undefined)?.budgetRemaining
+      )
+    });
+  }
+
   const diagnosticsDir = path.resolve('dist', 'diagnostics');
   await mkdir(diagnosticsDir, { recursive: true });
 
@@ -824,6 +974,8 @@ async function main(): Promise<void> {
     runtimeRetryNodeFailure: retryNodeFailedPayload,
     runtimeMultiFailureNodeFailures: multiFailureNodeFailedPayloads,
     runtimeFallbackCascadeNodeFailure: fallbackCascadeNodeFailedPayload,
+    runtimePolicyStateDriftNodeFailures: runtimePolicyStateDriftNodeFailures.map((event) => event.payload),
+    runtimePolicyStateDriftBudgets,
     emittedMetadata: emittedGovernanceMetadata,
     telemetryEvents,
     routedProviders
@@ -955,7 +1107,7 @@ function assertRuntimeFailureNodeTelemetryShape(
   options: {
     expectedNodeId: string;
     expectedErrorIncludes: string;
-    expectedWarning: string;
+    expectedWarning?: string;
     expectedBudgetRemaining?: number;
   }
 ): void {
@@ -982,7 +1134,7 @@ function assertRuntimeFailureNodeTelemetryShape(
     throw new Error('Diagnostics verification failed: runtime node-failed payload metadata missing.');
   }
   const metadataRecord = metadata as Record<string, unknown>;
-  if (metadataRecord.providerRoutingWarning !== options.expectedWarning) {
+  if (options.expectedWarning !== undefined && metadataRecord.providerRoutingWarning !== options.expectedWarning) {
     throw new Error('Diagnostics verification failed: runtime node-failed providerRoutingWarning mismatch.');
   }
   if (options.expectedBudgetRemaining !== undefined) {

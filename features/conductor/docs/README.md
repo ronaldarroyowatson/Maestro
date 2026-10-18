@@ -23,6 +23,8 @@ runtime executions preserve deterministic partial-status semantics with continui
 Multi-failure same-layer runs preserve deterministic `maestro.node.failed` event cardinality,
 and fallback-cascade failures preserve routing-warning context when preferred resolution fails
 before fallback-provider execution also fails.
+Repeated failure runs can carry governance policy/state metadata that demonstrates deterministic
+budget drift continuity across runs (`governanceState.budgetRemaining` sequence assertions).
 
 ## Structure
 - models/: runtime contracts and execution result models
