@@ -5,6 +5,8 @@ It contains adapter registration, model discovery, and unified inference executi
 It also exposes deterministic provider-health snapshots for runtime routing decisions.
 Preferred-provider resolution supports policy constraints (status, latency, priority ordering)
 for conductor-provider orchestration hardening.
+Policy selection now supports weighted latency/cost routing to enforce deterministic,
+cost-aware provider decisions with explicit fallback behavior.
 
 ## Structure
 - models/: public feature types

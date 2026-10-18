@@ -217,4 +217,62 @@ describe('conductor provider routing integration', () => {
     expect(routedProviders).toContain('alpha');
     expect((result.nodeResults.get('n3')?.output as { text: string } | undefined)?.text).toBe('response:alpha');
   });
+
+  it('uses weighted policy selection for preferred provider routing', async () => {
+    const prompt = new PromptEngine();
+    const context = new ContextEngine();
+    const rules = new RulesEngine();
+    const reviewer = new Reviewer(rules, prompt);
+    prompt.registerTemplate({
+      id: 't1',
+      version: '1.0.0',
+      contentHash: 'h',
+      status: 'active',
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      changelog: 'init',
+      title: 'routing-template',
+      template: 'Echo: {{output}}',
+      variables: ['output']
+    });
+
+    const providerRegistry = new ProviderRegistry();
+    providerRegistry.register(providerAdapter('alpha', 10));
+    providerRegistry.register(providerAdapter('beta', 4));
+
+    const routedProviders: string[] = [];
+    const conductor = new Conductor({
+      promptEngine: prompt,
+      contextEngine: context,
+      reviewer,
+      providerRegistry: {
+        run: async (providerId, request) => {
+          routedProviders.push(providerId);
+          return providerRegistry.run(providerId, request);
+        }
+      },
+      providerRouting: {
+        resolvePreferredProviderId: async () =>
+          providerRegistry.resolvePreferredProviderId(
+            {
+              selectionStrategy: 'weighted',
+              providerCostByProviderId: {
+                alpha: 1,
+                beta: 10
+              },
+              latencyWeight: 1,
+              costWeight: 3
+            },
+            ['alpha', 'beta']
+          )
+      },
+      serviceRegistry: new Map([['service', async (_config, executionContext) => String(executionContext.metadata.input ?? '').toUpperCase()]])
+    });
+
+    const result = await conductor.run(routingPipeline(), 'hello');
+
+    expect(result.status === 'completed' || result.status === 'partial').toBe(true);
+    expect(routedProviders).toContain('alpha');
+    expect((result.nodeResults.get('n3')?.output as { text: string } | undefined)?.text).toBe('response:alpha');
+  });
 });

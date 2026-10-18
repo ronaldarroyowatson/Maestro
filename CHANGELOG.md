@@ -73,6 +73,7 @@
   - added `resolvePreferredProviderId(policy, providerIds?)` in provider-registry
   - added policy constraints for status, latency threshold, and priority ordering
   - expanded routing tests for policy-excluded candidates and fallback recovery behavior
+  - added weighted latency/cost policy strategy with deterministic tie-break behavior
 
 ## 0.1.9
 

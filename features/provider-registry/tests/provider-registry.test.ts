@@ -314,4 +314,70 @@ describe('provider-registry modules', () => {
 
     expect(preferredFromPolicy).toBeUndefined();
   });
+
+  it('resolvePreferredProviderId supports weighted latency/cost strategy', async () => {
+    const registry = new ProviderRegistry();
+
+    registry.register({
+      providerId: 'alpha',
+      displayName: 'Alpha',
+      discover: async () => [],
+      run: async () => ({ text: 'ok', tokensUsed: 0, latencyMs: 1, rawResponse: {} }),
+      healthCheck: async () => ({ status: 'healthy', latencyMs: 10 })
+    });
+    registry.register({
+      providerId: 'beta',
+      displayName: 'Beta',
+      discover: async () => [],
+      run: async () => ({ text: 'ok', tokensUsed: 0, latencyMs: 1, rawResponse: {} }),
+      healthCheck: async () => ({ status: 'healthy', latencyMs: 4 })
+    });
+
+    const preferredFromPolicy = await registry.resolvePreferredProviderId(
+      {
+        selectionStrategy: 'weighted',
+        providerCostByProviderId: {
+          alpha: 1,
+          beta: 10
+        },
+        latencyWeight: 1,
+        costWeight: 3
+      },
+      ['alpha', 'beta']
+    );
+
+    expect(preferredFromPolicy).toBe('alpha');
+  });
+
+  it('resolvePreferredProviderId excludes unknown-cost providers when maxCost is configured', async () => {
+    const registry = new ProviderRegistry();
+
+    registry.register({
+      providerId: 'alpha',
+      displayName: 'Alpha',
+      discover: async () => [],
+      run: async () => ({ text: 'ok', tokensUsed: 0, latencyMs: 1, rawResponse: {} }),
+      healthCheck: async () => ({ status: 'healthy', latencyMs: 10 })
+    });
+    registry.register({
+      providerId: 'beta',
+      displayName: 'Beta',
+      discover: async () => [],
+      run: async () => ({ text: 'ok', tokensUsed: 0, latencyMs: 1, rawResponse: {} }),
+      healthCheck: async () => ({ status: 'healthy', latencyMs: 5 })
+    });
+
+    const preferredFromPolicy = await registry.resolvePreferredProviderId(
+      {
+        selectionStrategy: 'weighted',
+        providerCostByProviderId: {
+          beta: 3
+        },
+        maxCost: 5
+      },
+      ['alpha', 'beta']
+    );
+
+    expect(preferredFromPolicy).toBe('beta');
+  });
 });

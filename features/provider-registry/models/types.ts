@@ -71,4 +71,11 @@ export interface ProviderSelectionPolicy {
   allowedStatuses?: Array<'healthy' | 'degraded'>;
   maxLatencyMs?: number;
   providerPriority?: string[];
+  selectionStrategy?: 'latency-first' | 'weighted';
+  providerCostByProviderId?: Record<string, number>;
+  maxCost?: number;
+  latencyWeight?: number;
+  costWeight?: number;
+  degradedPenalty?: number;
+  unknownCostPenalty?: number;
 }

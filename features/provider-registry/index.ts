@@ -167,10 +167,50 @@ export class ProviderRegistry {
     const snapshot = await this.getHealthSnapshot(providerIds);
     const allowedStatuses = new Set(policy.allowedStatuses ?? ['healthy', 'degraded']);
     const priorityIndex = new Map((policy.providerPriority ?? []).map((providerId, index) => [providerId, index]));
+    const strategy = policy.selectionStrategy ?? 'latency-first';
+    const costByProviderId = policy.providerCostByProviderId ?? {};
+    const latencyWeight = policy.latencyWeight ?? 1;
+    const costWeight = policy.costWeight ?? 1;
+    const degradedPenalty = policy.degradedPenalty ?? 5;
+    const unknownCostPenalty = policy.unknownCostPenalty ?? 25;
 
     const candidates = snapshot.entries
-      .filter((entry) => allowedStatuses.has(entry.health.status) && (policy.maxLatencyMs === undefined || entry.health.latencyMs <= policy.maxLatencyMs))
+      .filter((entry) => {
+        if (!allowedStatuses.has(entry.health.status)) {
+          return false;
+        }
+        if (policy.maxLatencyMs !== undefined && entry.health.latencyMs > policy.maxLatencyMs) {
+          return false;
+        }
+        if (policy.maxCost !== undefined) {
+          const providerCost = costByProviderId[entry.providerId];
+          if (providerCost === undefined || providerCost > policy.maxCost) {
+            return false;
+          }
+        }
+        return true;
+      })
       .sort((a, b) => {
+        if (strategy === 'weighted') {
+          const aScore = weightedScore(a.providerId, a.health.status, a.health.latencyMs, {
+            latencyWeight,
+            costWeight,
+            degradedPenalty,
+            unknownCostPenalty,
+            providerCostByProviderId: costByProviderId
+          });
+          const bScore = weightedScore(b.providerId, b.health.status, b.health.latencyMs, {
+            latencyWeight,
+            costWeight,
+            degradedPenalty,
+            unknownCostPenalty,
+            providerCostByProviderId: costByProviderId
+          });
+          if (aScore !== bScore) {
+            return aScore - bScore;
+          }
+        }
+
         const priorityA = priorityIndex.get(a.providerId);
         const priorityB = priorityIndex.get(b.providerId);
 
@@ -189,4 +229,22 @@ export class ProviderRegistry {
 
     return candidates[0]?.providerId;
   }
+}
+
+function weightedScore(
+  providerId: string,
+  status: 'healthy' | 'degraded' | 'unreachable',
+  latencyMs: number,
+  options: {
+    latencyWeight: number;
+    costWeight: number;
+    degradedPenalty: number;
+    unknownCostPenalty: number;
+    providerCostByProviderId: Record<string, number>;
+  }
+): number {
+  const providerCost = options.providerCostByProviderId[providerId];
+  const costComponent = providerCost === undefined ? options.unknownCostPenalty : providerCost;
+  const statusComponent = status === 'degraded' ? options.degradedPenalty : 0;
+  return latencyMs * options.latencyWeight + costComponent * options.costWeight + statusComponent;
 }

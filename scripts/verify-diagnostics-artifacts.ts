@@ -86,9 +86,15 @@ async function main(): Promise<void> {
   const snapshot = await providerRegistry.getHealthSnapshot(['diag-alpha', 'diag-beta']);
   const policyPreferredProviderId = await providerRegistry.resolvePreferredProviderId(
     {
+      selectionStrategy: 'weighted',
       allowedStatuses: ['healthy'],
-      maxLatencyMs: 10,
-      providerPriority: ['diag-beta', 'diag-alpha']
+      maxLatencyMs: 20,
+      providerCostByProviderId: {
+        'diag-alpha': 10,
+        'diag-beta': 1
+      },
+      latencyWeight: 1,
+      costWeight: 2
     },
     ['diag-alpha', 'diag-beta']
   );
@@ -136,9 +142,15 @@ async function main(): Promise<void> {
         resolvePreferredProviderId: async () =>
           providerRegistry.resolvePreferredProviderId(
             {
+              selectionStrategy: 'weighted',
               allowedStatuses: ['healthy'],
-              maxLatencyMs: 10,
-              providerPriority: ['diag-beta', 'diag-alpha']
+              maxLatencyMs: 20,
+              providerCostByProviderId: {
+                'diag-alpha': 10,
+                'diag-beta': 1
+              },
+              latencyWeight: 1,
+              costWeight: 2
             },
             ['diag-alpha', 'diag-beta']
           )

@@ -437,9 +437,11 @@ Changes:
     - allowed statuses (`healthy` / `degraded`)
     - max latency threshold
     - explicit provider priority ordering
+    - weighted latency/cost strategy (`selectionStrategy: "weighted"`, `providerCostByProviderId`, weights/penalties)
 - conductor/provider integration tests now cover:
   - policy-constrained preferred-provider selection,
-  - fallback recovery when policy excludes all preferred candidates.
+  - fallback recovery when policy excludes all preferred candidates,
+  - weighted policy routing behavior.
 - diagnostics artifact verification script now uses policy-driven provider selection invariants.
 
 Validation:
