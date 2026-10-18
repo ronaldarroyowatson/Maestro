@@ -275,4 +275,112 @@ describe('conductor provider routing integration', () => {
     expect(routedProviders).toContain('alpha');
     expect((result.nodeResults.get('n3')?.output as { text: string } | undefined)?.text).toBe('response:alpha');
   });
+
+  it('falls back when circuit-breaker policy blocks all preferred providers', async () => {
+    const prompt = new PromptEngine();
+    const context = new ContextEngine();
+    const rules = new RulesEngine();
+    const reviewer = new Reviewer(rules, prompt);
+    prompt.registerTemplate({
+      id: 't1',
+      version: '1.0.0',
+      contentHash: 'h',
+      status: 'active',
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      changelog: 'init',
+      title: 'routing-template',
+      template: 'Echo: {{output}}',
+      variables: ['output']
+    });
+
+    const providerRegistry = new ProviderRegistry();
+    providerRegistry.register(providerAdapter('alpha', 10));
+    providerRegistry.register(providerAdapter('beta', 4));
+
+    const routedProviders: string[] = [];
+    const conductor = new Conductor({
+      promptEngine: prompt,
+      contextEngine: context,
+      reviewer,
+      providerRegistry: {
+        run: async (providerId, request) => {
+          routedProviders.push(providerId);
+          return providerRegistry.run(providerId, request);
+        }
+      },
+      providerRouting: {
+        resolvePreferredProviderId: async () =>
+          providerRegistry.resolvePreferredProviderId(
+            {
+              blockedProviderIds: ['alpha', 'beta']
+            },
+            ['alpha', 'beta']
+          )
+      },
+      serviceRegistry: new Map([['service', async (_config, executionContext) => String(executionContext.metadata.input ?? '').toUpperCase()]])
+    });
+
+    const result = await conductor.run(routingPipeline(), 'hello');
+
+    expect(result.status === 'completed' || result.status === 'partial').toBe(true);
+    expect(routedProviders).toContain('alpha');
+    expect((result.nodeResults.get('n3')?.output as { text: string } | undefined)?.text).toBe('response:alpha');
+  });
+
+  it('falls back when cooldown windows exclude all preferred providers', async () => {
+    const prompt = new PromptEngine();
+    const context = new ContextEngine();
+    const rules = new RulesEngine();
+    const reviewer = new Reviewer(rules, prompt);
+    prompt.registerTemplate({
+      id: 't1',
+      version: '1.0.0',
+      contentHash: 'h',
+      status: 'active',
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      changelog: 'init',
+      title: 'routing-template',
+      template: 'Echo: {{output}}',
+      variables: ['output']
+    });
+
+    const providerRegistry = new ProviderRegistry();
+    providerRegistry.register(providerAdapter('alpha', 10));
+    providerRegistry.register(providerAdapter('beta', 4));
+
+    const routedProviders: string[] = [];
+    const conductor = new Conductor({
+      promptEngine: prompt,
+      contextEngine: context,
+      reviewer,
+      providerRegistry: {
+        run: async (providerId, request) => {
+          routedProviders.push(providerId);
+          return providerRegistry.run(providerId, request);
+        }
+      },
+      providerRouting: {
+        resolvePreferredProviderId: async () =>
+          providerRegistry.resolvePreferredProviderId(
+            {
+              evaluationTime: new Date('2026-10-18T00:00:00.000Z'),
+              cooldownUntilByProviderId: {
+                alpha: '2026-10-18T00:10:00.000Z',
+                beta: '2026-10-18T00:10:00.000Z'
+              }
+            },
+            ['alpha', 'beta']
+          )
+      },
+      serviceRegistry: new Map([['service', async (_config, executionContext) => String(executionContext.metadata.input ?? '').toUpperCase()]])
+    });
+
+    const result = await conductor.run(routingPipeline(), 'hello');
+
+    expect(result.status === 'completed' || result.status === 'partial').toBe(true);
+    expect(routedProviders).toContain('alpha');
+    expect((result.nodeResults.get('n3')?.output as { text: string } | undefined)?.text).toBe('response:alpha');
+  });
 });

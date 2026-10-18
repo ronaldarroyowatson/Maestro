@@ -74,6 +74,11 @@ export interface ProviderSelectionPolicy {
   selectionStrategy?: 'latency-first' | 'weighted';
   providerCostByProviderId?: Record<string, number>;
   maxCost?: number;
+  blockedProviderIds?: string[];
+  cooldownUntilByProviderId?: Record<string, Date | string | number>;
+  evaluationTime?: Date;
+  budgetRemaining?: number;
+  reserveBudget?: number;
   latencyWeight?: number;
   costWeight?: number;
   degradedPenalty?: number;

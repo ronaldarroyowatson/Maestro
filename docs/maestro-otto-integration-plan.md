@@ -50,7 +50,7 @@ This section is intentionally added before major implementation changes.
 - Otto UI internals remain external to this repo.
 - This repo will provide stable contracts, bootstrap scripts, payload metadata, and docs for clean Otto-side integration.
 
-## Current Phase Status (2026-10-17)
+## Current Phase Status (2026-10-18)
 
 ## Execution Rule (Active)
 
@@ -76,14 +76,14 @@ This section is intentionally added before major implementation changes.
 - Conductor-to-provider-registry routing integration test implemented using preferred-provider health snapshot selection with fallback recovery coverage.
 - Workflow diagnostics artifact verification is implemented in Windows installer workflow (targeted tests + diagnostics artifact generation/upload).
 - Conductor-provider orchestration policy hardening is implemented (latency/status constrained preferred-provider selection and fallback recovery coverage).
-- Current execution focus: orchestration-policy governance hardening (weighted latency/cost selection with deterministic recovery behavior).
-- Additional hardening implemented: provider selection recovery from transient health-check outages using last-known healthy snapshots with max-age constraints.
+- Additional hardening implemented: weighted latency/cost provider selection, transient outage recovery via last-known healthy snapshots with max-age constraints, budget/circuit-breaker policy controls (`blockedProviderIds`, `budgetRemaining`, `reserveBudget`) with fallback recovery coverage, and deterministic cooldown/decay-window policy controls (`cooldownUntilByProviderId`, `evaluationTime`).
+- Current execution focus: orchestration governance refinements for cross-run budget/circuit-breaker state handling.
 
 ### Next Step
 
-1. Run integrated validation pass for current backbone slices (`typecheck`, targeted backbone tests, diagnostics artifact verification, tracer bullet).
-2. Prepare commit/push batch and phase checkpoint with transient-outage recovery coverage.
-3. Start next backbone increment for orchestration-policy governance (budget/circuit-breaker controls).
+1. Add cross-run governance policy scaffolding for budget/circuit-breaker state handoff.
+2. Run integrated validation pass for current backbone slices (`typecheck`, targeted backbone tests, diagnostics artifact verification, tracer bullet).
+3. Prepare commit/push batch and phase checkpoint.
 
 ## End-of-Day Checkpoint (2026-10-17)
 

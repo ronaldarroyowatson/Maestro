@@ -172,8 +172,13 @@ export class ProviderRegistry {
     const snapshot = await this.getHealthSnapshot(providerIds);
     const allowedStatuses = new Set(policy.allowedStatuses ?? ['healthy', 'degraded']);
     const priorityIndex = new Map((policy.providerPriority ?? []).map((providerId, index) => [providerId, index]));
+    const blockedProviderIds = new Set(policy.blockedProviderIds ?? []);
+    const cooldownUntilByProviderId = policy.cooldownUntilByProviderId ?? {};
+    const evaluationTime = policy.evaluationTime ?? snapshot.generatedAt;
     const strategy = policy.selectionStrategy ?? 'latency-first';
     const costByProviderId = policy.providerCostByProviderId ?? {};
+    const reserveBudget = policy.reserveBudget ?? 0;
+    const budgetRemaining = policy.budgetRemaining;
     const latencyWeight = policy.latencyWeight ?? 1;
     const costWeight = policy.costWeight ?? 1;
     const degradedPenalty = policy.degradedPenalty ?? 5;
@@ -181,6 +186,12 @@ export class ProviderRegistry {
 
     const candidates = snapshot.entries
       .filter((entry) => {
+        if (blockedProviderIds.has(entry.providerId)) {
+          return false;
+        }
+        if (isProviderCoolingDown(entry.providerId, cooldownUntilByProviderId, evaluationTime)) {
+          return false;
+        }
         if (!allowedStatuses.has(entry.health.status)) {
           return false;
         }
@@ -190,6 +201,12 @@ export class ProviderRegistry {
         if (policy.maxCost !== undefined) {
           const providerCost = costByProviderId[entry.providerId];
           if (providerCost === undefined || providerCost > policy.maxCost) {
+            return false;
+          }
+        }
+        if (budgetRemaining !== undefined) {
+          const providerCost = costByProviderId[entry.providerId] ?? Number.POSITIVE_INFINITY;
+          if (providerCost > Math.max(0, budgetRemaining - reserveBudget)) {
             return false;
           }
         }
@@ -261,8 +278,13 @@ export class ProviderRegistry {
     const providerFilter = providerIds ? new Set(providerIds) : undefined;
     const allowedStatuses = new Set(policy.allowedStatuses ?? ['healthy', 'degraded']);
     const priorityIndex = new Map((policy.providerPriority ?? []).map((providerId, index) => [providerId, index]));
+    const blockedProviderIds = new Set(policy.blockedProviderIds ?? []);
+    const cooldownUntilByProviderId = policy.cooldownUntilByProviderId ?? {};
+    const evaluationTime = policy.evaluationTime ?? currentSnapshotTime;
     const strategy = policy.selectionStrategy ?? 'latency-first';
     const costByProviderId = policy.providerCostByProviderId ?? {};
+    const reserveBudget = policy.reserveBudget ?? 0;
+    const budgetRemaining = policy.budgetRemaining;
     const latencyWeight = policy.latencyWeight ?? 1;
     const costWeight = policy.costWeight ?? 1;
     const degradedPenalty = policy.degradedPenalty ?? 5;
@@ -271,6 +293,12 @@ export class ProviderRegistry {
     const candidates = this.lastKnownHealthySnapshot.entries
       .filter((entry) => {
         if (providerFilter && !providerFilter.has(entry.providerId)) {
+          return false;
+        }
+        if (blockedProviderIds.has(entry.providerId)) {
+          return false;
+        }
+        if (isProviderCoolingDown(entry.providerId, cooldownUntilByProviderId, evaluationTime)) {
           return false;
         }
         if (!allowedStatuses.has(entry.health.status)) {
@@ -282,6 +310,12 @@ export class ProviderRegistry {
         if (policy.maxCost !== undefined) {
           const providerCost = costByProviderId[entry.providerId];
           if (providerCost === undefined || providerCost > policy.maxCost) {
+            return false;
+          }
+        }
+        if (budgetRemaining !== undefined) {
+          const providerCost = costByProviderId[entry.providerId] ?? Number.POSITIVE_INFINITY;
+          if (providerCost > Math.max(0, budgetRemaining - reserveBudget)) {
             return false;
           }
         }
@@ -343,4 +377,28 @@ function weightedScore(
   const costComponent = providerCost === undefined ? options.unknownCostPenalty : providerCost;
   const statusComponent = status === 'degraded' ? options.degradedPenalty : 0;
   return latencyMs * options.latencyWeight + costComponent * options.costWeight + statusComponent;
+}
+
+function isProviderCoolingDown(
+  providerId: string,
+  cooldownUntilByProviderId: Record<string, Date | string | number>,
+  evaluationTime: Date
+): boolean {
+  const cooldownUntil = cooldownUntilByProviderId[providerId];
+  if (cooldownUntil === undefined) {
+    return false;
+  }
+
+  const cooldownUntilMs =
+    cooldownUntil instanceof Date
+      ? cooldownUntil.getTime()
+      : typeof cooldownUntil === 'number'
+        ? cooldownUntil
+        : new Date(cooldownUntil).getTime();
+
+  if (Number.isNaN(cooldownUntilMs)) {
+    return false;
+  }
+
+  return evaluationTime.getTime() < cooldownUntilMs;
 }

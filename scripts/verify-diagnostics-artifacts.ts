@@ -93,6 +93,12 @@ async function main(): Promise<void> {
         'diag-alpha': 10,
         'diag-beta': 1
       },
+      budgetRemaining: 5,
+      reserveBudget: 1,
+      evaluationTime: new Date('2026-10-18T00:00:00.000Z'),
+      cooldownUntilByProviderId: {
+        'diag-alpha': '2026-10-18T00:10:00.000Z'
+      },
       latencyWeight: 1,
       costWeight: 2
     },
@@ -148,6 +154,12 @@ async function main(): Promise<void> {
               providerCostByProviderId: {
                 'diag-alpha': 10,
                 'diag-beta': 1
+              },
+              budgetRemaining: 5,
+              reserveBudget: 1,
+              evaluationTime: new Date('2026-10-18T00:00:00.000Z'),
+              cooldownUntilByProviderId: {
+                'diag-alpha': '2026-10-18T00:10:00.000Z'
               },
               latencyWeight: 1,
               costWeight: 2

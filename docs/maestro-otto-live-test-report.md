@@ -475,3 +475,67 @@ Next-session first actions:
 1. Add conductor-to-provider-registry routing integration test based on health snapshot selection.
 2. Add diagnostics artifact verification to workflow-level validation.
 3. Bundle and push integrated change set after final validation pass.
+
+---
+
+## Session Continuation: Budget/Circuit-Breaker Governance (2026-10-18)
+
+Objective:
+
+- complete orchestration governance hardening by enforcing explicit blocked-provider and budget controls in provider selection;
+- validate recovery behavior through conductor fallback when preferred-provider resolution is empty.
+
+Changes:
+
+- provider-registry policy hardening completed and validated for:
+  - explicit circuit-breaker exclusions (`blockedProviderIds`),
+  - budget guardrails (`budgetRemaining`, `reserveBudget`) with deterministic candidate filtering.
+- conductor/provider routing integration coverage expanded with blocked-all recovery:
+  - when policy blocks all preferred providers, conductor recovers through configured fallback provider.
+- diagnostics verification script policy payload now includes budget controls to keep workflow artifact checks aligned with governance behavior.
+
+Validation:
+
+- `npm --prefix D:\OneDrive\Documents\GitHub\Maestro test -- features/provider-registry/tests/provider-registry.test.ts` ✅
+- `npm --prefix D:\OneDrive\Documents\GitHub\Maestro test -- features/conductor/tests/conductor-provider-routing.integration.test.ts` ✅
+- `npm --prefix D:\OneDrive\Documents\GitHub\Maestro run typecheck` ✅
+- `npm --prefix D:\OneDrive\Documents\GitHub\Maestro run verify:diagnostics-artifacts` ✅
+- `npm --prefix D:\OneDrive\Documents\GitHub\Maestro run validate:otto-ui-contract` ✅
+
+Next implementation slice:
+
+1. Add deterministic cooldown/decay-window policy controls for circuit-breaker recovery.
+2. Expand provider-registry tests for active cooldown exclusion and expired cooldown restoration behavior.
+
+---
+
+## Session Continuation: Cooldown/Decay-Window Governance (2026-10-18)
+
+Objective:
+
+- implement deterministic cooldown-window policy controls for circuit-breaker recovery and verify conductor fallback behavior when all preferred providers are cooling down.
+
+Changes:
+
+- provider-registry selection policy now supports cooldown windows via:
+  - `cooldownUntilByProviderId`
+  - `evaluationTime`
+- provider selection now excludes providers whose cooldown-until timestamp is still active at evaluation time.
+- provider-registry tests expanded for:
+  - active cooldown exclusion behavior,
+  - expired cooldown restoration behavior.
+- conductor/provider routing integration tests expanded for:
+  - fallback recovery when cooldown windows exclude all preferred providers.
+
+Validation:
+
+- `npm --prefix D:\OneDrive\Documents\GitHub\Maestro test -- features/provider-registry/tests/provider-registry.test.ts` ✅
+- `npm --prefix D:\OneDrive\Documents\GitHub\Maestro test -- features/conductor/tests/conductor-provider-routing.integration.test.ts` ✅
+- `npm --prefix D:\OneDrive\Documents\GitHub\Maestro run typecheck` ✅
+- `npm --prefix D:\OneDrive\Documents\GitHub\Maestro run verify:diagnostics-artifacts` ✅
+- `npm --prefix D:\OneDrive\Documents\GitHub\Maestro run validate:otto-ui-contract` ✅
+
+Next implementation slice:
+
+1. Add cross-run budget/circuit-breaker state handoff policy scaffolding.
+2. Expand diagnostics artifact assertions to cover governance-state handoff metadata once implemented.

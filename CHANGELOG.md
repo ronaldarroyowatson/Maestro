@@ -75,6 +75,9 @@
   - expanded routing tests for policy-excluded candidates and fallback recovery behavior
   - added weighted latency/cost policy strategy with deterministic tie-break behavior
   - added transient outage recovery via last-known healthy snapshot with max-age guardrails
+  - added budget and circuit-breaker governance controls (`blockedProviderIds`, `budgetRemaining`, `reserveBudget`)
+  - added conductor fallback regression coverage when circuit-breaker policy blocks all preferred candidates
+  - added deterministic cooldown/decay-window controls (`cooldownUntilByProviderId`, `evaluationTime`) and recovery tests
 
 ## 0.1.9
 

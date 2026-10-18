@@ -457,4 +457,141 @@ describe('provider-registry modules', () => {
 
     expect(recovered).toBeUndefined();
   });
+
+  it('resolvePreferredProviderId excludes blocked providers (circuit-breaker behavior)', async () => {
+    const registry = new ProviderRegistry();
+
+    registry.register({
+      providerId: 'alpha',
+      displayName: 'Alpha',
+      discover: async () => [],
+      run: async () => ({ text: 'ok', tokensUsed: 0, latencyMs: 1, rawResponse: {} }),
+      healthCheck: async () => ({ status: 'healthy', latencyMs: 2 })
+    });
+    registry.register({
+      providerId: 'beta',
+      displayName: 'Beta',
+      discover: async () => [],
+      run: async () => ({ text: 'ok', tokensUsed: 0, latencyMs: 1, rawResponse: {} }),
+      healthCheck: async () => ({ status: 'healthy', latencyMs: 1 })
+    });
+
+    const preferredFromPolicy = await registry.resolvePreferredProviderId(
+      {
+        blockedProviderIds: ['beta']
+      },
+      ['alpha', 'beta']
+    );
+
+    expect(preferredFromPolicy).toBe('alpha');
+  });
+
+  it('resolvePreferredProviderId enforces budget controls', async () => {
+    const registry = new ProviderRegistry();
+
+    registry.register({
+      providerId: 'alpha',
+      displayName: 'Alpha',
+      discover: async () => [],
+      run: async () => ({ text: 'ok', tokensUsed: 0, latencyMs: 1, rawResponse: {} }),
+      healthCheck: async () => ({ status: 'healthy', latencyMs: 2 })
+    });
+    registry.register({
+      providerId: 'beta',
+      displayName: 'Beta',
+      discover: async () => [],
+      run: async () => ({ text: 'ok', tokensUsed: 0, latencyMs: 1, rawResponse: {} }),
+      healthCheck: async () => ({ status: 'healthy', latencyMs: 1 })
+    });
+
+    const preferredFromPolicy = await registry.resolvePreferredProviderId(
+      {
+        providerCostByProviderId: {
+          alpha: 7,
+          beta: 5
+        },
+        budgetRemaining: 6,
+        reserveBudget: 1
+      },
+      ['alpha', 'beta']
+    );
+
+    expect(preferredFromPolicy).toBe('beta');
+
+    const noneWithinBudget = await registry.resolvePreferredProviderId(
+      {
+        providerCostByProviderId: {
+          alpha: 7,
+          beta: 5
+        },
+        budgetRemaining: 4,
+        reserveBudget: 1
+      },
+      ['alpha', 'beta']
+    );
+
+    expect(noneWithinBudget).toBeUndefined();
+  });
+
+  it('resolvePreferredProviderId excludes providers in active cooldown windows', async () => {
+    const registry = new ProviderRegistry();
+
+    registry.register({
+      providerId: 'alpha',
+      displayName: 'Alpha',
+      discover: async () => [],
+      run: async () => ({ text: 'ok', tokensUsed: 0, latencyMs: 1, rawResponse: {} }),
+      healthCheck: async () => ({ status: 'healthy', latencyMs: 2 })
+    });
+    registry.register({
+      providerId: 'beta',
+      displayName: 'Beta',
+      discover: async () => [],
+      run: async () => ({ text: 'ok', tokensUsed: 0, latencyMs: 1, rawResponse: {} }),
+      healthCheck: async () => ({ status: 'healthy', latencyMs: 1 })
+    });
+
+    const preferredFromPolicy = await registry.resolvePreferredProviderId(
+      {
+        evaluationTime: new Date('2026-10-18T00:00:00.000Z'),
+        cooldownUntilByProviderId: {
+          beta: '2026-10-18T00:10:00.000Z'
+        }
+      },
+      ['alpha', 'beta']
+    );
+
+    expect(preferredFromPolicy).toBe('alpha');
+  });
+
+  it('resolvePreferredProviderId restores providers after cooldown windows expire', async () => {
+    const registry = new ProviderRegistry();
+
+    registry.register({
+      providerId: 'alpha',
+      displayName: 'Alpha',
+      discover: async () => [],
+      run: async () => ({ text: 'ok', tokensUsed: 0, latencyMs: 1, rawResponse: {} }),
+      healthCheck: async () => ({ status: 'healthy', latencyMs: 2 })
+    });
+    registry.register({
+      providerId: 'beta',
+      displayName: 'Beta',
+      discover: async () => [],
+      run: async () => ({ text: 'ok', tokensUsed: 0, latencyMs: 1, rawResponse: {} }),
+      healthCheck: async () => ({ status: 'healthy', latencyMs: 1 })
+    });
+
+    const preferredFromPolicy = await registry.resolvePreferredProviderId(
+      {
+        evaluationTime: new Date('2026-10-18T00:15:00.000Z'),
+        cooldownUntilByProviderId: {
+          beta: '2026-10-18T00:10:00.000Z'
+        }
+      },
+      ['alpha', 'beta']
+    );
+
+    expect(preferredFromPolicy).toBe('beta');
+  });
 });

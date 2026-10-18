@@ -9,6 +9,10 @@ Policy selection now supports weighted latency/cost routing to enforce determini
 cost-aware provider decisions with explicit fallback behavior.
 Transient provider-health outages can recover via optional last-known healthy snapshot
 selection with max-age limits for safe deterministic fallback.
+Policy governance also supports circuit-breaker exclusions (`blockedProviderIds`)
+and runtime budget controls (`budgetRemaining`, `reserveBudget`).
+Cooldown/decay-window controls are supported through
+`cooldownUntilByProviderId` + `evaluationTime` to keep provider re-entry deterministic.
 
 ## Structure
 - models/: public feature types
