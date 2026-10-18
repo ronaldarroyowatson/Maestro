@@ -10,6 +10,7 @@
         "typecheck": "tsc -p tsconfig.json --noEmit",
         "check:otto-upstreams": "node --import tsx ./scripts/sync-otto-upstreams.ts",
         "sync:otto-upstreams": "node --import tsx ./scripts/sync-otto-upstreams.ts --apply",
+        "verify:otto-upstreams-live": "node --import tsx ./scripts/verify-otto-upstreams-live.ts",
         "validate:command-service": "node --import tsx ./src/shared/utils/commandServiceContract.ts",
         "validate:otto-upstream-contract": "node --import tsx ./src/shared/utils/ottoUpstreamIntegrationContract.ts",
         "validate:otto-ui-contract": "node --import tsx ./scripts/otto-ui-tracer-bullet.ts",
