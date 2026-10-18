@@ -410,6 +410,15 @@ function assertEarlyFailureGovernanceMetadataShape(payload: Record<string, unkno
   if (!payload) {
     throw new Error('Diagnostics verification failed: missing telemetry payload for invalid pipeline failure.');
   }
+  if (typeof payload.runId !== 'string' || payload.runId.length === 0) {
+    throw new Error('Diagnostics verification failed: invalid pipeline runId is missing in failure telemetry.');
+  }
+  if (payload.pipelineId !== 'p-diagnostics-invalid') {
+    throw new Error('Diagnostics verification failed: invalid pipelineId in failure telemetry payload.');
+  }
+  if (payload.environment !== 'ci' || payload.deploymentChannel !== 'stable' || typeof payload.hostOs !== 'string') {
+    throw new Error('Diagnostics verification failed: runtime context metadata is incomplete in failure telemetry payload.');
+  }
   if (typeof payload.error !== 'string' || !payload.error.includes('Pipeline graph validation failed')) {
     throw new Error('Diagnostics verification failed: invalid pipeline failure error payload mismatch.');
   }

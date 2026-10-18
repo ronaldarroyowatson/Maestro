@@ -623,6 +623,9 @@ Changes:
   - propagated `governanceState`,
   - propagated `governancePolicy`.
 - diagnostics verifier expanded with an invalid-pipeline sub-run to enforce workflow-level failure telemetry contract checks.
+- additional failure telemetry checks now assert runtime context + identifiers:
+  - `environment`, `deploymentChannel`, `hostOs`
+  - `runId`, `pipelineId`
 
 Validation:
 

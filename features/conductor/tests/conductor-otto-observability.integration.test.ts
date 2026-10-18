@@ -231,6 +231,11 @@ describe('conductor + otto observability bridge', () => {
       (payload) => typeof payload?.error === 'string' && String(payload.error).includes('Pipeline graph validation failed')
     );
     expect(failedPayload).toBeDefined();
+    expect(failedPayload?.runId).toBe(result.runId);
+    expect(failedPayload?.pipelineId).toBe('p-observability-invalid');
+    expect(failedPayload?.environment).toBe('test');
+    expect(failedPayload?.deploymentChannel).toBe('stable');
+    expect(failedPayload?.hostOs).toBe('windows');
     expect((failedPayload?.metadata as Record<string, unknown> | undefined)?.providerRoutingWarning).toBe('seeded-warning');
     expect(
       ((failedPayload?.metadata as Record<string, unknown> | undefined)?.governanceState as Record<string, unknown> | undefined)
