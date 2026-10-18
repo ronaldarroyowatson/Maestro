@@ -11,6 +11,9 @@ for runtime telemetry/logging/tracing validation.
 
 Observability emissions can include runtime context metadata (environment/channel/host OS)
 to keep deployment diagnostics explicit across Otto telemetry surfaces.
+Pipeline lifecycle emissions also include optional governance-routing metadata
+(`governancePolicy`, `governanceState`, `providerRoutingWarning`, `selectedProvidersByNode`)
+for cross-run provider-policy diagnostics.
 
 ## Structure
 - models/: runtime contracts and execution result models

@@ -99,7 +99,7 @@ async function main(): Promise<void> {
     costWeight: 2
   };
   const initialGovernanceState: ProviderGovernanceState = {
-    blockedProviderIds: [] as string[],
+    blockedProviderIds: [],
     cooldownUntilByProviderId: {},
     budgetRemaining: 5,
     reserveBudget: 1
@@ -126,6 +126,7 @@ async function main(): Promise<void> {
   }
 
   const telemetryEvents: string[] = [];
+  let emittedGovernanceMetadata: Record<string, unknown> | undefined;
   const bridge = new OttoObservabilityBridge({
     runtimeContext: {
       environment: 'ci',
@@ -143,13 +144,19 @@ async function main(): Promise<void> {
       })
     },
     telemetry: {
-      emit: async (eventName) => {
+      emit: async (eventName, payload) => {
         telemetryEvents.push(eventName);
+        if (eventName === 'maestro.pipeline.completed' && payload?.metadata && typeof payload.metadata === 'object') {
+          emittedGovernanceMetadata = payload.metadata as Record<string, unknown>;
+        }
       }
     }
   });
 
   const routedProviders: string[] = [];
+  let governanceStateForRun: ProviderGovernanceState = initialGovernanceState;
+  let governanceStateAfterSelection: ProviderGovernanceState | undefined;
+  let selectedProviderIdFromRouting: string | undefined;
   const conductor = new Conductor(
     {
       promptEngine: prompt,
@@ -162,7 +169,27 @@ async function main(): Promise<void> {
         }
       },
       providerRouting: {
-        resolvePreferredProviderId: async () => providerRegistry.resolvePreferredProviderId(firstPolicy, ['diag-alpha', 'diag-beta'])
+        resolvePreferredProviderId: async ({ context: executionContext }) => {
+          const policy = providerRegistry.createSelectionPolicyWithGovernance(
+            basePolicy,
+            governanceStateForRun,
+            new Date('2026-10-18T00:00:00.000Z')
+          );
+          executionContext.metadata.governancePolicy = policy;
+          executionContext.metadata.governanceState = governanceStateForRun;
+
+          const selectedProviderId = await providerRegistry.resolvePreferredProviderId(policy, ['diag-alpha', 'diag-beta']);
+          governanceStateAfterSelection = providerRegistry.createNextGovernanceState({
+            previousState: governanceStateForRun,
+            policy,
+            selectedProviderId,
+            evaluatedAt: new Date('2026-10-18T00:00:00.000Z')
+          });
+          governanceStateForRun = governanceStateAfterSelection;
+          selectedProviderIdFromRouting = selectedProviderId;
+          executionContext.metadata.governanceState = governanceStateAfterSelection;
+          return selectedProviderId;
+        }
       },
       serviceRegistry: new Map([['service', async (_config, executionContext) => String(executionContext.metadata.input ?? '').toUpperCase()]])
     },
@@ -184,6 +211,21 @@ async function main(): Promise<void> {
   if (!routedProviders.includes(policyPreferredProviderId)) {
     throw new Error('Diagnostics verification failed: policy-preferred provider was not used by conductor routing.');
   }
+  if (!governanceStateAfterSelection) {
+    throw new Error('Diagnostics verification failed: governance state was not captured from routing.');
+  }
+  assertGovernanceStateShape(initialGovernanceState, 'initialGovernanceState');
+  assertGovernanceStateShape(governanceStateAfterSelection, 'governanceStateAfterSelection');
+  if (
+    !emittedGovernanceMetadata ||
+    typeof emittedGovernanceMetadata.selectedProvidersByNode !== 'object' ||
+    emittedGovernanceMetadata.selectedProvidersByNode === null
+  ) {
+    throw new Error('Diagnostics verification failed: missing emitted governance metadata in pipeline completed event.');
+  }
+  if (selectedProviderIdFromRouting !== policyPreferredProviderId) {
+    throw new Error('Diagnostics verification failed: routing selection diverged from policy selection baseline.');
+  }
 
   const diagnosticsDir = path.resolve('dist', 'diagnostics');
   await mkdir(diagnosticsDir, { recursive: true });
@@ -193,23 +235,23 @@ async function main(): Promise<void> {
     `${JSON.stringify(snapshot, null, 2)}\n`,
     'utf8'
   );
+  const observabilityTrace = {
+    runId: result.runId,
+    status: result.status,
+    policyPreferredProviderId,
+    governanceState: {
+      initial: initialGovernanceState,
+      afterSelection: governanceStateAfterSelection
+    },
+    emittedMetadata: emittedGovernanceMetadata,
+    telemetryEvents,
+    routedProviders
+  };
+  assertObservabilityTraceShape(observabilityTrace);
+
   await writeFile(
     path.join(diagnosticsDir, 'observability-trace.json'),
-    `${JSON.stringify(
-      {
-        runId: result.runId,
-        status: result.status,
-        policyPreferredProviderId,
-        governanceState: {
-          initial: initialGovernanceState,
-          afterSelection: nextGovernanceState
-        },
-        telemetryEvents,
-        routedProviders
-      },
-      null,
-      2
-    )}\n`,
+    `${JSON.stringify(observabilityTrace, null, 2)}\n`,
     'utf8'
   );
 
@@ -217,3 +259,43 @@ async function main(): Promise<void> {
 }
 
 await main();
+
+function assertGovernanceStateShape(state: ProviderGovernanceState, label: string): void {
+  if (state.budgetRemaining !== undefined && typeof state.budgetRemaining !== 'number') {
+    throw new Error(`Diagnostics verification failed: ${label}.budgetRemaining must be a number when defined.`);
+  }
+  if (state.reserveBudget !== undefined && typeof state.reserveBudget !== 'number') {
+    throw new Error(`Diagnostics verification failed: ${label}.reserveBudget must be a number when defined.`);
+  }
+  if (state.blockedProviderIds !== undefined && !Array.isArray(state.blockedProviderIds)) {
+    throw new Error(`Diagnostics verification failed: ${label}.blockedProviderIds must be an array when defined.`);
+  }
+  if (
+    state.cooldownUntilByProviderId !== undefined &&
+    (typeof state.cooldownUntilByProviderId !== 'object' || state.cooldownUntilByProviderId === null)
+  ) {
+    throw new Error(`Diagnostics verification failed: ${label}.cooldownUntilByProviderId must be an object when defined.`);
+  }
+}
+
+function assertObservabilityTraceShape(trace: {
+  runId: string;
+  status: string;
+  policyPreferredProviderId: string;
+  governanceState: { initial: ProviderGovernanceState; afterSelection: ProviderGovernanceState };
+  emittedMetadata?: Record<string, unknown>;
+  telemetryEvents: string[];
+  routedProviders: string[];
+}): void {
+  if (!trace.runId) {
+    throw new Error('Diagnostics verification failed: observability trace runId is missing.');
+  }
+  if (!Array.isArray(trace.telemetryEvents) || trace.telemetryEvents.length === 0) {
+    throw new Error('Diagnostics verification failed: observability trace telemetryEvents is empty.');
+  }
+  if (!Array.isArray(trace.routedProviders) || trace.routedProviders.length === 0) {
+    throw new Error('Diagnostics verification failed: observability trace routedProviders is empty.');
+  }
+  assertGovernanceStateShape(trace.governanceState.initial, 'observabilityTrace.governanceState.initial');
+  assertGovernanceStateShape(trace.governanceState.afterSelection, 'observabilityTrace.governanceState.afterSelection');
+}

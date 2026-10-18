@@ -56,6 +56,7 @@ describe('conductor + otto observability bridge', () => {
     const telemetryEvents: string[] = [];
     const telemetryRunIds: string[] = [];
     const telemetryEnvironments: string[] = [];
+    const telemetryMetadata: Array<Record<string, unknown> | undefined> = [];
     const traceEvents: string[] = [];
     const logEvents: string[] = [];
 
@@ -87,6 +88,7 @@ describe('conductor + otto observability bridge', () => {
           telemetryEvents.push(eventName);
           telemetryRunIds.push(String(payload?.runId ?? 'missing'));
           telemetryEnvironments.push(String(payload?.environment ?? 'missing'));
+          telemetryMetadata.push(payload?.metadata as Record<string, unknown> | undefined);
         }
       }
     });
@@ -121,5 +123,13 @@ describe('conductor + otto observability bridge', () => {
     expect(logEvents).toContain('ReviewerDecision');
     expect(telemetryRunIds.every((id) => id === 'run-obs-001')).toBe(true);
     expect(telemetryEnvironments.every((value) => value === 'test')).toBe(true);
+    expect(
+      telemetryMetadata.some(
+        (metadata) =>
+          typeof metadata === 'object' &&
+          metadata !== null &&
+          typeof (metadata.selectedProvidersByNode as Record<string, unknown> | undefined)?.n3 === 'string'
+      )
+    ).toBe(true);
   });
 });

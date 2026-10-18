@@ -77,13 +77,13 @@ This section is intentionally added before major implementation changes.
 - Workflow diagnostics artifact verification is implemented in Windows installer workflow (targeted tests + diagnostics artifact generation/upload).
 - Conductor-provider orchestration policy hardening is implemented (latency/status constrained preferred-provider selection and fallback recovery coverage).
 - Additional hardening implemented: weighted latency/cost provider selection, transient outage recovery via last-known healthy snapshots with max-age constraints, budget/circuit-breaker policy controls (`blockedProviderIds`, `budgetRemaining`, `reserveBudget`) with fallback recovery coverage, deterministic cooldown/decay-window policy controls (`cooldownUntilByProviderId`, `evaluationTime`), and cross-run governance state handoff scaffolding.
-- Current execution focus: orchestration governance refinements and diagnostics-contract coverage expansion.
+- Current execution focus: governance diagnostics and runtime trace contract refinement after metadata-shape coverage completion.
 
 ### Next Step
 
-1. Expand governance diagnostics assertions and metadata schema coverage in artifact outputs.
-2. Run integrated validation pass for current backbone slices (`typecheck`, targeted backbone tests, diagnostics artifact verification, tracer bullet).
-3. Prepare commit/push batch and phase checkpoint.
+1. Expand runtime trace assertions across additional governance failure-mode surfaces.
+2. Add broader conductor-level governance metadata checks for non-preferred routing paths.
+3. Run integrated validation pass and prepare commit/push checkpoint.
 
 ## End-of-Day Checkpoint (2026-10-17)
 

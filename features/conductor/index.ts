@@ -65,7 +65,11 @@ export class Conductor {
       }
     };
 
-    this.eventBus.emit(EVENT_NAMES.PIPELINE_STARTED, { runId, pipelineId: pipeline.id });
+    this.eventBus.emit(EVENT_NAMES.PIPELINE_STARTED, {
+      runId,
+      pipelineId: pipeline.id,
+      metadata: runtimeTelemetryMetadata(context.metadata)
+    });
 
     try {
       const valid = this.nodeGraph.validate(pipeline.graph);
@@ -95,10 +99,15 @@ export class Conductor {
         this.eventBus.emit(EVENT_NAMES.PIPELINE_FAILED, {
           runId,
           pipelineId: pipeline.id,
-          error: new Error('Pipeline execution failed')
+          error: new Error('Pipeline execution failed'),
+          metadata: runtimeTelemetryMetadata(context.metadata)
         });
       } else {
-        this.eventBus.emit(EVENT_NAMES.PIPELINE_COMPLETED, { runId, pipelineId: pipeline.id });
+        this.eventBus.emit(EVENT_NAMES.PIPELINE_COMPLETED, {
+          runId,
+          pipelineId: pipeline.id,
+          metadata: runtimeTelemetryMetadata(context.metadata)
+        });
       }
 
       this.runs.set(runId, result);
@@ -114,10 +123,35 @@ export class Conductor {
       this.eventBus.emit(EVENT_NAMES.PIPELINE_FAILED, {
         runId,
         pipelineId: pipeline.id,
-        error: failure.error ?? new Error('Unknown pipeline failure')
+        error: failure.error ?? new Error('Unknown pipeline failure'),
+        metadata: runtimeTelemetryMetadata(context.metadata)
       });
       this.runs.set(runId, failure);
       return failure;
+    }
+
+    function runtimeTelemetryMetadata(metadata: Record<string, unknown>): Record<string, unknown> | undefined {
+      const providerEntries = Object.entries(metadata)
+        .filter(([key, value]) => key.startsWith('provider:') && typeof value === 'string')
+        .map(([key, value]) => [key.replace('provider:', ''), value] as const);
+
+      const selectedProvidersByNode = Object.fromEntries(providerEntries);
+      const output: Record<string, unknown> = {};
+
+      if (typeof metadata.providerRoutingWarning === 'string') {
+        output.providerRoutingWarning = metadata.providerRoutingWarning;
+      }
+      if (metadata.governanceState && typeof metadata.governanceState === 'object') {
+        output.governanceState = metadata.governanceState;
+      }
+      if (metadata.governancePolicy && typeof metadata.governancePolicy === 'object') {
+        output.governancePolicy = metadata.governancePolicy;
+      }
+      if (providerEntries.length > 0) {
+        output.selectedProvidersByNode = selectedProvidersByNode;
+      }
+
+      return Object.keys(output).length > 0 ? output : undefined;
     }
   }
 

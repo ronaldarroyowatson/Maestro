@@ -1,13 +1,20 @@
 import { EVENT_NAMES } from '../../../../src/shared/index.js';
 
+export interface ConductorRuntimeTelemetryMetadata {
+  providerRoutingWarning?: string;
+  governanceState?: Record<string, unknown>;
+  governancePolicy?: Record<string, unknown>;
+  selectedProvidersByNode?: Record<string, string>;
+}
+
 export interface ConductorEventPayloads {
   [EVENT_NAMES.NODE_STARTED]: { runId: string; nodeId: string };
   [EVENT_NAMES.NODE_COMPLETED]: { runId: string; nodeId: string; output: unknown };
   [EVENT_NAMES.NODE_FAILED]: { runId: string; nodeId: string; error: Error; retriesExhausted?: boolean };
   [EVENT_NAMES.REVIEWER_DECISION]: { runId: string; edgeId: string; decision: 'accepted' | 'revision-requested' | 'rejected' };
-  [EVENT_NAMES.PIPELINE_STARTED]: { runId: string; pipelineId: string };
-  [EVENT_NAMES.PIPELINE_COMPLETED]: { runId: string; pipelineId: string };
-  [EVENT_NAMES.PIPELINE_FAILED]: { runId: string; pipelineId: string; error: Error };
+  [EVENT_NAMES.PIPELINE_STARTED]: { runId: string; pipelineId: string; metadata?: ConductorRuntimeTelemetryMetadata };
+  [EVENT_NAMES.PIPELINE_COMPLETED]: { runId: string; pipelineId: string; metadata?: ConductorRuntimeTelemetryMetadata };
+  [EVENT_NAMES.PIPELINE_FAILED]: { runId: string; pipelineId: string; error: Error; metadata?: ConductorRuntimeTelemetryMetadata };
 }
 
 /** Synchronous in-process event bus used by conductor runtime. */

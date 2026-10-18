@@ -80,6 +80,8 @@
   - added deterministic cooldown/decay-window controls (`cooldownUntilByProviderId`, `evaluationTime`) and recovery tests
   - added cross-run governance state handoff scaffolding (`createSelectionPolicyWithGovernance`, `createNextGovernanceState`)
   - added routing integration coverage for multi-run budget handoff and fallback recovery
+  - added governance metadata shape assertions in diagnostics artifact verification
+  - added conductor pipeline-event governance metadata emission for runtime trace visibility
 
 ## 0.1.9
 
