@@ -1,9 +1,11 @@
 import type { Edge, Graph, NodeDefinition, ValidationResult } from '../../src/shared/index.js';
 import { EdgeManager } from './services/edge-manager/index.js';
 import { GraphValidator } from './services/graph-validator/index.js';
+import { InMemoryGraphService } from './services/graph-service/index.js';
 import { NodeRegistry } from './services/node-registry/index.js';
 import { TopologicalSorter } from './services/topological-sorter/index.js';
 
+export { InMemoryGraphService };
 export type { ExecutionLayer, TopologicalOrder } from './models/types.js';
 
 /** Node-graph facade that composes graph modules and exposes feature API. */

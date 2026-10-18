@@ -348,3 +348,11 @@ export interface WorkflowStateSnapshot {
   nodeStates: Record<string, WorkflowRuntimeState>;
   state: WorkflowRuntimeState;
 }
+
+export interface StateCheckpointServiceAdapter {
+  saveState(runId: string, snapshot: WorkflowStateSnapshot): Promise<WorkflowStateSnapshot>;
+  getState(runId: string): Promise<WorkflowStateSnapshot | undefined>;
+  createCheckpoint(runId: string): Promise<WorkflowCheckpoint | undefined>;
+  restoreCheckpoint(runId: string, checkpointId: string): Promise<boolean>;
+  rollbackRun(runId: string, checkpointId: string): Promise<boolean>;
+}

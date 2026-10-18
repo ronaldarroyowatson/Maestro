@@ -1,4 +1,11 @@
-import type { AgentCatalog, InferenceRequest, InferenceResponse, ProviderAdapter, ProviderHealth } from '../../src/shared/index.js';
+import type {
+  AgentCatalog,
+  InferenceRequest,
+  InferenceResponse,
+  ProviderAdapter,
+  ProviderHealth,
+  ResourceCapabilityTag
+} from '../../src/shared/index.js';
 import type { ProviderGovernanceState, ProviderHealthSnapshot, ProviderSelectionPolicy } from './models/types.js';
 import { AdapterFactory } from './services/adapter-factory/index.js';
 import { AzureOpenAiAdapter, type AzureOpenAiAdapterOptions } from './services/adapters/azure-openai/index.js';
@@ -7,7 +14,9 @@ import { McpAdapter, type McpAdapterOptions } from './services/adapters/mcp/inde
 import { OllamaAdapter, type OllamaAdapterOptions } from './services/adapters/ollama/index.js';
 import { OpenAiAdapter, type OpenAiAdapterOptions } from './services/adapters/openai/index.js';
 import { PaddleOcrAdapter, type PaddleOcrAdapterOptions } from './services/adapters/paddleocr/index.js';
+import { CapabilityClassifier, ResourceRegistry } from './services/capability-classifier/index.js';
 import { AgentDiscovery } from './services/discovery/index.js';
+import { ResourcePolicyRouter } from './services/resource-selector/index.js';
 
 export type {
   AdapterRegistration,
@@ -23,11 +32,14 @@ export type {
 } from './models/types.js';
 export {
   AzureOpenAiAdapter,
+  CapabilityClassifier,
   LmStudioAdapter,
   McpAdapter,
   OllamaAdapter,
   OpenAiAdapter,
-  PaddleOcrAdapter
+  PaddleOcrAdapter,
+  ResourcePolicyRouter,
+  ResourceRegistry
 };
 
 export interface ProviderRegistryBootOptions {
@@ -44,11 +56,15 @@ export interface ProviderRegistryBootOptions {
 export class ProviderRegistry {
   readonly adapterFactory: AdapterFactory;
   readonly discovery: AgentDiscovery;
+  readonly capabilityClassifier: CapabilityClassifier;
+  readonly resourceRegistry: ResourceRegistry;
   private lastKnownHealthySnapshot?: ProviderHealthSnapshot;
 
   constructor(options: ProviderRegistryBootOptions = {}) {
     this.adapterFactory = new AdapterFactory();
     this.discovery = new AgentDiscovery(options.discoveryTtlMs);
+    this.capabilityClassifier = new CapabilityClassifier();
+    this.resourceRegistry = new ResourceRegistry();
 
     this.adapterFactory.register(new OllamaAdapter(options.ollama));
     this.adapterFactory.register(new LmStudioAdapter(options.lmStudio));
@@ -76,12 +92,45 @@ export class ProviderRegistry {
 
   /** Refreshes discovery across all registered adapters. */
   async refreshDiscovery(): Promise<AgentCatalog> {
-    return this.discovery.refresh(this.adapterFactory.listAdapters());
+    const catalog = await this.discovery.refresh(this.adapterFactory.listAdapters());
+    for (const entry of catalog.entries) {
+      this.resourceRegistry.applyClassification(entry);
+    }
+    return catalog;
+  }
+
+  /** Returns the best matching classified resource for a requested capability set. */
+  selectBestMatchingResource(
+    requestedCapabilities: Array<string | ResourceCapabilityTag>,
+    options: Parameters<ResourceRegistry['selectBestMatch']>[1] = {}
+  ) {
+    const normalized = this.normalizeCapabilityTags(requestedCapabilities);
+    return this.resourceRegistry.selectBestMatch(normalized, options);
   }
 
   /** Returns discovered descriptors for one provider. */
   async listByProvider(providerId: string) {
     return this.discovery.getByProvider(providerId, this.adapterFactory.listAdapters());
+  }
+
+  private normalizeCapabilityTags(capabilities: Array<string | ResourceCapabilityTag>): ResourceCapabilityTag[] {
+    const tagSet = new Set<ResourceCapabilityTag>();
+    for (const capability of capabilities) {
+      const candidate = capability.toLowerCase();
+      if (candidate === 'coding' || candidate === 'code') tagSet.add('coding');
+      if (candidate === 'research') tagSet.add('research');
+      if (candidate === 'vision') tagSet.add('vision');
+      if (candidate === 'reasoning') tagSet.add('reasoning');
+      if (candidate === 'multimodal') tagSet.add('multimodal');
+      if (candidate === 'local') tagSet.add('local');
+      if (candidate === 'cloud') tagSet.add('cloud');
+      if (candidate === 'offline') tagSet.add('offline');
+      if (candidate === 'fast inference' || candidate === 'fast-inference') tagSet.add('fast_inference');
+      if (candidate === 'long context' || candidate === 'long-context') tagSet.add('long_context');
+      if (candidate === 'large memory' || candidate === 'large-memory') tagSet.add('large_memory');
+    }
+
+    return Array.from(tagSet);
   }
 
   /** Returns full discovered catalog, using TTL cache. */

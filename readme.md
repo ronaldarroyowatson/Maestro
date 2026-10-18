@@ -1,87 +1,70 @@
-# Maestro Runtime
+# Maestro
 
-Maestro is a modular runtime for agent orchestration, pipelines, provider adapters, and reviewer-driven execution control.
+Maestro is the orchestration runtime for graph-based workflows, provider discovery, execution routing, and workflow observability inside the Otto ecosystem. It is designed to keep Otto as the reusable substrate while Maestro provides the orchestration logic, runtime state management, and operational intelligence that sit above it.
 
-## Install Maestro via Otto
+## Project status
 
-Maestro installers now embed a minimal Otto core and do not require a separate Otto installation.
+This repository is in the contract-first runtime foundation phase:
 
-1. Download and install Maestro using the platform installer.
-2. Launch Maestro.
-3. Embedded Otto boots from `/opt/maestro/otto/bin/otto`, loads `otto/payload.json`, and installs/configures Maestro runtime.
+- Otto remains the external platform/service backbone.
+- Maestro owns orchestration contracts, graph/runtime services, and workflow routing logic.
+- Commands, CLI/API exposure, and UI registration remain routed through Otto's command-service layer rather than being implemented ad hoc in Maestro.
 
-Primary lifecycle commands:
+## Why this repo exists
 
-- `/opt/maestro/otto/bin/otto --payload /opt/maestro/otto/payload.json`
-- `/opt/maestro/installer/macos/bootstrap.sh`
+Maestro is not a standalone frontend app by itself. It is a runtime and service layer that provides:
 
-## Download Installers
+- graph persistence and traversal contracts
+- workflow runtime lifecycle management
+- checkpoint and restore semantics
+- provider registry and capability classification
+- health/performance-aware resource selection
+- Otto-compatible manifests and module registration metadata
 
-These installers are published as durable latest-release assets. Otto completes runtime downloads and setup after launch.
+## Repository layout
 
-- Windows: https://github.com/ronaldarroyowatson/Maestro/releases/latest/download/maestro-installer-windows.exe
-- Windows (MSI): https://github.com/ronaldarroyowatson/Maestro/releases/latest/download/maestro-installer-windows.msi
-- Linux: https://github.com/ronaldarroyowatson/Maestro/releases/latest/download/maestro-installer-linux.sh
-- Linux (DEB): https://github.com/ronaldarroyowatson/Maestro/releases/latest/download/maestro-installer-linux.deb
-- Linux (RPM): https://github.com/ronaldarroyowatson/Maestro/releases/latest/download/maestro-installer-linux.rpm
-- macOS: https://github.com/ronaldarroyowatson/Maestro/releases/latest/download/maestro-installer-macos.pkg
+- `features/` - runtime feature modules (graph, workflow runtime, provider registry, etc.)
+- `src/shared/` - shared platform contracts and validation utilities
+- `otto/` - Otto integration manifests, payloads, and module metadata
+- `docs/` - architecture, state, and integration documentation
+- `installer/` - installer/bootstrap assets
+- `tests/` - focused validation and integration coverage
 
-## Telemetry and Logs
+## Quick start
 
-Maestro integrates with Otto extension modules for:
+```bash
+npm install
+npm run typecheck
+npm test
+```
 
-- Logging (`logging.module`)
-- Tracing (`tracing.module`)
-- Telemetry (`metrics.module`)
+## Otto integration boundaries
 
-Configured runtime paths (resolved by Otto):
+The architectural rule for this project is explicit:
 
-- Logs: `{otto.dataDir}/logs/maestro`
-- Traces: `{otto.dataDir}/traces/maestro`
-- Telemetry: `{otto.dataDir}/telemetry/maestro`
+- Otto owns reusable platform capabilities and command service registration.
+- Maestro consumes those platforms via contracts and manifests.
+- Maestro does not create a separate CLI/API surface outside the Otto command-service layer.
 
-## Installer and Payload Files
-
-- Payload: `otto/maestro-payload.json`
-- Command manifest: `otto/maestro-commands.json`
-- Installer architecture: `installer/README.md`
-- Linux bootstrap: `installer/linux/bootstrap.sh`
-- macOS bootstrap: `installer/macos/bootstrap.sh`
-- Windows bootstrap: `installer/windows/bootstrap.ps1`
+This means the source tree may contain manifests, service contracts, and runtime implementations, but the final command surface is still expected to be registered and exposed by Otto's upstream command-service layer.
 
 ## Documentation
 
-- Current state: `docs/maestro-current-state.md`
-- Integration plan: `docs/maestro-otto-integration-plan.md`
-- Payload semantics: `docs/maestro-otto-payload.md`
-- Installation guide: `docs/maestro-installation-via-otto.md`
-- Telemetry and logging: `docs/maestro-telemetry-and-logging.md`
-- UI and node graphs: `docs/maestro-ui-and-node-graphs.md`
-- Live test report: `docs/maestro-otto-live-test-report.md`
+- `docs/maestro-master-architecture-plan.md` - architecture and execution roadmap
+- `docs/maestro-current-state.md` - current status and implementation milestones
+- `docs/maestro-otto-integration-plan.md` - integration execution tracker
+- `docs/maestro-otto-payload.md` - payload and runtime contract details
+- `docs/maestro-installation-via-otto.md` - install and bootstrap sequence
+- `docs/MAESTRO-ARCHITECTURE.md` - architecture notes
 
-## Development Validation
+## Contributing
 
-- `pnpm typecheck`
-- `pnpm test`
-- Installer dry-run instructions are in `installer/README.md`
+Please read `CONTRIBUTING.md` before opening a pull request.
 
-## Mirror-Ready Workspace Setup
+## Security
 
-This repository is designed to be reproduced across machines with a consistent setup flow. The mirrored environment should preserve:
+Please report vulnerabilities in accordance with `SECURITY.md`.
 
-- the Maestro repo and feature layout
-- the Otto runtime backbone and embedded payload contracts
-- the toolchain and validation commands
-- any required MCP server integrations and local extension repos
-- the recovery procedure needed for machine replacement
+## License
 
-The full setup and recovery playbook lives at `docs/MAESTRO-SETUP-PLAYBOOK.md`.
-The toolchain and MCP inventory lives at `docs/MAESTRO-TOOLCHAIN-MCP-REGISTRY.md`.
-
-Core setup principles:
-
-- treat Otto as the backbone runtime and extension platform
-- keep Maestro feature modules modular and explicit
-- use TypeScript as the default for orchestration and feature logic
-- reserve Rust for measured hot paths only
-- document every tool, repo, and configuration change so it can be replayed on another machine
+This project is licensed under the MIT License. See `LICENSE` for details.
