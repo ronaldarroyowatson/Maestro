@@ -80,11 +80,12 @@ This section is intentionally added before major implementation changes.
 17. External bridge execution automation is now implemented and exercised locally: `scripts/sync-otto-upstreams.ts` performs drift detection + apply sync for the handoff mappings and has been run successfully against sibling `otto-command-service` and `otto-ui` repositories.
 18. Upstream publication + live verification completed: `otto-systems/otto-command-service#1` and `otto-systems/otto-ui#1` are merged, and `scripts/verify-otto-upstreams-live.ts` confirms that upstream `main` content matches Maestro handoff sources for all mapped artifacts.
 19. Maestro-to-Otto observability bridge adapter completed: `features/otto-observability-bridge/index.ts` now provides a deterministic event-envelope forwarder (logging/tracing/telemetry) and conductor observability now routes through this adapter boundary.
+20. Otto UI Maestro surfaces are now contract-wired beyond placeholder bindings: panel rendering for workflow/runtime/registry/timeline/diagnostics uses contract/bootstrap/module metadata via `maestroPanelBindingService` and `MaestroModulePage` rather than static panel stubs.
 
 ### In Progress
 
-- Active phase: harden observability bridge adoption and diagnostics reporting.
-- Current execution step: add dedicated validation surfaces for observability forwarding failures and installer/runtime event parity checks.
+- Active phase: observability bridge hardening and diagnostics parity validation.
+- Current execution step: add explicit failure diagnostics/reporting flows for bridge forwarding and verify parity across installer/runtime event pipelines.
 - Backbone feature implementation phase in Maestro.
 - Phase 1 contract core refinement: finalize service boundary contracts for discovery, state checkpointing, capability classification, and resource lifecycle metadata before introducing the first functional Otto graph service.
 - Active execution objective: introduce explicit Workflow Runtime adapter contracts for run lifecycle, state transitions, checkpointing, and pause/resume/cancel operations, then wire the shared types into the public index and validate with TypeScript checks.

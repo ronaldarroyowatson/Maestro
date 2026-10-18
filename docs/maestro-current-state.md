@@ -37,7 +37,8 @@ The workspace root appears to be the active Maestro runtime repository based on:
 - External bridge execution is now automated and validated locally: `scripts/sync-otto-upstreams.ts` can check drift and apply sync mappings to sibling Otto repos, and a local apply+recheck run has completed successfully.
 - Upstream publication + live verification is complete: `otto-systems/otto-command-service#1` and `otto-systems/otto-ui#1` are merged, and live default-branch parity is now machine-verified by `scripts/verify-otto-upstreams-live.ts`.
 - The dedicated Maestro-to-Otto observability bridge is now implemented as a first-class adapter in `features/otto-observability-bridge/index.ts`, and conductor observability forwarding has been refactored to route through this shared bridge boundary.
-- The next active integration phase is observability hardening: explicit diagnostics/reporting coverage for forwarding failures and parity checks across installer/runtime event paths.
+- UI wiring parity milestone is now completed in Otto UI: Maestro module panels for workflow/runtime/registry/timeline/diagnostics are contract-backed and no longer rely on static placeholder panel stubs.
+- Active integration focus has returned to observability hardening: explicit failure diagnostics/reporting coverage and installer/runtime event parity validation.
 
 ## Existing Otto Alignment
 
@@ -55,6 +56,7 @@ The workspace root appears to be the active Maestro runtime repository based on:
 - The next implementation phase is converting the shell into a real Maestro feature catalog: workflow builder, runtime status/runtime monitor, registry browser, execution timeline, and diagnostics pages are now the target set.
 - The shell remains intentionally minimal while preserving compatibility with the established `runtime-status` route so Otto bootstrapping and runtime health checks continue to work during the product-layer expansion.
 - The first real product-layer milestone has been reached: the feature roster is now represented in both a shared TypeScript catalog and a machine-readable Otto manifest under `otto/manifests/` so it can be validated as part of the UI contract lifecycle.
+- Contract-driven Maestro panel binding is now in place in Otto UI for the registered feature surfaces; remaining work is runtime-depth hardening and richer live data sources behind those views.
 - The next architectural milestone is the Otto-first service-contract core: event envelopes, shared graph definitions, graph service API contracts, event bus subscription contracts, workflow runtime state shapes, and checkpoint contracts are being formalized before the deeper runtime graph implementation begins.
 - The current codebase has crossed from contract-layer work into the first concrete execution layer: graph persistence + traversal is now implemented in-memory and validated; the next service slice is the Workflow Runtime state machine and checkpoint manager.
 - Dedicated Maestro-to-Otto extension bridge module now exists (`features/otto-observability-bridge`), but additional diagnostics and production hardening checks are still in progress.

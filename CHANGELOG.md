@@ -49,6 +49,7 @@
   - `features/otto-observability-bridge/index.ts`
   - `features/otto-observability-bridge/tests/otto-observability-extension-bridge.test.ts`
   - conductor observability forwarding now routes through this adapter boundary
+- Extended Otto UI Maestro panel wiring to replace static panel placeholders with contract/bootstrap-driven bindings across workflow/runtime/registry/timeline/diagnostics surfaces.
 - Added Otto ecosystem capability mapping doc:
   - `docs/maestro-otto-ecosystem-capability-map.md`
 - Added repository-level Copilot source-of-truth instructions:
