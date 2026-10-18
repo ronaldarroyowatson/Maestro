@@ -40,6 +40,7 @@ The workspace root appears to be the active Maestro runtime repository based on:
 - UI wiring parity milestone is now completed in Otto UI: Maestro module panels for workflow/runtime/registry/timeline/diagnostics are contract-backed and no longer rely on static placeholder panel stubs.
 - Observability hardening parity milestone is completed: bridge diagnostics snapshots now capture forwarding/failure telemetry, and installer/runtime parity verification is automated through `scripts/verify-observability-bridge-diagnostics.ts` with emitted diagnostics artifacts.
 - Active integration focus now shifts to richer runtime-backed UI data sources behind the contract-driven panel surfaces.
+- Nightly checkpoint (2026-10-17): Maestro `main` is synced to GitHub, and the current upstream UI wiring work is tracked in `otto-systems/otto-ui#2` for merge review.
 
 ## Existing Otto Alignment
 
