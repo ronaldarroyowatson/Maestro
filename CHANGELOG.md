@@ -38,6 +38,10 @@
   - `src/shared/utils/ottoUpstreamIntegrationContract.ts`
   - `tests/shared/otto-upstream-integration-contract.test.ts`
   - `validate:otto-upstream-contract` npm script
+- Added external Otto-repo bridge execution automation:
+  - `scripts/sync-otto-upstreams.ts`
+  - `check:otto-upstreams` npm script
+  - `sync:otto-upstreams` npm script
 - Added Otto ecosystem capability mapping doc:
   - `docs/maestro-otto-ecosystem-capability-map.md`
 - Added repository-level Copilot source-of-truth instructions:

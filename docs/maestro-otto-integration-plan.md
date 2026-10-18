@@ -77,10 +77,12 @@ This section is intentionally added before major implementation changes.
 14. Health/performance-aware policy routing is now implemented in `features/provider-registry/services/resource-selector`: the registry can select the best resource for a capability request across health, cost, and performance thresholds.
 15. Workflow runtime event publication is now implemented in `features/workflow-runtime/services/event-bus`: lifecycle transitions are pub/sub observable and decoupled from state updates, with targeted tests validating the event envelope flow.
 16. Otto upstream handoff contract is now implemented and validated: `otto/modules/maestro/upstream-handoff.json` plus `src/shared/utils/ottoUpstreamIntegrationContract.ts` provide deterministic mapping from local Maestro manifests into external `otto-command-service` and `otto-ui` target paths.
+17. External bridge execution automation is now implemented and exercised locally: `scripts/sync-otto-upstreams.ts` performs drift detection + apply sync for the handoff mappings and has been run successfully against sibling `otto-command-service` and `otto-ui` repositories.
 
 ### In Progress
 
 - Active phase: execute the external-repo bridge step by applying the upstream handoff mappings inside `otto-command-service` and `otto-ui`, then verifying live command/UI registration end-to-end.
+- Current execution step: perform upstream-repo validation and publication workflow (review, commit, and push in external Otto repositories) so live command-service and UI ingestion can be verified from their own default branches.
 - Backbone feature implementation phase in Maestro.
 - Phase 1 contract core refinement: finalize service boundary contracts for discovery, state checkpointing, capability classification, and resource lifecycle metadata before introducing the first functional Otto graph service.
 - Active execution objective: introduce explicit Workflow Runtime adapter contracts for run lifecycle, state transitions, checkpointing, and pause/resume/cancel operations, then wire the shared types into the public index and validate with TypeScript checks.

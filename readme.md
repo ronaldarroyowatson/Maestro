@@ -38,6 +38,14 @@ npm run typecheck
 npm test
 ```
 
+Otto integration validation and bridge helpers:
+
+```bash
+npm run validate:otto-upstream-contract
+npm run check:otto-upstreams
+npm run sync:otto-upstreams
+```
+
 ## Otto integration boundaries
 
 The architectural rule for this project is explicit:
