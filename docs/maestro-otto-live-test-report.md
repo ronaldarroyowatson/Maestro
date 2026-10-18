@@ -629,6 +629,8 @@ Changes:
 - additional validation-failure permutation coverage now includes cycle-detection failures with seeded governance metadata continuity assertions.
 - runtime failure telemetry coverage now includes `maestro.node.failed` contract assertions with seeded governance metadata continuity.
 - runtime retry-exhaustion + mixed-outcome telemetry coverage now includes `retriesExhausted` assertions and deterministic partial-result continuity checks.
+- runtime multi-failure layer telemetry coverage now asserts deterministic `maestro.node.failed` event cardinality and continuity metadata across same-layer failures.
+- fallback-cascade telemetry coverage now asserts preferred-resolution failure + fallback-provider execution failure propagation on `maestro.node.failed`.
 
 Validation:
 
@@ -636,4 +638,4 @@ Validation:
 - `npm --prefix D:\OneDrive\Documents\GitHub\Maestro run typecheck` ✅
 - `npm --prefix D:\OneDrive\Documents\GitHub\Maestro run verify:diagnostics-artifacts` ✅
 - `npm --prefix D:\OneDrive\Documents\GitHub\Maestro run validate:otto-ui-contract` ✅
-- `npm --prefix D:\OneDrive\Documents\GitHub\Maestro test` ✅ (62 files / 148 tests passed)
+- `npm --prefix D:\OneDrive\Documents\GitHub\Maestro test` ✅ (62 files / 150 tests passed)

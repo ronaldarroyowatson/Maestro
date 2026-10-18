@@ -189,6 +189,75 @@ function runtimeRetryExhaustionMixedOutcomePipelineWithGovernanceMetadata(): Pip
   };
 }
 
+function runtimeMultiFailureLayerPipelineWithGovernanceMetadata(): Pipeline {
+  const now = new Date();
+  return {
+    id: 'p-observability-runtime-multi-failure',
+    version: '1.0.0',
+    contentHash: 'hash-runtime-multi-failure',
+    status: 'active',
+    createdAt: now,
+    updatedAt: now,
+    changelog: 'init',
+    metadata: {
+      name: 'observability-runtime-multi-failure',
+      description: 'multi-failure layer telemetry checks',
+      tags: [],
+      createdAt: now,
+      updatedAt: now,
+      governanceState: {
+        budgetRemaining: 7,
+        reserveBudget: 1
+      },
+      governancePolicy: {
+        selectionStrategy: 'weighted'
+      },
+      providerRoutingWarning: 'seeded-multi-failure-warning'
+    } as unknown as Pipeline['metadata'],
+    graph: {
+      graphId: 'g-observability-runtime-multi-failure',
+      nodes: [
+        { instanceId: 'n1', nodeTypeId: 'trigger', config: { role: 'entry' }, position: { x: 0, y: 0 } },
+        { instanceId: 'n2', nodeTypeId: 'service', config: { mode: 'fail-a', maxRetries: 1, backoffStrategy: 'fixed' }, position: { x: 1, y: 0 } },
+        { instanceId: 'n3', nodeTypeId: 'service', config: { mode: 'fail-b', maxRetries: 0, backoffStrategy: 'fixed' }, position: { x: 1, y: 1 } },
+        { instanceId: 'n4', nodeTypeId: 'trigger', config: { role: 'exit' }, position: { x: 2, y: 1 } }
+      ],
+      edges: [
+        { edgeId: 'e1', fromNodeId: 'n1', fromPort: 'out', toNodeId: 'n2', toPort: 'in' },
+        { edgeId: 'e2', fromNodeId: 'n1', fromPort: 'out', toNodeId: 'n3', toPort: 'in' }
+      ]
+    }
+  };
+}
+
+function runtimeFallbackCascadeFailurePipelineWithGovernanceMetadata(): Pipeline {
+  const now = new Date();
+  return {
+    id: 'p-observability-runtime-fallback-cascade',
+    version: '1.0.0',
+    contentHash: 'hash-runtime-fallback-cascade',
+    status: 'active',
+    createdAt: now,
+    updatedAt: now,
+    changelog: 'init',
+    metadata: { name: 'observability-runtime-fallback-cascade', description: 'fallback cascade failure telemetry checks', tags: [], createdAt: now, updatedAt: now } as Pipeline['metadata'],
+    graph: {
+      graphId: 'g-observability-runtime-fallback-cascade',
+      nodes: [
+        { instanceId: 'n1', nodeTypeId: 'trigger', config: { role: 'entry' }, position: { x: 0, y: 0 } },
+        {
+          instanceId: 'n2',
+          nodeTypeId: 'agent',
+          config: { providerId: 'preferred', fallbackProviderId: 'alpha', agentDescriptorId: 'alpha:model-a', promptTemplateId: 't1', maxRetries: 0 },
+          position: { x: 1, y: 0 }
+        },
+        { instanceId: 'n3', nodeTypeId: 'trigger', config: { role: 'exit' }, position: { x: 2, y: 0 } }
+      ],
+      edges: [{ edgeId: 'e1', fromNodeId: 'n1', fromPort: 'out', toNodeId: 'n2', toPort: 'in' }]
+    }
+  };
+}
+
 describe('conductor + otto observability bridge', () => {
   it('emits deterministic runtime observability traces for conductor execution', async () => {
     const prompt = new PromptEngine();
@@ -574,5 +643,164 @@ describe('conductor + otto observability bridge', () => {
         | Record<string, unknown>
         | undefined)?.budgetRemaining
     ).toBe(6);
+  });
+
+  it('emits deterministic telemetry for multi-failure layer combinations', async () => {
+    const prompt = new PromptEngine();
+    const context = new ContextEngine();
+    const rules = new RulesEngine();
+    const reviewer = new Reviewer(rules, prompt);
+
+    let failAAttempts = 0;
+    let failBAttempts = 0;
+    const telemetryEvents: Array<{ eventName: string; payload: Record<string, unknown> | undefined }> = [];
+    const bridge = new OttoObservabilityBridge({
+      runtimeContext: {
+        environment: 'test',
+        deploymentChannel: 'stable',
+        hostOs: 'windows'
+      },
+      logging: { info: async () => {}, error: async () => {} },
+      tracing: {
+        startSpan: async () => ({
+          annotate: async () => {},
+          end: async () => {}
+        })
+      },
+      telemetry: {
+        emit: async (eventName, payload) => {
+          telemetryEvents.push({ eventName, payload });
+        }
+      }
+    });
+
+    const conductor = new Conductor({
+      promptEngine: prompt,
+      contextEngine: context,
+      reviewer,
+      providerRegistry: {
+        run: async () => ({ text: 'agent-output', tokensUsed: 1, latencyMs: 1, rawResponse: {} })
+      },
+      serviceRegistry: new Map([
+        [
+          'service',
+          async (nodeConfig) => {
+            const mode = String(nodeConfig.mode ?? '');
+            if (mode === 'fail-a') {
+              failAAttempts += 1;
+              throw new Error('intentional multi failure A');
+            }
+            if (mode === 'fail-b') {
+              failBAttempts += 1;
+              throw new Error('intentional multi failure B');
+            }
+            return 'ok';
+          }
+        ]
+      ])
+    });
+
+    bridge.bind(conductor.eventBus);
+    const result = await conductor.run(runtimeMultiFailureLayerPipelineWithGovernanceMetadata(), 'hello');
+    await bridge.flush();
+
+    expect(result.status).toBe('partial');
+    expect(failAAttempts).toBe(2);
+    expect(failBAttempts).toBe(1);
+    expect(result.nodeResults.get('n2')?.status).toBe('failed');
+    expect(result.nodeResults.get('n3')?.status).toBe('failed');
+    expect(telemetryEvents.some((event) => event.eventName === 'maestro.pipeline.completed')).toBe(true);
+    expect(telemetryEvents.some((event) => event.eventName === 'maestro.pipeline.failed')).toBe(false);
+
+    const nodeFailedEvents = telemetryEvents.filter((event) => event.eventName === 'maestro.node.failed');
+    expect(nodeFailedEvents).toHaveLength(2);
+    expect(
+      nodeFailedEvents.every(
+        (event) =>
+          event.payload?.retriesExhausted === true &&
+          event.payload?.environment === 'test' &&
+          event.payload?.deploymentChannel === 'stable' &&
+          event.payload?.hostOs === 'windows'
+      )
+    ).toBe(true);
+    expect(
+      nodeFailedEvents.every(
+        (event) =>
+          (event.payload?.metadata as Record<string, unknown> | undefined)?.providerRoutingWarning === 'seeded-multi-failure-warning'
+      )
+    ).toBe(true);
+  });
+
+  it('emits fallback-cascade failure telemetry when preferred routing fails and fallback provider run fails', async () => {
+    const prompt = new PromptEngine();
+    const context = new ContextEngine();
+    const rules = new RulesEngine();
+    const reviewer = new Reviewer(rules, prompt);
+    prompt.registerTemplate({
+      id: 't1',
+      version: '1.0.0',
+      contentHash: 'h',
+      status: 'active',
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      changelog: 'init',
+      title: 't',
+      template: 'Echo: {{output}}',
+      variables: ['output']
+    });
+
+    const telemetryEvents: Array<{ eventName: string; payload: Record<string, unknown> | undefined }> = [];
+    const bridge = new OttoObservabilityBridge({
+      runtimeContext: { environment: 'test', deploymentChannel: 'stable', hostOs: 'windows' },
+      logging: { info: async () => {}, error: async () => {} },
+      tracing: {
+        startSpan: async () => ({
+          annotate: async () => {},
+          end: async () => {}
+        })
+      },
+      telemetry: {
+        emit: async (eventName, payload) => {
+          telemetryEvents.push({ eventName, payload });
+        }
+      }
+    });
+
+    const conductor = new Conductor({
+      promptEngine: prompt,
+      contextEngine: context,
+      reviewer,
+      providerRegistry: {
+        run: async (providerId) => {
+          if (providerId === 'alpha') {
+            throw new Error('fallback provider execution failed');
+          }
+          return { text: 'agent-output', tokensUsed: 1, latencyMs: 1, rawResponse: {} };
+        }
+      },
+      providerRouting: {
+        resolvePreferredProviderId: async () => {
+          throw new Error('preferred resolver unavailable');
+        }
+      },
+      serviceRegistry: new Map([['service', async () => 'noop']])
+    });
+
+    bridge.bind(conductor.eventBus);
+    const result = await conductor.run(runtimeFallbackCascadeFailurePipelineWithGovernanceMetadata(), 'hello');
+    await bridge.flush();
+
+    expect(result.status).toBe('partial');
+    const nodeFailedEvent = telemetryEvents.find((event) => event.eventName === 'maestro.node.failed');
+    expect(nodeFailedEvent).toBeDefined();
+    expect(nodeFailedEvent?.payload?.nodeId).toBe('n2');
+    expect(nodeFailedEvent?.payload?.retriesExhausted).toBe(true);
+    expect(String(nodeFailedEvent?.payload?.error ?? '')).toContain('fallback provider execution failed');
+    expect(String((nodeFailedEvent?.payload?.metadata as Record<string, unknown> | undefined)?.providerRoutingWarning ?? '')).toContain(
+      'preferred-provider-error'
+    );
+    expect(String((nodeFailedEvent?.payload?.metadata as Record<string, unknown> | undefined)?.providerRoutingWarning ?? '')).toContain(
+      'fallback=alpha'
+    );
   });
 });

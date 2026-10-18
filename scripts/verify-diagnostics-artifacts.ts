@@ -211,6 +211,81 @@ function diagnosticsRuntimeRetryExhaustionMixedOutcomePipelineWithGovernanceMeta
   };
 }
 
+function diagnosticsRuntimeMultiFailureLayerPipelineWithGovernanceMetadata(): Pipeline {
+  const now = new Date();
+  return {
+    id: 'p-diagnostics-runtime-multi-failure',
+    version: '1.0.0',
+    contentHash: 'hash-runtime-multi-failure',
+    status: 'active',
+    createdAt: now,
+    updatedAt: now,
+    changelog: 'init',
+    metadata: {
+      name: 'diagnostics-runtime-multi-failure',
+      description: 'multi-failure layer telemetry checks',
+      tags: [],
+      createdAt: now,
+      updatedAt: now,
+      governanceState: {
+        budgetRemaining: 7,
+        reserveBudget: 1
+      },
+      governancePolicy: {
+        selectionStrategy: 'weighted'
+      },
+      providerRoutingWarning: 'seeded-multi-failure-warning'
+    } as unknown as Pipeline['metadata'],
+    graph: {
+      graphId: 'g-diagnostics-runtime-multi-failure',
+      nodes: [
+        { instanceId: 'n1', nodeTypeId: 'trigger', config: { role: 'entry' }, position: { x: 0, y: 0 } },
+        { instanceId: 'n2', nodeTypeId: 'service', config: { mode: 'fail-a', maxRetries: 1, backoffStrategy: 'fixed' }, position: { x: 1, y: 0 } },
+        { instanceId: 'n3', nodeTypeId: 'service', config: { mode: 'fail-b', maxRetries: 0, backoffStrategy: 'fixed' }, position: { x: 1, y: 1 } },
+        { instanceId: 'n4', nodeTypeId: 'trigger', config: { role: 'exit' }, position: { x: 2, y: 1 } }
+      ],
+      edges: [
+        { edgeId: 'e1', fromNodeId: 'n1', fromPort: 'out', toNodeId: 'n2', toPort: 'in' },
+        { edgeId: 'e2', fromNodeId: 'n1', fromPort: 'out', toNodeId: 'n3', toPort: 'in' }
+      ]
+    }
+  };
+}
+
+function diagnosticsRuntimeFallbackCascadeFailurePipelineWithGovernanceMetadata(): Pipeline {
+  const now = new Date();
+  return {
+    id: 'p-diagnostics-runtime-fallback-cascade',
+    version: '1.0.0',
+    contentHash: 'hash-runtime-fallback-cascade',
+    status: 'active',
+    createdAt: now,
+    updatedAt: now,
+    changelog: 'init',
+    metadata: {
+      name: 'diagnostics-runtime-fallback-cascade',
+      description: 'fallback cascade failure telemetry checks',
+      tags: [],
+      createdAt: now,
+      updatedAt: now
+    } as Pipeline['metadata'],
+    graph: {
+      graphId: 'g-diagnostics-runtime-fallback-cascade',
+      nodes: [
+        { instanceId: 'n1', nodeTypeId: 'trigger', config: { role: 'entry' }, position: { x: 0, y: 0 } },
+        {
+          instanceId: 'n2',
+          nodeTypeId: 'agent',
+          config: { providerId: 'preferred', fallbackProviderId: 'diag-alpha', agentDescriptorId: 'diag-alpha:model-a', promptTemplateId: 't1', maxRetries: 0 },
+          position: { x: 1, y: 0 }
+        },
+        { instanceId: 'n3', nodeTypeId: 'trigger', config: { role: 'exit' }, position: { x: 2, y: 0 } }
+      ],
+      edges: [{ edgeId: 'e1', fromNodeId: 'n1', fromPort: 'out', toNodeId: 'n2', toPort: 'in' }]
+    }
+  };
+}
+
 function adapter(providerId: string, latencyMs: number): ProviderAdapter {
   return {
     providerId,
@@ -579,6 +654,154 @@ async function main(): Promise<void> {
     expectedBudgetRemaining: 6
   });
 
+  let multiFailureAAttempts = 0;
+  let multiFailureBAttempts = 0;
+  const runtimeMultiFailureTelemetryEvents: Array<{ eventName: string; payload: Record<string, unknown> | undefined }> = [];
+  const runtimeMultiFailureBridge = new OttoObservabilityBridge({
+    runtimeContext: {
+      environment: 'ci',
+      deploymentChannel: 'stable',
+      hostOs: process.platform
+    },
+    logging: {
+      info: async () => {},
+      error: async () => {}
+    },
+    tracing: {
+      startSpan: async () => ({
+        annotate: async () => {},
+        end: async () => {}
+      })
+    },
+    telemetry: {
+      emit: async (eventName, payload) => {
+        runtimeMultiFailureTelemetryEvents.push({ eventName, payload });
+      }
+    }
+  });
+  const runtimeMultiFailureConductor = new Conductor({
+    promptEngine: prompt,
+    contextEngine: context,
+    reviewer,
+    providerRegistry: {
+      run: async (providerId, request) => providerRegistry.run(providerId, request)
+    },
+    serviceRegistry: new Map([
+      [
+        'service',
+        async (nodeConfig) => {
+          const mode = String(nodeConfig.mode ?? '');
+          if (mode === 'fail-a') {
+            multiFailureAAttempts += 1;
+            throw new Error('intentional multi failure A');
+          }
+          if (mode === 'fail-b') {
+            multiFailureBAttempts += 1;
+            throw new Error('intentional multi failure B');
+          }
+          return 'ok';
+        }
+      ]
+    ])
+  });
+  runtimeMultiFailureBridge.bind(runtimeMultiFailureConductor.eventBus);
+  const runtimeMultiFailureResult = await runtimeMultiFailureConductor.run(
+    diagnosticsRuntimeMultiFailureLayerPipelineWithGovernanceMetadata(),
+    'hello'
+  );
+  await runtimeMultiFailureBridge.flush();
+  if (runtimeMultiFailureResult.status !== 'partial') {
+    throw new Error('Diagnostics verification failed: runtime multi-failure pipeline did not produce partial status.');
+  }
+  if (multiFailureAAttempts !== 2 || multiFailureBAttempts !== 1) {
+    throw new Error('Diagnostics verification failed: runtime multi-failure retry attempt counts are unexpected.');
+  }
+  const multiFailureNodeFailedPayloads = runtimeMultiFailureTelemetryEvents
+    .filter((event) => event.eventName === 'maestro.node.failed')
+    .map((event) => event.payload);
+  if (multiFailureNodeFailedPayloads.length !== 2) {
+    throw new Error('Diagnostics verification failed: runtime multi-failure telemetry expected exactly two node-failed payloads.');
+  }
+  for (const payload of multiFailureNodeFailedPayloads) {
+    assertRuntimeFailureNodeTelemetryShape(payload, {
+      expectedNodeId: String(payload?.nodeId ?? ''),
+      expectedErrorIncludes: 'intentional multi failure',
+      expectedWarning: 'seeded-multi-failure-warning',
+      expectedBudgetRemaining: 7
+    });
+  }
+
+  const runtimeFallbackCascadeTelemetryEvents: Array<{ eventName: string; payload: Record<string, unknown> | undefined }> = [];
+  const runtimeFallbackCascadeBridge = new OttoObservabilityBridge({
+    runtimeContext: {
+      environment: 'ci',
+      deploymentChannel: 'stable',
+      hostOs: process.platform
+    },
+    logging: {
+      info: async () => {},
+      error: async () => {}
+    },
+    tracing: {
+      startSpan: async () => ({
+        annotate: async () => {},
+        end: async () => {}
+      })
+    },
+    telemetry: {
+      emit: async (eventName, payload) => {
+        runtimeFallbackCascadeTelemetryEvents.push({ eventName, payload });
+      }
+    }
+  });
+  const runtimeFallbackCascadeConductor = new Conductor({
+    promptEngine: prompt,
+    contextEngine: context,
+    reviewer,
+    providerRegistry: {
+      run: async (providerId) => {
+        if (providerId === 'diag-alpha') {
+          throw new Error('fallback provider execution failed');
+        }
+        return { text: `diag:${providerId}`, tokensUsed: 1, latencyMs: 1, rawResponse: { providerId } };
+      }
+    },
+    providerRouting: {
+      resolvePreferredProviderId: async () => {
+        throw new Error('preferred resolver unavailable');
+      }
+    },
+    serviceRegistry: new Map([['service', async () => 'noop']])
+  });
+  runtimeFallbackCascadeBridge.bind(runtimeFallbackCascadeConductor.eventBus);
+  const runtimeFallbackCascadeResult = await runtimeFallbackCascadeConductor.run(
+    diagnosticsRuntimeFallbackCascadeFailurePipelineWithGovernanceMetadata(),
+    'hello'
+  );
+  await runtimeFallbackCascadeBridge.flush();
+  if (runtimeFallbackCascadeResult.status !== 'partial') {
+    throw new Error('Diagnostics verification failed: fallback-cascade pipeline did not produce partial status.');
+  }
+  const fallbackCascadeNodeFailedPayload = runtimeFallbackCascadeTelemetryEvents.find(
+    (event) => event.eventName === 'maestro.node.failed' && String(event.payload?.nodeId ?? '') === 'n2'
+  )?.payload;
+  if (!fallbackCascadeNodeFailedPayload) {
+    throw new Error('Diagnostics verification failed: fallback-cascade node-failed payload was missing.');
+  }
+  assertRuntimeFailureNodeTelemetryShape(fallbackCascadeNodeFailedPayload, {
+    expectedNodeId: 'n2',
+    expectedErrorIncludes: 'fallback provider execution failed',
+    expectedWarning: String(
+      (fallbackCascadeNodeFailedPayload['metadata'] as Record<string, unknown> | undefined)?.providerRoutingWarning ?? ''
+    )
+  });
+  const fallbackWarning = String(
+    (fallbackCascadeNodeFailedPayload['metadata'] as Record<string, unknown> | undefined)?.providerRoutingWarning ?? ''
+  );
+  if (!fallbackWarning.includes('preferred-provider-error') || !fallbackWarning.includes('fallback=diag-alpha')) {
+    throw new Error('Diagnostics verification failed: fallback-cascade providerRoutingWarning did not include expected fallback details.');
+  }
+
   const diagnosticsDir = path.resolve('dist', 'diagnostics');
   await mkdir(diagnosticsDir, { recursive: true });
 
@@ -599,6 +822,8 @@ async function main(): Promise<void> {
     earlyFailureCycle: failedCyclePayload,
     runtimeNodeFailure: runtimeNodeFailedPayload,
     runtimeRetryNodeFailure: retryNodeFailedPayload,
+    runtimeMultiFailureNodeFailures: multiFailureNodeFailedPayloads,
+    runtimeFallbackCascadeNodeFailure: fallbackCascadeNodeFailedPayload,
     emittedMetadata: emittedGovernanceMetadata,
     telemetryEvents,
     routedProviders
@@ -731,7 +956,7 @@ function assertRuntimeFailureNodeTelemetryShape(
     expectedNodeId: string;
     expectedErrorIncludes: string;
     expectedWarning: string;
-    expectedBudgetRemaining: number;
+    expectedBudgetRemaining?: number;
   }
 ): void {
   if (!payload) {
@@ -760,11 +985,13 @@ function assertRuntimeFailureNodeTelemetryShape(
   if (metadataRecord.providerRoutingWarning !== options.expectedWarning) {
     throw new Error('Diagnostics verification failed: runtime node-failed providerRoutingWarning mismatch.');
   }
-  const governanceState = metadataRecord.governanceState;
-  if (!governanceState || typeof governanceState !== 'object') {
-    throw new Error('Diagnostics verification failed: runtime node-failed governanceState missing.');
-  }
-  if ((governanceState as Record<string, unknown>).budgetRemaining !== options.expectedBudgetRemaining) {
-    throw new Error('Diagnostics verification failed: runtime node-failed governanceState budget mismatch.');
+  if (options.expectedBudgetRemaining !== undefined) {
+    const governanceState = metadataRecord.governanceState;
+    if (!governanceState || typeof governanceState !== 'object') {
+      throw new Error('Diagnostics verification failed: runtime node-failed governanceState missing.');
+    }
+    if ((governanceState as Record<string, unknown>).budgetRemaining !== options.expectedBudgetRemaining) {
+      throw new Error('Diagnostics verification failed: runtime node-failed governanceState budget mismatch.');
+    }
   }
 }

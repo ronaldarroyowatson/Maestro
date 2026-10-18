@@ -82,12 +82,14 @@ This section is intentionally added before major implementation changes.
 - Additional governance trace hardening implemented: cycle-validation failure telemetry coverage with governance-metadata continuity assertions and workflow-level diagnostics checks.
 - Additional governance trace hardening implemented: runtime service/node-failure telemetry coverage with governance metadata continuity assertions on `maestro.node.failed` payloads.
 - Additional governance trace hardening implemented: retry-exhaustion + mixed-outcome runtime telemetry coverage with `retriesExhausted` and continuity-metadata assertions.
-- Current execution focus: expanding telemetry invariants across additional failure-path permutations while preserving deterministic partial/failure semantics.
+- Additional governance trace hardening implemented: multi-failure layer telemetry coverage with deterministic `maestro.node.failed` cardinality and continuity-metadata assertions.
+- Additional governance trace hardening implemented: fallback-cascade failure telemetry coverage when preferred-provider resolution fails and fallback provider execution fails.
+- Current execution focus: expanding telemetry invariants for broader policy-state permutations while preserving deterministic failure semantics.
 
 ### Next Step
 
-1. Expand telemetry assertions for additional failure-path permutations (multi-failure layer combinations and fallback-cascade paths).
-2. Extend diagnostics artifact checks for those broader failure-path invariants.
+1. Expand telemetry assertions for broader policy-state permutations (governance-state deltas across repeated failure runs).
+2. Extend diagnostics artifact checks for policy-state drift and continuity invariants.
 3. Run integrated validation pass and prepare commit/push checkpoint.
 
 ## End-of-Day Checkpoint (2026-10-17)

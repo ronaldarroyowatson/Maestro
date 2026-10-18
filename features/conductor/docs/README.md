@@ -20,6 +20,9 @@ Runtime node-failure emissions (`maestro.node.failed`) also propagate optional g
 metadata when available, preserving failure-context visibility for service/node error paths.
 Retry-exhaustion node-failure payloads include `retriesExhausted=true`, and mixed-outcome
 runtime executions preserve deterministic partial-status semantics with continuity metadata.
+Multi-failure same-layer runs preserve deterministic `maestro.node.failed` event cardinality,
+and fallback-cascade failures preserve routing-warning context when preferred resolution fails
+before fallback-provider execution also fails.
 
 ## Structure
 - models/: runtime contracts and execution result models

@@ -95,6 +95,9 @@
   - expanded diagnostics artifact verification for runtime service-failure telemetry invariants
   - added runtime retry-exhaustion telemetry assertions (`retriesExhausted`) with mixed-outcome partial-status coverage
   - expanded diagnostics artifact verification for retry-exhaustion and mixed-node-outcome telemetry invariants
+  - added multi-failure layer telemetry assertions for deterministic `maestro.node.failed` cardinality and continuity metadata
+  - added fallback-cascade failure telemetry assertions for preferred-routing failure + fallback-provider execution failure
+  - expanded diagnostics artifact verification for multi-failure and fallback-cascade telemetry invariants
 
 ## 0.1.9
 
