@@ -90,13 +90,28 @@ This section is intentionally added before major implementation changes.
 - Additional governance trace hardening implemented: cross-run mixed-mutation telemetry coverage with consistent fallback warning assertions across cooldown/blocked/budget-reserve permutations.
 - Otto UI startup hardening implemented in local `otto-ui`: preload bridge compatibility fix (`preload.cjs`) plus renderer-readiness startup gating before Electron `loadURL` to avoid blank-shell launches.
 - Additional governance trace hardening implemented: deterministic warning-shape coverage across resolver-error vs resolver-unavailable fallback permutations (integration + diagnostics verifier).
-- Current execution focus: continuing governance warning/error-shape invariants and packaging the next sync checkpoint.
+- Current execution focus: paused for end-of-day checkpoint after resolver warning-shape hardening and sync.
 
 ### Next Step
 
 1. Expand telemetry assertions for remaining governance mutation combinations not yet represented in workflow diagnostics artifacts.
 2. Extend diagnostics artifact checks for warning/error-shape consistency across additional fallback and policy-pressure permutations.
 3. Run integrated validation pass and prepare commit/push checkpoint.
+
+## End-of-Day Checkpoint (2026-10-17, Late Session)
+
+Session stop state:
+
+- Resolver warning-shape determinism is implemented and validated for both `preferred-provider-error` and `preferred-provider-unavailable` fallback permutations.
+- Workflow-level diagnostics verifier now enforces the same resolver warning-shape continuity contract.
+- Otto UI startup order hardening has been validated in local `otto-ui` by launching Electron before Vite and confirming renderer connection after dev-server readiness.
+- Maestro `main` is synced with GitHub after the latest governance hardening commit.
+
+Resume-first actions for next session:
+
+1. Continue governance telemetry expansion for remaining warning/error-shape and policy-pressure permutations.
+2. Mirror any new integration assertions in `scripts/verify-diagnostics-artifacts.ts`.
+3. Run targeted + full validation pass, then publish the next synced checkpoint.
 
 ## End-of-Day Checkpoint (2026-10-17)
 
