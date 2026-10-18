@@ -25,6 +25,45 @@ export type {
   ProviderHealth,
   ToolDefinition
 } from './types/provider.js';
+export type {
+  CapabilityProfile,
+  ContextEntity,
+  DiscoveryResourceRecord,
+  EventBusPublishRequest,
+  EventBusSubscription,
+  GraphDefinition,
+  GraphEdgeDefinition,
+  GraphLayoutMetadata,
+  GraphNodeDefinition,
+  GraphPersistenceRequest,
+  GraphPersistenceResult,
+  GraphQueryRequest,
+  GraphServiceAdapter,
+  GraphServiceRequest,
+  GraphServiceResult,
+  GraphSerializer,
+  GraphStorageAdapter,
+  GraphTraversalRequest,
+  GraphTraversalResult,
+  GraphVersionRecord,
+  MaestroEventEnvelope,
+  ResourceCapabilityTag,
+  ResourceHealthRecord,
+  ResourceLifecycleStatus,
+  ResourcePerformanceSnapshot,
+  RuntimeNodeKind,
+  WorkflowCheckpoint,
+  WorkflowExecutionPolicy,
+  WorkflowOrchestrationPolicy,
+  WorkflowRoutingRule,
+  WorkflowRunRequest,
+  WorkflowRunResult,
+  WorkflowRuntimeCommand,
+  WorkflowRuntimeServiceAdapter,
+  WorkflowRuntimeState,
+  WorkflowRunState,
+  WorkflowStateSnapshot
+} from './types/platform.js';
 
 export {
   DEFAULT_CONFIDENCE_THRESHOLD,
@@ -46,4 +85,9 @@ export {
   loadMaestroOttoUiContract,
   validateMaestroOttoUiContract
 } from './utils/ottoUiContract.js';
+export {
+  getMaestroEntryFeature,
+  getMaestroFeatureCatalog,
+  MAESTRO_FEATURE_CATALOG
+} from './utils/maestroFeatureCatalog.js';
 export { validateMaestroModuleRegistration } from './utils/ottoModuleRegistration.js';

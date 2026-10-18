@@ -24,6 +24,16 @@
 
 ### Changed
 
+- Converted the tracer-bullet Otto UI surface into a real first-pass Maestro feature shell:
+  - expanded the navigation contract to workflow-builder, runtime-status/runtime-monitor, registry-browser, execution-timeline, and diagnostics pages
+  - preserved compatibility with the existing `runtime-status` entry while expanding the feature catalog beyond the install smoke path
+  - updated UI settings and node graph metadata to represent the actual Maestro runtime flow
+  - promoted the feature roster into a machine-readable Otto manifest at `otto/manifests/maestro-feature-catalog.json`
+  - added a structured feature catalog helper in `src/shared/utils/maestroFeatureCatalog.ts` and exported it from `src/shared/index.ts`
+  - extended the shared UI contract test to assert the feature set beyond the installation smoke path and validate the catalog manifest as part of the UI contract lifecycle
+- Formalized the Otto-first platform contract core for the next architecture phase:
+  - added shared runtime and event contracts in `src/shared/types/platform.ts`
+  - introduced event-envelope, graph-definition, workflow-runtime-state, checkpoint, and run-request interfaces to anchor the upcoming Graph/Workflow service work
 - Expanded Otto backend module wiring in install contracts to include:
   - `otto-systems/otto-server`
   - `otto-systems/otto-kernel`

@@ -1,8 +1,8 @@
 # Maestro Master Architecture & Execution Plan
 
-Status: Draft v1 (architecture-first planning, no code changes)  
+Status: Draft v1.5 (architecture-first plan + Otto-first contract-core iteration in progress)
 Date: 2026-10-17  
-Scope: Preserve all completed Otto↔Maestro foundation work and define the next long-range build phases for Maestro as a graph-based orchestration platform on Otto.
+Scope: Preserve all completed Otto↔Maestro foundation work and define the next long-range build phases for Maestro as a graph-based orchestration platform on Otto, while progressively formalizing the contract layer for graph, runtime, discovery, and checkpoint services.
 
 ## 1) Architecture Overview
 
@@ -263,6 +263,13 @@ Initial practical default: PostgreSQL (core metadata) + Redis/NATS/Kafka (events
 - Early architectural risk is contract and domain-shape correctness, not raw traversal throughput.
 - Hybrid keeps ETC/DRY/SOLID goals: stable interface, replaceable implementation.
 
+### Recommended implementation posture
+
+- Keep the public Otto service contracts language-agnostic and versioned.
+- Use TypeScript service adapters and orchestration logic in the first implementation pass.
+- Keep the Rust graph kernel as a pluggable backend when memory pressure, traversals, or layout optimization exceed TypeScript runtime efficiency.
+- Do not couple Maestro UI or workflow orchestration directly to the graph engine storage implementation.
+
 ---
 
 ## 10) Execution Model Recommendations
@@ -309,6 +316,10 @@ Node contract must allow one or many references per resource type.
 
 ## 11) Prioritized Implementation Roadmap
 
+## Current milestone: Runtime orchestration contract boundary
+
+The shared Otto-first contract layer now includes graph traversal, event-bus publish semantics, discovery lifecycle metadata, capability/resource telemetry contracts, graph persistence/version semantics, and concrete adapter boundaries for both the Graph Service and Workflow Runtime. The next concrete implementation step is to formalize the orchestration policy and execution routing boundary so Maestro can schedule runs, route alternate paths, apply approval/confidence rules, and create/restore checkpoints without drifting into ad hoc runtime logic or standalone CLI/API creation outside the Otto command-service rule.
+
 ## Phase 0 — Foundation Lock (already mostly complete)
 
 - Freeze and version current Otto install/update/runtime contracts.
@@ -320,12 +331,14 @@ Node contract must allow one or many references per resource type.
 - Introduce platform-wide event bus schemas and publisher/subscriber SDK.
 - Normalize deterministic event fields.
 - Exit criteria: runtime + discovery + registry events visible end-to-end.
+- Current execution status: event envelopes, capability/resource metadata, graph traversal, and persistence/versioning contracts are in the shared platform contract layer and validated by TypeScript checks.
 
 ## Phase 2 — Graph Service v1
 
 - Build TypeScript Graph Service with versioned graph persistence and traversal/query APIs.
 - Include layout metadata and serializer contracts.
 - Exit criteria: Maestro builder can persist/load/query graph versions via service APIs.
+- Immediate next milestone: formalize the graph service adapter boundary and first TypeScript implementation contract in the shared platform layer before introducing a concrete runtime implementation or a new Otto ecosystem repo.
 
 ## Phase 3 — Workflow Runtime Service v1
 

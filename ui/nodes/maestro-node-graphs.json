@@ -25,6 +25,12 @@
       "label": "Reviewer",
       "icon": "check",
       "color": "#8250DF"
+    },
+    {
+      "id": "monitor.node",
+      "label": "Monitor",
+      "icon": "activity",
+      "color": "#D97706"
     }
   ],
   "graphs": [
@@ -33,9 +39,14 @@
       "name": "Default Maestro Runtime Graph",
       "nodes": [
         {
-          "id": "conductor",
+          "id": "workflow-builder",
           "type": "pipeline.node",
-          "label": "Conductor"
+          "label": "Workflow Builder"
+        },
+        {
+          "id": "runtime-monitor",
+          "type": "monitor.node",
+          "label": "Runtime Monitor"
         },
         {
           "id": "context-engine",
@@ -53,14 +64,24 @@
           "label": "Provider Registry"
         },
         {
+          "id": "execution-timeline",
+          "type": "monitor.node",
+          "label": "Execution Timeline"
+        },
+        {
           "id": "reviewer",
           "type": "review.node",
           "label": "Reviewer"
+        },
+        {
+          "id": "diagnostics",
+          "type": "monitor.node",
+          "label": "Diagnostics"
         }
       ],
       "edges": [
         {
-          "from": "conductor",
+          "from": "workflow-builder",
           "to": "context-engine"
         },
         {
@@ -74,6 +95,18 @@
         {
           "from": "provider-registry",
           "to": "reviewer"
+        },
+        {
+          "from": "reviewer",
+          "to": "execution-timeline"
+        },
+        {
+          "from": "execution-timeline",
+          "to": "diagnostics"
+        },
+        {
+          "from": "runtime-monitor",
+          "to": "diagnostics"
         }
       ]
     }

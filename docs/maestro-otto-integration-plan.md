@@ -66,10 +66,16 @@ This section is intentionally added before major implementation changes.
 4. Observability baseline contracts (logging/tracing/metrics/debug + diagnostics path).
 5. Maestro module registration contract + registration validation.
 6. Otto UI contract-ingestion step completed: preload contract loading, dynamic route generation, and panel-level contract surfaces validated.
+7. Otto-first service contract core expansion: shared event envelopes, graph-service contracts, workflow runtime state, checkpoint interfaces, and discovery/registry/context scaffolding defined in `src/shared/types/platform.ts`.
+8. Maestro feature-catalog expansion and validation: product surfaces are now represented as a stable catalog/manifest pair and checked for contract consistency.
+9. Contract refinement pass: discovery/resource lifecycle, context entities, and state snapshot primitives added to the shared Otto-first contract layer to support the eventual Graph Service and Workflow Runtime implementation.
 
 ### In Progress
 
 - Backbone feature implementation phase in Maestro.
+- Phase 1 contract core refinement: finalize service boundary contracts for discovery, state checkpointing, capability classification, and resource lifecycle metadata before introducing the first functional Otto graph service.
+- Active execution objective: introduce explicit Workflow Runtime adapter contracts for run lifecycle, state transitions, checkpointing, and pause/resume/cancel operations, then wire the shared types into the public index and validate with TypeScript checks.
+- Completed this cycle: event-bus publish semantics, graph traversal contracts, graph persistence/versioning adapters, capability classification primitives, health/performance snapshots, and context/resource metadata contracts were added to the shared Otto-first platform layer.
 - First backbone slice started in `features/conductor`: deterministic runtime options for run ID/time and reproducible execution checks.
 - Otto UI bootstrap diagnostics surfaced in Maestro panel with degraded-stage badges for local service failure visibility.
 - Conductor observability runtime trace wiring and deterministic event-trace integration coverage implemented with passing integration tests.
@@ -92,13 +98,20 @@ This section is intentionally added before major implementation changes.
 - Additional governance trace hardening implemented: cross-run mixed-mutation telemetry coverage with consistent fallback warning assertions across cooldown/blocked/budget-reserve permutations.
 - Otto UI startup hardening implemented in local `otto-ui`: preload bridge compatibility fix (`preload.cjs`) plus renderer-readiness startup gating before Electron `loadURL` to avoid blank-shell launches.
 - Additional governance trace hardening implemented: deterministic warning-shape coverage across resolver-error vs resolver-unavailable fallback permutations (integration + diagnostics verifier).
-- Current execution focus: paused for end-of-day checkpoint after resolver warning-shape hardening and sync.
+- Current execution focus: resumed with governance telemetry expansion and validation sweep after the resolver warning-shape hardening checkpoint.
+- Active objective: convert the existing tracer-bullet Otto UI shell into a feature-oriented Maestro runtime surface with real product pages and a stable runtime feature catalog while preserving compatibility with the existing runtime-status entry point.
+- This phase explicitly moves beyond installation smoke validation and into a first real feature set: workflow-builder, runtime-status/runtime-monitor, registry-browser, execution-timeline, and diagnostics status pages.
+- Product-layer milestone: the feature catalog is now represented as both a shared TypeScript helper and a machine-readable Otto manifest so the shell is no longer just a smoke test contract.
+- Architecture transition milestone: the next execution phase begins with the Otto-first service contract core — event envelopes, graph service contracts, event bus subscription contracts, and workflow runtime state definitions are now being formalized before feature implementation begins.
 
 ### Next Step
 
 1. Expand telemetry assertions for remaining governance mutation combinations not yet represented in workflow diagnostics artifacts.
-2. Extend diagnostics artifact checks for warning/error-shape consistency across additional fallback and policy-pressure permutations.
-3. Run integrated validation pass and prepare commit/push checkpoint.
+2. Preserve the existing runtime-status entry point while expanding the product-facing feature catalog aligned with the Maestro architecture model.
+3. Promote the feature catalog to a machine-readable manifest contract under `otto/manifests/` and validate it against the UI contract.
+4. Formalize the cross-service platform contract core (`event envelope`, `graph definition`, `runtime state`, and `checkpoint` interfaces) as shared types for the Otto-first architecture layer.
+5. Extend diagnostics artifact checks for warning/error-shape consistency across additional fallback and policy-pressure permutations.
+6. Run integrated validation pass and prepare commit/push checkpoint.
 
 ## End-of-Day Checkpoint (2026-10-17, Late Session)
 

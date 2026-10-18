@@ -2,7 +2,7 @@
   "version": "1.0.0",
   "runtime": "maestro",
   "defaults": {
-    "startView": "graph",
+    "startView": "runtime-monitor",
     "showLogsPanel": true,
     "showTelemetryPanel": true,
     "showTracingPanel": true,
@@ -11,10 +11,15 @@
     "telemetryEnabled": true
   },
   "availableViews": [
-    "graph",
+    "install-status",
+    "workflow-builder",
+    "runtime-monitor",
+    "registry-browser",
+    "node-graph",
+    "execution-timeline",
+    "diagnostics",
     "logs",
-    "telemetry",
-    "runtime-status"
+    "telemetry"
   ],
   "preferences": {
     "persistAcrossSessions": true,

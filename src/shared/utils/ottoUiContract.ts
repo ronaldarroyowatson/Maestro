@@ -22,6 +22,17 @@ interface MaestroNodeGraphs {
   }>;
 }
 
+interface MaestroFeatureCatalog {
+  features: Array<{
+    id: string;
+    label: string;
+    route: string;
+    panel: string;
+    category: string;
+    status: string;
+  }>;
+}
+
 export interface MaestroOttoUiContractPage {
   id: string;
   label: string;
@@ -39,6 +50,7 @@ export interface MaestroOttoUiContract {
     navigation: string;
     nodeGraphs: string;
     settings: string;
+    featureCatalog: string;
   };
   pages: MaestroOttoUiContractPage[];
 }
@@ -65,10 +77,12 @@ export function validateMaestroOttoUiContract(repoRoot: string): OttoUiContractV
   const panelsPath = path.join(repoRoot, contract.source.navigation);
   const nodeGraphsPath = path.join(repoRoot, contract.source.nodeGraphs);
   const settingsPath = path.join(repoRoot, contract.source.settings);
+  const featureCatalogPath = path.join(repoRoot, contract.source.featureCatalog);
 
   const panels = JSON.parse(readFileSync(panelsPath, 'utf8')) as MaestroPanels;
   const nodeGraphs = JSON.parse(readFileSync(nodeGraphsPath, 'utf8')) as MaestroNodeGraphs;
   const settings = JSON.parse(readFileSync(settingsPath, 'utf8')) as MaestroUiSettings;
+  const featureCatalog = JSON.parse(readFileSync(featureCatalogPath, 'utf8')) as MaestroFeatureCatalog;
 
   const entryPage = contract.pages.find((page) => page.id === contract.entryPageId);
   if (!entryPage) {
@@ -88,6 +102,13 @@ export function validateMaestroOttoUiContract(repoRoot: string): OttoUiContractV
   const hasNodeGraphPage = contract.pages.some((page) => page.id === 'maestro.node-graph');
   if (!hasNodeGraphPage) {
     problems.push("Missing required page 'maestro.node-graph'.");
+  }
+
+  const featureIds = new Set(featureCatalog.features.map((feature) => feature.id));
+  for (const page of contract.pages) {
+    if (!featureIds.has(page.id)) {
+      problems.push(`Feature catalog is missing UI page '${page.id}'.`);
+    }
   }
 
   if (nodeGraphs.graphs.length === 0) {

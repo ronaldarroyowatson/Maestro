@@ -10,7 +10,7 @@ Date: 2026-07-05
 
 - `otto/maestro-payload.json` now includes an explicit `otto-command-service` artifact with a git source, version pin, and install path.
 - The payload still includes the Maestro source checkout, build output, UI assets, configuration defaults, telemetry hooks, and lifecycle hooks.
-- The command source-of-truth block continues to point at `../Otto/otto-command-service`.
+- The command source-of-truth block continues to point at `../otto-command-service`.
 
 ## Result
 

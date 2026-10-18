@@ -8,7 +8,12 @@
   "panels": [
     "install-status",
     "runtime-status",
+    "workflow-builder",
+    "runtime-monitor",
+    "registry-browser",
     "node-graph",
+    "execution-timeline",
+    "diagnostics",
     "logs",
     "telemetry"
   ],
@@ -17,6 +22,10 @@
     "maestro.update",
     "maestro.repair",
     "maestro.uninstall",
+    "maestro.workflow.builder",
+    "maestro.runtime.monitor",
+    "maestro.registry.search",
+    "maestro.execution.timeline",
     "maestro.tracing",
     "maestro.diagnostics"
   ],

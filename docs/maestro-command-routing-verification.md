@@ -10,7 +10,7 @@ Date: 2026-07-05
 ## Findings
 
 - Maestro command contracts resolve through the standalone `@otto/command-service` package in `src/shared/utils/commandServiceContract.ts`.
-- `otto/maestro-commands.json` declares `../Otto/otto-command-service` as the source of truth for Maestro command schemas.
+- `otto/maestro-commands.json` declares `../otto-command-service` as the source of truth for Maestro command schemas.
 - `otto/maestro-payload.json` now also includes an explicit `otto-command-service` artifact entry for install-time availability.
 - No embedded command-service implementation or standalone Maestro CLI parser was found in the active Maestro source paths.
 

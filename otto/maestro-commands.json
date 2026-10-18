@@ -2,7 +2,7 @@
   "$schema": "./schemas/maestro-commands.schema.json",
   "schemaVersion": "1.0.0",
   "sourceOfTruth": {
-    "repo": "../Otto/otto-command-service",
+    "repo": "../otto-command-service",
     "schemaPath": "src/schemas"
   },
   "commands": [

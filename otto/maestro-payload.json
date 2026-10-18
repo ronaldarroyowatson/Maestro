@@ -154,7 +154,7 @@
   "commands": {
     "manifest": "otto/maestro-commands.json",
     "sourceOfTruth": {
-      "repo": "../Otto/otto-command-service",
+      "repo": "../otto-command-service",
       "schemaPath": "src/schemas"
     }
   },

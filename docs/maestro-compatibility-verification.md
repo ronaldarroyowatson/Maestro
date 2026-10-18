@@ -12,8 +12,8 @@ Date: 2026-07-05
 ### Command-service routing
 
 - `src/shared/utils/commandServiceContract.ts` validates the presence of `maestro.install`, `maestro.update`, `maestro.repair`, and `maestro.uninstall` in `@otto/command-service`.
-- `otto/maestro-commands.json` declares the standalone command-service repo as source of truth (`../Otto/otto-command-service`) and maps every Maestro command to a `commandServiceSchema` entry.
-- `otto/maestro-payload.json` also points its command source-of-truth block to `../Otto/otto-command-service`.
+- `otto/maestro-commands.json` declares the standalone command-service repo as source of truth (`../otto-command-service`) and maps every Maestro command to a `commandServiceSchema` entry.
+- `otto/maestro-payload.json` also points its command source-of-truth block to `../otto-command-service`.
 
 ### Installer, payload, telemetry, and UI wiring
 

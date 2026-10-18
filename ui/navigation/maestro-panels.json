@@ -14,9 +14,34 @@
       "panel": "runtime-status"
     },
     {
+      "id": "maestro.workflow-builder",
+      "label": "Workflow Builder",
+      "panel": "workflow-builder"
+    },
+    {
+      "id": "maestro.runtime-monitor",
+      "label": "Runtime Monitor",
+      "panel": "runtime-monitor"
+    },
+    {
+      "id": "maestro.registry-browser",
+      "label": "Registry Browser",
+      "panel": "registry-browser"
+    },
+    {
       "id": "maestro.node-graph",
       "label": "Node Graph",
       "panel": "node-graph"
+    },
+    {
+      "id": "maestro.execution-timeline",
+      "label": "Execution Timeline",
+      "panel": "execution-timeline"
+    },
+    {
+      "id": "maestro.diagnostics",
+      "label": "Diagnostics",
+      "panel": "diagnostics"
     },
     {
       "id": "maestro.logs",
