@@ -93,6 +93,8 @@
   - expanded failure telemetry permutation coverage for cycle-validation errors with governance-metadata continuity checks
   - added runtime node-failure telemetry assertions (`maestro.node.failed`) for governance metadata continuity
   - expanded diagnostics artifact verification for runtime service-failure telemetry invariants
+  - added runtime retry-exhaustion telemetry assertions (`retriesExhausted`) with mixed-outcome partial-status coverage
+  - expanded diagnostics artifact verification for retry-exhaustion and mixed-node-outcome telemetry invariants
 
 ## 0.1.9
 

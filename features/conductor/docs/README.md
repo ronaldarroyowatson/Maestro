@@ -18,6 +18,8 @@ When provided in pipeline metadata, governance metadata is seeded into runtime c
 so early validation failures still emit continuity diagnostics on pipeline-failed events.
 Runtime node-failure emissions (`maestro.node.failed`) also propagate optional governance
 metadata when available, preserving failure-context visibility for service/node error paths.
+Retry-exhaustion node-failure payloads include `retriesExhausted=true`, and mixed-outcome
+runtime executions preserve deterministic partial-status semantics with continuity metadata.
 
 ## Structure
 - models/: runtime contracts and execution result models

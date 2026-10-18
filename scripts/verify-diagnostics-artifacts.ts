@@ -170,6 +170,47 @@ function diagnosticsRuntimeFailurePipelineWithGovernanceMetadata(): Pipeline {
   };
 }
 
+function diagnosticsRuntimeRetryExhaustionMixedOutcomePipelineWithGovernanceMetadata(): Pipeline {
+  const now = new Date();
+  return {
+    id: 'p-diagnostics-runtime-retry-exhaustion',
+    version: '1.0.0',
+    contentHash: 'hash-runtime-retry-exhaustion',
+    status: 'active',
+    createdAt: now,
+    updatedAt: now,
+    changelog: 'init',
+    metadata: {
+      name: 'diagnostics-runtime-retry-exhaustion',
+      description: 'runtime retry exhaustion and mixed node outcomes telemetry checks',
+      tags: [],
+      createdAt: now,
+      updatedAt: now,
+      governanceState: {
+        budgetRemaining: 6,
+        reserveBudget: 1
+      },
+      governancePolicy: {
+        selectionStrategy: 'weighted'
+      },
+      providerRoutingWarning: 'seeded-runtime-retry-warning'
+    } as unknown as Pipeline['metadata'],
+    graph: {
+      graphId: 'g-diagnostics-runtime-retry-exhaustion',
+      nodes: [
+        { instanceId: 'n1', nodeTypeId: 'trigger', config: { role: 'entry' }, position: { x: 0, y: 0 } },
+        { instanceId: 'n2', nodeTypeId: 'service', config: { mode: 'fail', maxRetries: 2, backoffStrategy: 'fixed' }, position: { x: 1, y: 0 } },
+        { instanceId: 'n3', nodeTypeId: 'service', config: { mode: 'success' }, position: { x: 1, y: 1 } },
+        { instanceId: 'n4', nodeTypeId: 'trigger', config: { role: 'exit' }, position: { x: 2, y: 1 } }
+      ],
+      edges: [
+        { edgeId: 'e1', fromNodeId: 'n1', fromPort: 'out', toNodeId: 'n2', toPort: 'in' },
+        { edgeId: 'e2', fromNodeId: 'n1', fromPort: 'out', toNodeId: 'n3', toPort: 'in' }
+      ]
+    }
+  };
+}
+
 function adapter(providerId: string, latencyMs: number): ProviderAdapter {
   return {
     providerId,
@@ -456,7 +497,87 @@ async function main(): Promise<void> {
   const runtimeNodeFailedPayload = runtimeFailureTelemetryEvents.find(
     (event) => event.eventName === 'maestro.node.failed' && String(event.payload?.nodeId ?? '') === 'n2'
   )?.payload;
-  assertRuntimeFailureNodeTelemetryShape(runtimeNodeFailedPayload);
+  assertRuntimeFailureNodeTelemetryShape(runtimeNodeFailedPayload, {
+    expectedNodeId: 'n2',
+    expectedErrorIncludes: 'intentional runtime service failure',
+    expectedWarning: 'seeded-runtime-warning',
+    expectedBudgetRemaining: 4
+  });
+
+  let retryExhaustionAttempts = 0;
+  const runtimeRetryTelemetryEvents: Array<{ eventName: string; payload: Record<string, unknown> | undefined }> = [];
+  const runtimeRetryBridge = new OttoObservabilityBridge({
+    runtimeContext: {
+      environment: 'ci',
+      deploymentChannel: 'stable',
+      hostOs: process.platform
+    },
+    logging: {
+      info: async () => {},
+      error: async () => {}
+    },
+    tracing: {
+      startSpan: async () => ({
+        annotate: async () => {},
+        end: async () => {}
+      })
+    },
+    telemetry: {
+      emit: async (eventName, payload) => {
+        runtimeRetryTelemetryEvents.push({ eventName, payload });
+      }
+    }
+  });
+  const runtimeRetryConductor = new Conductor({
+    promptEngine: prompt,
+    contextEngine: context,
+    reviewer,
+    providerRegistry: {
+      run: async (providerId, request) => providerRegistry.run(providerId, request)
+    },
+    serviceRegistry: new Map([
+      [
+        'service',
+        async (nodeConfig) => {
+          if (String(nodeConfig.mode ?? '') === 'fail') {
+            retryExhaustionAttempts += 1;
+            throw new Error('intentional retry exhaustion failure');
+          }
+          return 'service-success-output';
+        }
+      ]
+    ])
+  });
+  runtimeRetryBridge.bind(runtimeRetryConductor.eventBus);
+  const runtimeRetryResult = await runtimeRetryConductor.run(
+    diagnosticsRuntimeRetryExhaustionMixedOutcomePipelineWithGovernanceMetadata(),
+    'hello'
+  );
+  await runtimeRetryBridge.flush();
+  if (runtimeRetryResult.status !== 'partial') {
+    throw new Error('Diagnostics verification failed: runtime retry-exhaustion pipeline did not produce partial status.');
+  }
+  if (retryExhaustionAttempts !== 3) {
+    throw new Error('Diagnostics verification failed: runtime retry-exhaustion attempts did not match maxRetries+1.');
+  }
+  if (runtimeRetryResult.nodeResults.get('n2')?.status !== 'failed') {
+    throw new Error('Diagnostics verification failed: runtime retry-exhaustion node n2 did not fail as expected.');
+  }
+  if (runtimeRetryResult.nodeResults.get('n3')?.status !== 'completed') {
+    throw new Error('Diagnostics verification failed: runtime mixed outcome node n3 did not complete as expected.');
+  }
+  if (!runtimeRetryTelemetryEvents.some((event) => event.eventName === 'maestro.pipeline.completed')) {
+    throw new Error('Diagnostics verification failed: runtime retry-exhaustion telemetry missing pipeline completed event.');
+  }
+  const retryNodeFailedPayload = runtimeRetryTelemetryEvents.find(
+    (event) => event.eventName === 'maestro.node.failed' && String(event.payload?.nodeId ?? '') === 'n2'
+  )?.payload;
+  assertRuntimeFailureNodeTelemetryShape(retryNodeFailedPayload, {
+    expectedNodeId: 'n2',
+    expectedErrorIncludes: 'intentional retry exhaustion failure',
+    expectedWarning: 'seeded-runtime-retry-warning',
+    expectedBudgetRemaining: 6
+  });
 
   const diagnosticsDir = path.resolve('dist', 'diagnostics');
   await mkdir(diagnosticsDir, { recursive: true });
@@ -477,6 +598,7 @@ async function main(): Promise<void> {
     earlyFailure: failedPayload,
     earlyFailureCycle: failedCyclePayload,
     runtimeNodeFailure: runtimeNodeFailedPayload,
+    runtimeRetryNodeFailure: retryNodeFailedPayload,
     emittedMetadata: emittedGovernanceMetadata,
     telemetryEvents,
     routedProviders
@@ -603,17 +725,28 @@ function assertEarlyFailureGovernanceMetadataShape(
   }
 }
 
-function assertRuntimeFailureNodeTelemetryShape(payload: Record<string, unknown> | undefined): void {
+function assertRuntimeFailureNodeTelemetryShape(
+  payload: Record<string, unknown> | undefined,
+  options: {
+    expectedNodeId: string;
+    expectedErrorIncludes: string;
+    expectedWarning: string;
+    expectedBudgetRemaining: number;
+  }
+): void {
   if (!payload) {
     throw new Error('Diagnostics verification failed: missing node-failed telemetry payload for runtime service failure.');
   }
   if (payload.pipelineId !== undefined) {
     throw new Error('Diagnostics verification failed: node-failed payload unexpectedly includes pipelineId.');
   }
-  if (payload.nodeId !== 'n2') {
+  if (payload.nodeId !== options.expectedNodeId) {
     throw new Error('Diagnostics verification failed: runtime node-failed payload nodeId mismatch.');
   }
-  if (typeof payload.error !== 'string' || !payload.error.includes('intentional runtime service failure')) {
+  if (payload.retriesExhausted !== true) {
+    throw new Error('Diagnostics verification failed: runtime node-failed retriesExhausted was not true.');
+  }
+  if (typeof payload.error !== 'string' || !payload.error.includes(options.expectedErrorIncludes)) {
     throw new Error('Diagnostics verification failed: runtime node-failed payload error mismatch.');
   }
   if (payload.environment !== 'ci' || payload.deploymentChannel !== 'stable' || typeof payload.hostOs !== 'string') {
@@ -624,14 +757,14 @@ function assertRuntimeFailureNodeTelemetryShape(payload: Record<string, unknown>
     throw new Error('Diagnostics verification failed: runtime node-failed payload metadata missing.');
   }
   const metadataRecord = metadata as Record<string, unknown>;
-  if (metadataRecord.providerRoutingWarning !== 'seeded-runtime-warning') {
+  if (metadataRecord.providerRoutingWarning !== options.expectedWarning) {
     throw new Error('Diagnostics verification failed: runtime node-failed providerRoutingWarning mismatch.');
   }
   const governanceState = metadataRecord.governanceState;
   if (!governanceState || typeof governanceState !== 'object') {
     throw new Error('Diagnostics verification failed: runtime node-failed governanceState missing.');
   }
-  if ((governanceState as Record<string, unknown>).budgetRemaining !== 4) {
+  if ((governanceState as Record<string, unknown>).budgetRemaining !== options.expectedBudgetRemaining) {
     throw new Error('Diagnostics verification failed: runtime node-failed governanceState budget mismatch.');
   }
 }

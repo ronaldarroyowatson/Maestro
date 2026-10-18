@@ -628,6 +628,7 @@ Changes:
   - `runId`, `pipelineId`
 - additional validation-failure permutation coverage now includes cycle-detection failures with seeded governance metadata continuity assertions.
 - runtime failure telemetry coverage now includes `maestro.node.failed` contract assertions with seeded governance metadata continuity.
+- runtime retry-exhaustion + mixed-outcome telemetry coverage now includes `retriesExhausted` assertions and deterministic partial-result continuity checks.
 
 Validation:
 
@@ -635,4 +636,4 @@ Validation:
 - `npm --prefix D:\OneDrive\Documents\GitHub\Maestro run typecheck` ✅
 - `npm --prefix D:\OneDrive\Documents\GitHub\Maestro run verify:diagnostics-artifacts` ✅
 - `npm --prefix D:\OneDrive\Documents\GitHub\Maestro run validate:otto-ui-contract` ✅
-- `npm --prefix D:\OneDrive\Documents\GitHub\Maestro test` ✅ (62 files / 147 tests passed)
+- `npm --prefix D:\OneDrive\Documents\GitHub\Maestro test` ✅ (62 files / 148 tests passed)
