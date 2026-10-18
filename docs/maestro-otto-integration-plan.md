@@ -82,7 +82,7 @@ This section is intentionally added before major implementation changes.
 ### In Progress
 
 - Active phase: execute the external-repo bridge step by applying the upstream handoff mappings inside `otto-command-service` and `otto-ui`, then verifying live command/UI registration end-to-end.
-- Current execution step: perform upstream-repo validation and publication workflow (review, commit, and push in external Otto repositories) so live command-service and UI ingestion can be verified from their own default branches.
+- Current execution step: publish the synchronized Maestro module artifacts into upstream Otto repositories via dedicated integration branches and verify those branches/PRs are live for ingestion review.
 - Backbone feature implementation phase in Maestro.
 - Phase 1 contract core refinement: finalize service boundary contracts for discovery, state checkpointing, capability classification, and resource lifecycle metadata before introducing the first functional Otto graph service.
 - Active execution objective: introduce explicit Workflow Runtime adapter contracts for run lifecycle, state transitions, checkpointing, and pause/resume/cancel operations, then wire the shared types into the public index and validate with TypeScript checks.
