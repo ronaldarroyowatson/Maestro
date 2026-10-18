@@ -1105,4 +1105,135 @@ describe('conductor + otto observability bridge', () => {
     expect(telemetryEvents.filter((event) => event.eventName === 'maestro.node.failed')).toHaveLength(2);
     expect(telemetryEvents.filter((event) => event.eventName === 'maestro.pipeline.completed')).toHaveLength(2);
   });
+
+  it('preserves reserve-budget gating telemetry continuity across repeated mutation failures', async () => {
+    const prompt = new PromptEngine();
+    const context = new ContextEngine();
+    const rules = new RulesEngine();
+    const reviewer = new Reviewer(rules, prompt);
+    prompt.registerTemplate({
+      id: 't1',
+      version: '1.0.0',
+      contentHash: 'h',
+      status: 'active',
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      changelog: 'init',
+      title: 't',
+      template: 'Echo: {{output}}',
+      variables: ['output']
+    });
+
+    const providerRegistry = new ProviderRegistry();
+    providerRegistry.register({
+      providerId: 'alpha',
+      displayName: 'alpha',
+      discover: async () => [],
+      run: async () => ({ text: 'ignored', tokensUsed: 1, latencyMs: 1, rawResponse: {} }),
+      healthCheck: async () => ({ status: 'healthy', latencyMs: 5 })
+    });
+
+    let governanceState: ProviderGovernanceState = {
+      blockedProviderIds: [],
+      cooldownUntilByProviderId: {},
+      budgetRemaining: 3,
+      reserveBudget: 2
+    };
+    let runCount = 0;
+    const nodeFailedSnapshots: Array<{
+      budget: number | undefined;
+      blockedCount: number;
+      cooldownCount: number;
+      policyReserveBudget: number | undefined;
+      warning: string;
+    }> = [];
+
+    const bridge = new OttoObservabilityBridge({
+      runtimeContext: { environment: 'test', deploymentChannel: 'stable', hostOs: 'windows' },
+      logging: { info: async () => {}, error: async () => {} },
+      tracing: {
+        startSpan: async () => ({
+          annotate: async () => {},
+          end: async () => {}
+        })
+      },
+      telemetry: {
+        emit: async (eventName, payload) => {
+          if (eventName === 'maestro.node.failed' && String(payload?.nodeId ?? '') === 'n2') {
+            const metadata = payload?.metadata as Record<string, unknown> | undefined;
+            const state = metadata?.governanceState as Record<string, unknown> | undefined;
+            const policy = metadata?.governancePolicy as Record<string, unknown> | undefined;
+            const blocked = state?.blockedProviderIds as unknown[] | undefined;
+            const cooldown = state?.cooldownUntilByProviderId as Record<string, unknown> | undefined;
+            nodeFailedSnapshots.push({
+              budget: typeof state?.budgetRemaining === 'number' ? state.budgetRemaining : undefined,
+              blockedCount: Array.isArray(blocked) ? blocked.length : 0,
+              cooldownCount: cooldown ? Object.keys(cooldown).length : 0,
+              policyReserveBudget: typeof policy?.reserveBudget === 'number' ? policy.reserveBudget : undefined,
+              warning: String(metadata?.providerRoutingWarning ?? '')
+            });
+          }
+        }
+      }
+    });
+
+    const conductor = new Conductor({
+      promptEngine: prompt,
+      contextEngine: context,
+      reviewer,
+      providerRegistry: {
+        run: async () => {
+          throw new Error('intentional reserve-budget mutation failure');
+        }
+      },
+      providerRouting: {
+        resolvePreferredProviderId: async ({ context: executionContext }) => {
+          runCount += 1;
+          const evaluatedAt = runCount === 1 ? new Date('2026-10-18T00:00:00.000Z') : new Date('2026-10-18T00:20:00.000Z');
+          const basePolicy =
+            runCount === 1
+              ? {
+                  providerCostByProviderId: { alpha: 2 },
+                  reserveBudget: 2,
+                  cooldownUntilByProviderId: { shadow: '2026-10-18T00:10:00.000Z' }
+                }
+              : {
+                  providerCostByProviderId: { alpha: 2 },
+                  reserveBudget: 2,
+                  blockedProviderIds: ['alpha']
+                };
+
+          const policy = providerRegistry.createSelectionPolicyWithGovernance(basePolicy, governanceState, evaluatedAt);
+          executionContext.metadata.governancePolicy = policy;
+          executionContext.metadata.governanceState = governanceState;
+
+          const selectedProviderId = await providerRegistry.resolvePreferredProviderId(policy, ['alpha']);
+          governanceState = providerRegistry.createNextGovernanceState({
+            previousState: governanceState,
+            policy,
+            selectedProviderId,
+            evaluatedAt
+          });
+          executionContext.metadata.governanceState = governanceState;
+          return selectedProviderId;
+        }
+      },
+      serviceRegistry: new Map([['service', async () => 'noop']])
+    });
+
+    bridge.bind(conductor.eventBus);
+    const first = await conductor.run(runtimeGovernanceMutationFailurePipelineWithGovernanceMetadata(), 'hello-reserve-1');
+    const second = await conductor.run(runtimeGovernanceMutationFailurePipelineWithGovernanceMetadata(), 'hello-reserve-2');
+    await bridge.flush();
+
+    expect(first.status).toBe('partial');
+    expect(second.status).toBe('partial');
+    expect(nodeFailedSnapshots).toHaveLength(2);
+    expect(nodeFailedSnapshots[0]).toMatchObject({ budget: 3, blockedCount: 0, cooldownCount: 1, policyReserveBudget: 2 });
+    expect(nodeFailedSnapshots[1]).toMatchObject({ budget: 3, blockedCount: 1, cooldownCount: 0, policyReserveBudget: 2 });
+    expect(nodeFailedSnapshots[0].warning).toContain('fallback=alpha');
+    expect(nodeFailedSnapshots[1].warning).toContain('fallback=alpha');
+    expect(governanceState.budgetRemaining).toBe(3);
+    expect(governanceState.reserveBudget).toBe(2);
+  });
 });

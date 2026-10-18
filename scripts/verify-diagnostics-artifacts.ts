@@ -1111,6 +1111,143 @@ async function main(): Promise<void> {
     throw new Error('Diagnostics verification failed: governance-mutation warning did not include expected fallback details.');
   }
 
+  let reservePressureGovernanceState: ProviderGovernanceState = {
+    blockedProviderIds: [],
+    cooldownUntilByProviderId: {},
+    budgetRemaining: 3,
+    reserveBudget: 2
+  };
+  let reservePressureRunCount = 0;
+  const runtimeReservePressureTelemetryEvents: Array<{ eventName: string; payload: Record<string, unknown> | undefined }> = [];
+  const runtimeReservePressureSnapshots: Array<{
+    budget: number | undefined;
+    blockedCount: number;
+    cooldownCount: number;
+    policyReserveBudget: number | undefined;
+    warning: string;
+  }> = [];
+  const runtimeReservePressureBridge = new OttoObservabilityBridge({
+    runtimeContext: {
+      environment: 'ci',
+      deploymentChannel: 'stable',
+      hostOs: process.platform
+    },
+    logging: {
+      info: async () => {},
+      error: async () => {}
+    },
+    tracing: {
+      startSpan: async () => ({
+        annotate: async () => {},
+        end: async () => {}
+      })
+    },
+    telemetry: {
+      emit: async (eventName, payload) => {
+        runtimeReservePressureTelemetryEvents.push({ eventName, payload });
+        if (eventName === 'maestro.node.failed' && String(payload?.nodeId ?? '') === 'n2') {
+          const metadata = payload?.metadata as Record<string, unknown> | undefined;
+          const state = metadata?.governanceState as Record<string, unknown> | undefined;
+          const policy = metadata?.governancePolicy as Record<string, unknown> | undefined;
+          const blocked = state?.blockedProviderIds as unknown[] | undefined;
+          const cooldown = state?.cooldownUntilByProviderId as Record<string, unknown> | undefined;
+          runtimeReservePressureSnapshots.push({
+            budget: typeof state?.budgetRemaining === 'number' ? state.budgetRemaining : undefined,
+            blockedCount: Array.isArray(blocked) ? blocked.length : 0,
+            cooldownCount: cooldown ? Object.keys(cooldown).length : 0,
+            policyReserveBudget: typeof policy?.reserveBudget === 'number' ? policy.reserveBudget : undefined,
+            warning: String(metadata?.providerRoutingWarning ?? '')
+          });
+        }
+      }
+    }
+  });
+  const runtimeReservePressureConductor = new Conductor({
+    promptEngine: prompt,
+    contextEngine: context,
+    reviewer,
+    providerRegistry: {
+      run: async () => {
+        throw new Error('intentional reserve-budget mutation failure');
+      }
+    },
+    providerRouting: {
+      resolvePreferredProviderId: async ({ context: executionContext }) => {
+        reservePressureRunCount += 1;
+        const evaluatedAt =
+          reservePressureRunCount === 1 ? new Date('2026-10-18T00:00:00.000Z') : new Date('2026-10-18T00:20:00.000Z');
+        const basePolicy =
+          reservePressureRunCount === 1
+            ? {
+                providerCostByProviderId: { 'diag-alpha': 2 },
+                reserveBudget: 2,
+                cooldownUntilByProviderId: { shadow: '2026-10-18T00:10:00.000Z' }
+              }
+            : {
+                providerCostByProviderId: { 'diag-alpha': 2 },
+                reserveBudget: 2,
+                blockedProviderIds: ['diag-alpha']
+              };
+
+        const policy = providerRegistry.createSelectionPolicyWithGovernance(basePolicy, reservePressureGovernanceState, evaluatedAt);
+        executionContext.metadata.governancePolicy = policy;
+        executionContext.metadata.governanceState = reservePressureGovernanceState;
+
+        const selectedProviderId = await providerRegistry.resolvePreferredProviderId(policy, ['diag-alpha']);
+        reservePressureGovernanceState = providerRegistry.createNextGovernanceState({
+          previousState: reservePressureGovernanceState,
+          policy,
+          selectedProviderId,
+          evaluatedAt
+        });
+        executionContext.metadata.governanceState = reservePressureGovernanceState;
+        return selectedProviderId;
+      }
+    },
+    serviceRegistry: new Map([['service', async () => 'noop']])
+  });
+  runtimeReservePressureBridge.bind(runtimeReservePressureConductor.eventBus);
+  const runtimeReservePressureFirstResult = await runtimeReservePressureConductor.run(
+    diagnosticsRuntimeGovernanceMutationFailurePipelineWithGovernanceMetadata(),
+    'hello-reserve-1'
+  );
+  const runtimeReservePressureSecondResult = await runtimeReservePressureConductor.run(
+    diagnosticsRuntimeGovernanceMutationFailurePipelineWithGovernanceMetadata(),
+    'hello-reserve-2'
+  );
+  await runtimeReservePressureBridge.flush();
+  if (runtimeReservePressureFirstResult.status !== 'partial' || runtimeReservePressureSecondResult.status !== 'partial') {
+    throw new Error('Diagnostics verification failed: reserve-pressure failure runs did not produce partial status.');
+  }
+  if (runtimeReservePressureSnapshots.length !== 2) {
+    throw new Error('Diagnostics verification failed: reserve-pressure expected exactly two node-failed snapshots.');
+  }
+  if (
+    runtimeReservePressureSnapshots[0].budget !== 3 ||
+    runtimeReservePressureSnapshots[0].blockedCount !== 0 ||
+    runtimeReservePressureSnapshots[0].cooldownCount !== 1 ||
+    runtimeReservePressureSnapshots[0].policyReserveBudget !== 2
+  ) {
+    throw new Error('Diagnostics verification failed: reserve-pressure first snapshot mismatch.');
+  }
+  if (
+    runtimeReservePressureSnapshots[1].budget !== 3 ||
+    runtimeReservePressureSnapshots[1].blockedCount !== 1 ||
+    runtimeReservePressureSnapshots[1].cooldownCount !== 0 ||
+    runtimeReservePressureSnapshots[1].policyReserveBudget !== 2
+  ) {
+    throw new Error('Diagnostics verification failed: reserve-pressure second snapshot mismatch.');
+  }
+  if (
+    !runtimeReservePressureSnapshots[0].warning.includes('fallback=diag-alpha') ||
+    !runtimeReservePressureSnapshots[1].warning.includes('fallback=diag-alpha')
+  ) {
+    throw new Error('Diagnostics verification failed: reserve-pressure warnings did not include expected fallback details.');
+  }
+  if (reservePressureGovernanceState.budgetRemaining !== 3 || reservePressureGovernanceState.reserveBudget !== 2) {
+    throw new Error('Diagnostics verification failed: reserve-pressure governance state drifted unexpectedly.');
+  }
+
   const diagnosticsDir = path.resolve('dist', 'diagnostics');
   await mkdir(diagnosticsDir, { recursive: true });
 
@@ -1136,6 +1273,7 @@ async function main(): Promise<void> {
     runtimePolicyStateDriftNodeFailures: runtimePolicyStateDriftNodeFailures.map((event) => event.payload),
     runtimePolicyStateDriftBudgets,
     runtimeGovernanceMutationNodeFailureSnapshots: runtimeGovernanceMutationSnapshots,
+    runtimeReservePressureNodeFailureSnapshots: runtimeReservePressureSnapshots,
     emittedMetadata: emittedGovernanceMetadata,
     telemetryEvents,
     routedProviders

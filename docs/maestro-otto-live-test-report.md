@@ -633,6 +633,7 @@ Changes:
 - fallback-cascade telemetry coverage now asserts preferred-resolution failure + fallback-provider execution failure propagation on `maestro.node.failed`.
 - governance policy-state drift telemetry coverage now asserts deterministic budget-sequence continuity across repeated failure runs.
 - cooldown/blocked-state transition telemetry coverage now asserts deterministic mutation-shape continuity across repeated failure pressure runs.
+- mixed governance mutation telemetry coverage now asserts reserve-budget pressure continuity (`reserveBudget`) with deterministic budget-preservation under repeated fallback/failure runs.
 
 Validation:
 
@@ -640,4 +641,4 @@ Validation:
 - `npm --prefix D:\OneDrive\Documents\GitHub\Maestro run typecheck` ✅
 - `npm --prefix D:\OneDrive\Documents\GitHub\Maestro run verify:diagnostics-artifacts` ✅
 - `npm --prefix D:\OneDrive\Documents\GitHub\Maestro run validate:otto-ui-contract` ✅
-- `npm --prefix D:\OneDrive\Documents\GitHub\Maestro test` ✅ (62 files / 152 tests passed)
+- `npm --prefix D:\OneDrive\Documents\GitHub\Maestro test` ✅ (62 files / 153 tests passed)

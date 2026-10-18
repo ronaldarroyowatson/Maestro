@@ -27,6 +27,8 @@ Repeated failure runs can carry governance policy/state metadata that demonstrat
 budget drift continuity across runs (`governanceState.budgetRemaining` sequence assertions).
 Governance mutation-path checks also cover cooldown and blocked-state transitions, verifying
 deterministic mutation shape continuity in `maestro.node.failed` telemetry metadata.
+Reserve-budget pressure paths are also covered, asserting deterministic budget preservation
+when preferred-provider selection is constrained by `reserveBudget` and fallback execution fails.
 
 ## Structure
 - models/: runtime contracts and execution result models

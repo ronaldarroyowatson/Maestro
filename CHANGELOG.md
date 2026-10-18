@@ -102,6 +102,8 @@
   - expanded diagnostics artifact verification for policy-state drift continuity invariants
   - added cooldown/blocked-state transition telemetry assertions under repeated failure pressure with deterministic mutation-shape checks
   - expanded diagnostics artifact verification for cooldown/blocked governance-mutation continuity invariants
+  - added reserve-budget mutation telemetry assertions (`reserveBudget`) for deterministic budget-preservation under fallback pressure
+  - expanded diagnostics artifact verification for reserve-budget continuity invariants across repeated mutation failures
 
 ## 0.1.9
 
