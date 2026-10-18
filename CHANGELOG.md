@@ -4,6 +4,22 @@
 
 ### Added
 
+- Added the first concrete Otto-first graph service implementation:
+  - `features/node-graph/services/graph-service/index.ts`
+  - `features/node-graph/tests/graph-service.test.ts`
+- Added the first concrete workflow runtime service implementation:
+  - `features/workflow-runtime/index.ts`
+  - `features/workflow-runtime/tests/workflow-runtime.test.ts`
+- Added the first concrete state checkpoint service implementation:
+  - `features/workflow-runtime/services/state-checkpoint/index.ts`
+  - `features/workflow-runtime/tests/state-checkpoint.test.ts`
+- Added the first concrete discovery/classification slice implementation:
+  - `features/provider-registry/services/capability-classifier/index.ts`
+  - `features/provider-registry/tests/capability-classifier.test.ts`
+- Added the next registry service phase: health/performance-aware resource ranking and best-match orchestration selection.
+- Added workflow runtime event publication and lifecycle observability via an in-memory event bus.
+- Integrated the discovery and capability classifier into the high-level provider registry facade so `ProviderRegistry` can select the best-fit resource directly from a requested capability set.
+- Added the routing policy layer: `ResourcePolicyRouter` selects the best available capability match while honoring health, performance, and cost constraints.
 - Added Windows manifest-driven installer assets:
   - `installer/windows/minimal-installer.ps1`
   - `installer/windows/maestro-install-manifest.json`
@@ -24,6 +40,11 @@
 
 ### Changed
 
+- Standardized the repo for public Otto-ecosystem readiness:
+  - added canonical public project docs and release metadata
+  - added MIT licensing for OSS distribution
+  - aligned the repo with standard GitHub open-source expectations (`README`, `LICENSE`, `CONTRIBUTING`, `SECURITY`)
+  - documented the remaining external Otto command-service/UI runtime boundary so the local repo remains compliant with the architecture rule
 - Converted the tracer-bullet Otto UI surface into a real first-pass Maestro feature shell:
   - expanded the navigation contract to workflow-builder, runtime-status/runtime-monitor, registry-browser, execution-timeline, and diagnostics pages
   - preserved compatibility with the existing `runtime-status` entry while expanding the feature catalog beyond the install smoke path

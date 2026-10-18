@@ -52,6 +52,7 @@ export type {
   ResourceLifecycleStatus,
   ResourcePerformanceSnapshot,
   RuntimeNodeKind,
+  StateCheckpointServiceAdapter,
   WorkflowCheckpoint,
   WorkflowExecutionPolicy,
   WorkflowOrchestrationPolicy,
@@ -90,4 +91,8 @@ export {
   getMaestroFeatureCatalog,
   MAESTRO_FEATURE_CATALOG
 } from './utils/maestroFeatureCatalog.js';
+export {
+  loadMaestroOttoModuleDefinition,
+  validateMaestroOttoModuleDefinition
+} from './utils/ottoModuleDefinition.js';
 export { validateMaestroModuleRegistration } from './utils/ottoModuleRegistration.js';

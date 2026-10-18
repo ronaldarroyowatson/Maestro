@@ -3,6 +3,7 @@
   "moduleId": "maestro",
   "displayName": "Maestro",
   "category": "runtime",
+  "modulePackage": "otto/modules/maestro/manifest.json",
   "entryRoute": "/maestro/install-status",
   "uiContract": "otto/manifests/maestro-ui-contract.json",
   "panels": [

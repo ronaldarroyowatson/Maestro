@@ -60,7 +60,8 @@ This section is intentionally added before major implementation changes.
 
 ### Completed
 
-1. Installer/bootstrap baseline with repair/healing and live validation.
+1. Otto module manifest scaffold completed for Maestro: concrete module definition and bootstrap metadata now live under `otto/modules/maestro/manifest.json`, with validation in `src/shared/utils/ottoModuleDefinition.ts`.
+2. Installer/bootstrap baseline with repair/healing and live validation.
 2. Otto ecosystem-first artifact wiring for core backend modules.
 3. Otto UI tracer-bullet validation path with explicit UI contract and entry route verification.
 4. Observability baseline contracts (logging/tracing/metrics/debug + diagnostics path).
@@ -69,12 +70,19 @@ This section is intentionally added before major implementation changes.
 7. Otto-first service contract core expansion: shared event envelopes, graph-service contracts, workflow runtime state, checkpoint interfaces, and discovery/registry/context scaffolding defined in `src/shared/types/platform.ts`.
 8. Maestro feature-catalog expansion and validation: product surfaces are now represented as a stable catalog/manifest pair and checked for contract consistency.
 9. Contract refinement pass: discovery/resource lifecycle, context entities, and state snapshot primitives added to the shared Otto-first contract layer to support the eventual Graph Service and Workflow Runtime implementation.
+10. First concrete graph service implementation completed in `features/node-graph/services/graph-service`: in-memory graph persistence, query, traversal, and contract validation are now passing in targeted tests.
+11. First concrete workflow runtime state machine implemented in `features/workflow-runtime`: create/pause/resume/cancel lifecycle and checkpoint restore behavior are passing targeted tests.
+12. First concrete state/checkpoint service implemented in `features/workflow-runtime/services/state-checkpoint`: workflow snapshot persistence, checkpoint creation, restore, and rollback behavior are now passing targeted tests.
+13. First concrete discovery/classification slice implemented in `features/provider-registry/services/capability-classifier`: provider capability normalization, capability profiles, and resource registry upserts are now passing targeted tests.
+14. Health/performance-aware policy routing is now implemented in `features/provider-registry/services/resource-selector`: the registry can select the best resource for a capability request across health, cost, and performance thresholds.
+15. Workflow runtime event publication is now implemented in `features/workflow-runtime/services/event-bus`: lifecycle transitions are pub/sub observable and decoupled from state updates, with targeted tests validating the event envelope flow.
 
 ### In Progress
 
 - Backbone feature implementation phase in Maestro.
 - Phase 1 contract core refinement: finalize service boundary contracts for discovery, state checkpointing, capability classification, and resource lifecycle metadata before introducing the first functional Otto graph service.
 - Active execution objective: introduce explicit Workflow Runtime adapter contracts for run lifecycle, state transitions, checkpointing, and pause/resume/cancel operations, then wire the shared types into the public index and validate with TypeScript checks.
+- Status update: the Graph Service slice is complete in-memory and validated; Workflow Runtime service logic is now implemented in `features/workflow-runtime` and is the current active execution focus for the next orchestration milestone.
 - Completed this cycle: event-bus publish semantics, graph traversal contracts, graph persistence/versioning adapters, capability classification primitives, health/performance snapshots, and context/resource metadata contracts were added to the shared Otto-first platform layer.
 - First backbone slice started in `features/conductor`: deterministic runtime options for run ID/time and reproducible execution checks.
 - Otto UI bootstrap diagnostics surfaced in Maestro panel with degraded-stage badges for local service failure visibility.

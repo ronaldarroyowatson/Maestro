@@ -20,6 +20,18 @@ The workspace root appears to be the active Maestro runtime repository based on:
 - Test scaffolding and integration fixtures are present for runtime validation.
 - The Otto-first contract core is now explicitly modeled in `src/shared/types/platform.ts` with event envelopes, graph-service contracts, workflow runtime states, checkpoint shapes, and the first pass of discovery/registry/context scaffolding.
 - The product-shell UI contract has been upgraded from a tracer-bullet installation page into a feature catalog with real orchestration-focused page definitions and validation.
+- The first concrete Otto-first service implementation has been added in the `node-graph` feature: an in-memory `GraphService` that persists graph definitions, supports query/traversal, and matches the Otto-first graph contracts.
+- The next concrete runtime service layer is now implemented: `features/workflow-runtime` includes a workflow lifecycle manager with pause/resume/cancel state transitions and a `StateCheckpointService` that persists snapshots, creates checkpoints, restores them, and supports rollback behavior.
+- The next discovery/registry capability slice is implemented in `features/provider-registry`: a `CapabilityClassifier` and `ResourceRegistry` now normalize discovered provider capabilities into `CapabilityProfile` and `DiscoveryResourceRecord` structures, enabling resource classification and inventory tracking before the full Scout service is introduced.
+- The next service advancement is health/performance-aware resource selection: the registry now tracks `ResourcePerformanceSnapshot` and `ResourceHealthRecord` values so orchestration can rank the best-capable, healthiest, and most economical resource before dispatch.
+- The registry selection layer includes a `selectBestMatch()` heuristic that combines capability overlap, health status, success-rate quality, and cost to return the right resource candidate for a given request.
+- The Provider Registry facade now integrates discovery with classification and selection, which means the registry stores discovered descriptors, classifies them, and can return the best-fit capability match directly from the high-level `ProviderRegistry` API.
+- The routing policy layer is now implemented as a first-class service: `features/provider-registry/services/resource-selector/index.ts` adds a `ResourcePolicyRouter` that chooses the best resource for a capability request while honoring health, performance, and cost constraints.
+- The next orchestration milestone is a workflow event bus: `features/workflow-runtime` now publishes lifecycle events (`workflow.created`, `workflow.state.changed`, `workflow.checkpointed`, and `workflow.cancelled`) through an in-memory event bus so runtime transitions are observable and decoupled from the state machine itself.
+- The browser-facing UI is still not a runnable app in this repo: the current implementation is a contract-driven shell that Otto consumes, not a standalone React/Vite/Electron front-end. There is no local browser entry point to launch from this workspace yet.
+- The next concrete Otto integration milestone is now formalized as a real module definition: Maestro now has a concrete module manifest under `otto/modules/maestro/manifest.json` plus validation logic in `src/shared/utils/ottoModuleDefinition.ts`. This closes the missing gap between the UI/registration contracts and an actual Otto module package definition.
+- The command-service rule remains intact: the module manifest explicitly declares the external `otto-command-service` layer as the source of command exposure, while Maestro provides the contract package, runtime logic, and manifest bootstrap metadata that Otto consumes.
+- Repository hygiene and public release readiness are now being standardized to the broader Otto ecosystem norm: canonical docs, a permissive MIT license, contribution/security policies, and a public GitHub visibility pass are being completed so the project is ready for broader adoption and open-source collaboration.
 
 ## Existing Otto Alignment
 
@@ -33,10 +45,12 @@ The workspace root appears to be the active Maestro runtime repository based on:
 - Platform bootstrap installers are present, and release workflows now package durable macOS, Linux, and Windows artifacts.
 - Durable installer links are published in repository docs.
 - The existing Maestro UI is still a tracer-bullet shell: it verifies Otto installation and runtime wiring, but it does not yet expose a complete set of product features.
+- The current UI is intentionally contract-first rather than app-first: the repo presents UI metadata and manifests, not an actual browser app. There is currently no `dev`/`start` server or front-end entrypoint in this workspace to open a live interface from source.
 - The next implementation phase is converting the shell into a real Maestro feature catalog: workflow builder, runtime status/runtime monitor, registry browser, execution timeline, and diagnostics pages are now the target set.
 - The shell remains intentionally minimal while preserving compatibility with the established `runtime-status` route so Otto bootstrapping and runtime health checks continue to work during the product-layer expansion.
 - The first real product-layer milestone has been reached: the feature roster is now represented in both a shared TypeScript catalog and a machine-readable Otto manifest under `otto/manifests/` so it can be validated as part of the UI contract lifecycle.
 - The next architectural milestone is the Otto-first service-contract core: event envelopes, shared graph definitions, graph service API contracts, event bus subscription contracts, workflow runtime state shapes, and checkpoint contracts are being formalized before the deeper runtime graph implementation begins.
+- The current codebase has crossed from contract-layer work into the first concrete execution layer: graph persistence + traversal is now implemented in-memory and validated; the next service slice is the Workflow Runtime state machine and checkpoint manager.
 - No dedicated Maestro-to-Otto extension bridge module for logging/tracing/telemetry.
 - No end-to-end local Otto install runbook/report in this repo.
 
