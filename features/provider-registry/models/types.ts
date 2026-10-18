@@ -78,4 +78,6 @@ export interface ProviderSelectionPolicy {
   costWeight?: number;
   degradedPenalty?: number;
   unknownCostPenalty?: number;
+  allowLastKnownHealthySnapshot?: boolean;
+  lastKnownSnapshotMaxAgeMs?: number;
 }

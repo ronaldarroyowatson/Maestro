@@ -438,6 +438,7 @@ Changes:
     - max latency threshold
     - explicit provider priority ordering
     - weighted latency/cost strategy (`selectionStrategy: "weighted"`, `providerCostByProviderId`, weights/penalties)
+    - transient outage recovery via last-known healthy snapshot (`allowLastKnownHealthySnapshot`, `lastKnownSnapshotMaxAgeMs`)
 - conductor/provider integration tests now cover:
   - policy-constrained preferred-provider selection,
   - fallback recovery when policy excludes all preferred candidates,

@@ -380,4 +380,81 @@ describe('provider-registry modules', () => {
 
     expect(preferredFromPolicy).toBe('beta');
   });
+
+  it('resolvePreferredProviderId recovers from transient outage using last-known healthy snapshot', async () => {
+    const registry = new ProviderRegistry();
+    let outageMode = false;
+
+    registry.register({
+      providerId: 'alpha',
+      displayName: 'Alpha',
+      discover: async () => [],
+      run: async () => ({ text: 'ok', tokensUsed: 0, latencyMs: 1, rawResponse: {} }),
+      healthCheck: async () => {
+        if (outageMode) {
+          throw new Error('temporary health endpoint outage');
+        }
+        return { status: 'healthy', latencyMs: 6 };
+      }
+    });
+    registry.register({
+      providerId: 'beta',
+      displayName: 'Beta',
+      discover: async () => [],
+      run: async () => ({ text: 'ok', tokensUsed: 0, latencyMs: 1, rawResponse: {} }),
+      healthCheck: async () => {
+        if (outageMode) {
+          throw new Error('temporary health endpoint outage');
+        }
+        return { status: 'healthy', latencyMs: 4 };
+      }
+    });
+
+    const baseline = await registry.resolvePreferredProviderId({ allowedStatuses: ['healthy'] }, ['alpha', 'beta']);
+    expect(baseline).toBe('beta');
+
+    outageMode = true;
+    const recovered = await registry.resolvePreferredProviderId(
+      {
+        allowedStatuses: ['healthy'],
+        allowLastKnownHealthySnapshot: true,
+        lastKnownSnapshotMaxAgeMs: 60000
+      },
+      ['alpha', 'beta']
+    );
+
+    expect(recovered).toBe('beta');
+  });
+
+  it('resolvePreferredProviderId does not use stale last-known snapshot beyond max age', async () => {
+    const registry = new ProviderRegistry();
+    let outageMode = false;
+
+    registry.register({
+      providerId: 'alpha',
+      displayName: 'Alpha',
+      discover: async () => [],
+      run: async () => ({ text: 'ok', tokensUsed: 0, latencyMs: 1, rawResponse: {} }),
+      healthCheck: async () => {
+        if (outageMode) {
+          throw new Error('temporary health endpoint outage');
+        }
+        return { status: 'healthy', latencyMs: 3 };
+      }
+    });
+
+    await registry.resolvePreferredProviderId({ allowedStatuses: ['healthy'] }, ['alpha']);
+    outageMode = true;
+
+    const recovered = await registry.resolvePreferredProviderId(
+      {
+        allowedStatuses: ['healthy'],
+        allowLastKnownHealthySnapshot: true,
+        lastKnownSnapshotMaxAgeMs: -1
+      },
+      ['alpha']
+    );
+
+    expect(recovered).toBeUndefined();
+  });
 });

@@ -43,6 +43,7 @@ export interface ProviderRegistryBootOptions {
 export class ProviderRegistry {
   readonly adapterFactory: AdapterFactory;
   readonly discovery: AgentDiscovery;
+  private lastKnownHealthySnapshot?: ProviderHealthSnapshot;
 
   constructor(options: ProviderRegistryBootOptions = {}) {
     this.adapterFactory = new AdapterFactory();
@@ -154,12 +155,16 @@ export class ProviderRegistry {
         return a.providerId.localeCompare(b.providerId);
       });
 
-    return {
+    const snapshot: ProviderHealthSnapshot = {
       generatedAt: new Date(),
       entries,
       summary,
       preferredProviderId: healthyOrDegraded[0]?.providerId
     };
+    if (snapshot.summary.healthy + snapshot.summary.degraded > 0) {
+      this.lastKnownHealthySnapshot = snapshot;
+    }
+    return snapshot;
   }
 
   /** Resolves preferred provider id using health snapshot and optional orchestration policy constraints. */
@@ -214,6 +219,97 @@ export class ProviderRegistry {
         const priorityA = priorityIndex.get(a.providerId);
         const priorityB = priorityIndex.get(b.providerId);
 
+        if (priorityA !== undefined || priorityB !== undefined) {
+          if (priorityA === undefined) return 1;
+          if (priorityB === undefined) return -1;
+          if (priorityA !== priorityB) return priorityA - priorityB;
+        }
+
+        const latencyDelta = a.health.latencyMs - b.health.latencyMs;
+        if (latencyDelta !== 0) {
+          return latencyDelta;
+        }
+        return a.providerId.localeCompare(b.providerId);
+      });
+
+    if (candidates[0]) {
+      return candidates[0].providerId;
+    }
+
+    if (policy.allowLastKnownHealthySnapshot) {
+      return this.resolveFromLastKnownHealthySnapshot(policy, snapshot.generatedAt, providerIds);
+    }
+
+    return undefined;
+  }
+
+  private resolveFromLastKnownHealthySnapshot(
+    policy: ProviderSelectionPolicy,
+    currentSnapshotTime: Date,
+    providerIds?: string[]
+  ): string | undefined {
+    if (!this.lastKnownHealthySnapshot) {
+      return undefined;
+    }
+
+    const maxAgeMs = policy.lastKnownSnapshotMaxAgeMs ?? 300000;
+    const snapshotAgeMs = currentSnapshotTime.getTime() - this.lastKnownHealthySnapshot.generatedAt.getTime();
+    if (snapshotAgeMs > maxAgeMs) {
+      return undefined;
+    }
+
+    const providerFilter = providerIds ? new Set(providerIds) : undefined;
+    const allowedStatuses = new Set(policy.allowedStatuses ?? ['healthy', 'degraded']);
+    const priorityIndex = new Map((policy.providerPriority ?? []).map((providerId, index) => [providerId, index]));
+    const strategy = policy.selectionStrategy ?? 'latency-first';
+    const costByProviderId = policy.providerCostByProviderId ?? {};
+    const latencyWeight = policy.latencyWeight ?? 1;
+    const costWeight = policy.costWeight ?? 1;
+    const degradedPenalty = policy.degradedPenalty ?? 5;
+    const unknownCostPenalty = policy.unknownCostPenalty ?? 25;
+
+    const candidates = this.lastKnownHealthySnapshot.entries
+      .filter((entry) => {
+        if (providerFilter && !providerFilter.has(entry.providerId)) {
+          return false;
+        }
+        if (!allowedStatuses.has(entry.health.status)) {
+          return false;
+        }
+        if (policy.maxLatencyMs !== undefined && entry.health.latencyMs > policy.maxLatencyMs) {
+          return false;
+        }
+        if (policy.maxCost !== undefined) {
+          const providerCost = costByProviderId[entry.providerId];
+          if (providerCost === undefined || providerCost > policy.maxCost) {
+            return false;
+          }
+        }
+        return true;
+      })
+      .sort((a, b) => {
+        if (strategy === 'weighted') {
+          const aScore = weightedScore(a.providerId, a.health.status, a.health.latencyMs, {
+            latencyWeight,
+            costWeight,
+            degradedPenalty,
+            unknownCostPenalty,
+            providerCostByProviderId: costByProviderId
+          });
+          const bScore = weightedScore(b.providerId, b.health.status, b.health.latencyMs, {
+            latencyWeight,
+            costWeight,
+            degradedPenalty,
+            unknownCostPenalty,
+            providerCostByProviderId: costByProviderId
+          });
+          if (aScore !== bScore) {
+            return aScore - bScore;
+          }
+        }
+
+        const priorityA = priorityIndex.get(a.providerId);
+        const priorityB = priorityIndex.get(b.providerId);
         if (priorityA !== undefined || priorityB !== undefined) {
           if (priorityA === undefined) return 1;
           if (priorityB === undefined) return -1;

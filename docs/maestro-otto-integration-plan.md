@@ -77,12 +77,13 @@ This section is intentionally added before major implementation changes.
 - Workflow diagnostics artifact verification is implemented in Windows installer workflow (targeted tests + diagnostics artifact generation/upload).
 - Conductor-provider orchestration policy hardening is implemented (latency/status constrained preferred-provider selection and fallback recovery coverage).
 - Current execution focus: orchestration-policy governance hardening (weighted latency/cost selection with deterministic recovery behavior).
+- Additional hardening implemented: provider selection recovery from transient health-check outages using last-known healthy snapshots with max-age constraints.
 
 ### Next Step
 
 1. Run integrated validation pass for current backbone slices (`typecheck`, targeted backbone tests, diagnostics artifact verification, tracer bullet).
-2. Prepare commit/push batch and phase checkpoint with policy-hardening coverage.
-3. Start next backbone increment for orchestration-policy governance (weighted/cost-aware provider selection).
+2. Prepare commit/push batch and phase checkpoint with transient-outage recovery coverage.
+3. Start next backbone increment for orchestration-policy governance (budget/circuit-breaker controls).
 
 ## End-of-Day Checkpoint (2026-10-17)
 

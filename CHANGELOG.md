@@ -74,6 +74,7 @@
   - added policy constraints for status, latency threshold, and priority ordering
   - expanded routing tests for policy-excluded candidates and fallback recovery behavior
   - added weighted latency/cost policy strategy with deterministic tie-break behavior
+  - added transient outage recovery via last-known healthy snapshot with max-age guardrails
 
 ## 0.1.9
 

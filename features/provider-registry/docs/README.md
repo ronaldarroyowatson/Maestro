@@ -7,6 +7,8 @@ Preferred-provider resolution supports policy constraints (status, latency, prio
 for conductor-provider orchestration hardening.
 Policy selection now supports weighted latency/cost routing to enforce deterministic,
 cost-aware provider decisions with explicit fallback behavior.
+Transient provider-health outages can recover via optional last-known healthy snapshot
+selection with max-age limits for safe deterministic fallback.
 
 ## Structure
 - models/: public feature types
