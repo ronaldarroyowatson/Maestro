@@ -626,6 +626,7 @@ Changes:
 - additional failure telemetry checks now assert runtime context + identifiers:
   - `environment`, `deploymentChannel`, `hostOs`
   - `runId`, `pipelineId`
+- additional validation-failure permutation coverage now includes cycle-detection failures with seeded governance metadata continuity assertions.
 
 Validation:
 

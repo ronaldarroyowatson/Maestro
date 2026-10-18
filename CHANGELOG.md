@@ -90,6 +90,7 @@
   - added invalid-pipeline observability regression coverage for governance metadata propagation on `PipelineFailed`
   - expanded diagnostics artifact verification with invalid-pipeline failure metadata contract assertions
   - added runtime-context + identifier assertions on failure telemetry payloads (`environment`, `deploymentChannel`, `hostOs`, `runId`, `pipelineId`)
+  - expanded failure telemetry permutation coverage for cycle-validation errors with governance-metadata continuity checks
 
 ## 0.1.9
 

@@ -79,12 +79,13 @@ This section is intentionally added before major implementation changes.
 - Additional hardening implemented: weighted latency/cost provider selection, transient outage recovery via last-known healthy snapshots with max-age constraints, budget/circuit-breaker policy controls (`blockedProviderIds`, `budgetRemaining`, `reserveBudget`) with fallback recovery coverage, deterministic cooldown/decay-window policy controls (`cooldownUntilByProviderId`, `evaluationTime`), and cross-run governance state handoff scaffolding.
 - Additional governance trace hardening implemented: fallback/error permutation metadata assertions and workflow-level governance trace contract checks in diagnostics verification.
 - Additional governance trace hardening implemented: early pipeline-failure metadata continuity coverage with seeded governance metadata in failure telemetry, plus failure telemetry contract assertions for runtime context (`environment`, `deploymentChannel`, `hostOs`) and failure identifiers (`runId`, `pipelineId`).
-- Current execution focus: broadening governance assertions for additional failure permutations beyond current validation and routing paths.
+- Additional governance trace hardening implemented: cycle-validation failure telemetry coverage with governance-metadata continuity assertions and workflow-level diagnostics checks.
+- Current execution focus: expanding governance telemetry invariants for additional runtime failure classes beyond validation failures.
 
 ### Next Step
 
-1. Expand governance metadata assertions for additional pipeline-failure permutations beyond current routing + graph-validation paths.
-2. Add workflow-level checks for additional failure telemetry payload invariants in diagnostics artifacts.
+1. Expand governance telemetry assertions for runtime execution failure classes (node/service failures) in addition to validation failures.
+2. Add diagnostics artifact checks for those runtime-failure telemetry invariants.
 3. Run integrated validation pass and prepare commit/push checkpoint.
 
 ## End-of-Day Checkpoint (2026-10-17)

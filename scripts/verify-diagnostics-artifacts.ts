@@ -79,6 +79,45 @@ function diagnosticsInvalidPipelineWithGovernanceMetadata(): Pipeline {
   };
 }
 
+function diagnosticsInvalidCyclePipelineWithGovernanceMetadata(): Pipeline {
+  const now = new Date();
+  return {
+    id: 'p-diagnostics-invalid-cycle',
+    version: '1.0.0',
+    contentHash: 'hash-invalid-cycle',
+    status: 'active',
+    createdAt: now,
+    updatedAt: now,
+    changelog: 'init',
+    metadata: {
+      name: 'diagnostics-invalid-cycle',
+      description: 'diagnostics invalid cycle pipeline metadata continuity check',
+      tags: [],
+      createdAt: now,
+      updatedAt: now,
+      governanceState: {
+        budgetRemaining: 2,
+        reserveBudget: 1
+      },
+      governancePolicy: {
+        selectionStrategy: 'latency-first'
+      },
+      providerRoutingWarning: 'seeded-cycle-warning'
+    } as unknown as Pipeline['metadata'],
+    graph: {
+      graphId: 'g-diagnostics-invalid-cycle',
+      nodes: [
+        { instanceId: 'n1', nodeTypeId: 'trigger', config: { role: 'entry' }, position: { x: 0, y: 0 } },
+        { instanceId: 'n2', nodeTypeId: 'service', config: {}, position: { x: 1, y: 0 } }
+      ],
+      edges: [
+        { edgeId: 'e1', fromNodeId: 'n1', fromPort: 'out', toNodeId: 'n2', toPort: 'in' },
+        { edgeId: 'e2', fromNodeId: 'n2', fromPort: 'out', toNodeId: 'n1', toPort: 'in' }
+      ]
+    }
+  };
+}
+
 function adapter(providerId: string, latencyMs: number): ProviderAdapter {
   return {
     providerId,
@@ -297,7 +336,25 @@ async function main(): Promise<void> {
   const failedPayload = failureTelemetryPayloads.find(
     (payload) => typeof payload?.error === 'string' && String(payload.error).includes('Pipeline graph validation failed')
   );
-  assertEarlyFailureGovernanceMetadataShape(failedPayload);
+  assertEarlyFailureGovernanceMetadataShape(failedPayload, {
+    expectedPipelineId: 'p-diagnostics-invalid',
+    expectedWarning: 'seeded-warning',
+    expectedBudgetRemaining: 3
+  });
+
+  const failureCycleResult = await failureConductor.run(diagnosticsInvalidCyclePipelineWithGovernanceMetadata(), 'hello');
+  await failureBridge.flush();
+  if (failureCycleResult.status !== 'failed') {
+    throw new Error('Diagnostics verification failed: invalid cycle pipeline did not produce failed result.');
+  }
+  const failedCyclePayload = failureTelemetryPayloads.find(
+    (payload) => typeof payload?.error === 'string' && String(payload.error).includes('CYCLE_DETECTED')
+  );
+  assertEarlyFailureGovernanceMetadataShape(failedCyclePayload, {
+    expectedPipelineId: 'p-diagnostics-invalid-cycle',
+    expectedWarning: 'seeded-cycle-warning',
+    expectedBudgetRemaining: 2
+  });
 
   const diagnosticsDir = path.resolve('dist', 'diagnostics');
   await mkdir(diagnosticsDir, { recursive: true });
@@ -316,6 +373,7 @@ async function main(): Promise<void> {
       afterSelection: governanceStateAfterSelection
     },
     earlyFailure: failedPayload,
+    earlyFailureCycle: failedCyclePayload,
     emittedMetadata: emittedGovernanceMetadata,
     telemetryEvents,
     routedProviders
@@ -406,14 +464,17 @@ function assertEmittedGovernanceMetadataShape(
   }
 }
 
-function assertEarlyFailureGovernanceMetadataShape(payload: Record<string, unknown> | undefined): void {
+function assertEarlyFailureGovernanceMetadataShape(
+  payload: Record<string, unknown> | undefined,
+  options: { expectedPipelineId: string; expectedWarning: string; expectedBudgetRemaining: number }
+): void {
   if (!payload) {
     throw new Error('Diagnostics verification failed: missing telemetry payload for invalid pipeline failure.');
   }
   if (typeof payload.runId !== 'string' || payload.runId.length === 0) {
     throw new Error('Diagnostics verification failed: invalid pipeline runId is missing in failure telemetry.');
   }
-  if (payload.pipelineId !== 'p-diagnostics-invalid') {
+  if (payload.pipelineId !== options.expectedPipelineId) {
     throw new Error('Diagnostics verification failed: invalid pipelineId in failure telemetry payload.');
   }
   if (payload.environment !== 'ci' || payload.deploymentChannel !== 'stable' || typeof payload.hostOs !== 'string') {
@@ -427,14 +488,14 @@ function assertEarlyFailureGovernanceMetadataShape(payload: Record<string, unkno
     throw new Error('Diagnostics verification failed: invalid pipeline failure metadata is missing.');
   }
   const metadataRecord = metadata as Record<string, unknown>;
-  if (metadataRecord.providerRoutingWarning !== 'seeded-warning') {
+  if (metadataRecord.providerRoutingWarning !== options.expectedWarning) {
     throw new Error('Diagnostics verification failed: invalid pipeline providerRoutingWarning mismatch.');
   }
   const governanceState = metadataRecord.governanceState;
   if (!governanceState || typeof governanceState !== 'object') {
     throw new Error('Diagnostics verification failed: invalid pipeline governanceState metadata is missing.');
   }
-  if ((governanceState as Record<string, unknown>).budgetRemaining !== 3) {
+  if ((governanceState as Record<string, unknown>).budgetRemaining !== options.expectedBudgetRemaining) {
     throw new Error('Diagnostics verification failed: invalid pipeline governanceState budget mismatch.');
   }
 }

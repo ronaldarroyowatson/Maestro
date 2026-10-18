@@ -67,6 +67,45 @@ function invalidObservabilityPipelineWithGovernanceMetadata(): Pipeline {
   };
 }
 
+function invalidObservabilityCyclePipelineWithGovernanceMetadata(): Pipeline {
+  const now = new Date();
+  return {
+    id: 'p-observability-invalid-cycle',
+    version: '1.0.0',
+    contentHash: 'hash-invalid-cycle',
+    status: 'active',
+    createdAt: now,
+    updatedAt: now,
+    changelog: 'init',
+    metadata: {
+      name: 'observability-invalid-cycle',
+      description: 'cyclic pipeline for failure metadata checks',
+      tags: [],
+      createdAt: now,
+      updatedAt: now,
+      governanceState: {
+        budgetRemaining: 2,
+        reserveBudget: 1
+      },
+      governancePolicy: {
+        selectionStrategy: 'latency-first'
+      },
+      providerRoutingWarning: 'seeded-cycle-warning'
+    } as unknown as Pipeline['metadata'],
+    graph: {
+      graphId: 'g-observability-invalid-cycle',
+      nodes: [
+        { instanceId: 'n1', nodeTypeId: 'trigger', config: { role: 'entry' }, position: { x: 0, y: 0 } },
+        { instanceId: 'n2', nodeTypeId: 'service', config: {}, position: { x: 1, y: 0 } }
+      ],
+      edges: [
+        { edgeId: 'e1', fromNodeId: 'n1', fromPort: 'out', toNodeId: 'n2', toPort: 'in' },
+        { edgeId: 'e2', fromNodeId: 'n2', fromPort: 'out', toNodeId: 'n1', toPort: 'in' }
+      ]
+    }
+  };
+}
+
 describe('conductor + otto observability bridge', () => {
   it('emits deterministic runtime observability traces for conductor execution', async () => {
     const prompt = new PromptEngine();
@@ -245,5 +284,63 @@ describe('conductor + otto observability bridge', () => {
       ((failedPayload?.metadata as Record<string, unknown> | undefined)?.governancePolicy as Record<string, unknown> | undefined)
         ?.selectionStrategy
     ).toBe('weighted');
+  });
+
+  it('preserves seeded governance metadata for cycle-validation failures', async () => {
+    const prompt = new PromptEngine();
+    const context = new ContextEngine();
+    const rules = new RulesEngine();
+    const reviewer = new Reviewer(rules, prompt);
+
+    const telemetryPayloads: Array<Record<string, unknown> | undefined> = [];
+    const bridge = new OttoObservabilityBridge({
+      runtimeContext: {
+        environment: 'test',
+        deploymentChannel: 'stable',
+        hostOs: 'windows'
+      },
+      logging: {
+        info: async () => {},
+        error: async () => {}
+      },
+      tracing: {
+        startSpan: async () => ({
+          annotate: async () => {},
+          end: async () => {}
+        })
+      },
+      telemetry: {
+        emit: async (_eventName, payload) => {
+          telemetryPayloads.push(payload);
+        }
+      }
+    });
+
+    const conductor = new Conductor({
+      promptEngine: prompt,
+      contextEngine: context,
+      reviewer,
+      providerRegistry: {
+        run: async () => ({ text: 'agent-output', tokensUsed: 1, latencyMs: 1, rawResponse: {} })
+      },
+      serviceRegistry: new Map([['service', async (_config, executionContext) => String(executionContext.metadata.input ?? '').toUpperCase()]])
+    });
+
+    bridge.bind(conductor.eventBus);
+    const result = await conductor.run(invalidObservabilityCyclePipelineWithGovernanceMetadata(), 'hello');
+    await bridge.flush();
+
+    expect(result.status).toBe('failed');
+    const failedPayload = telemetryPayloads.find((payload) => typeof payload?.error === 'string' && String(payload.error).includes('CYCLE_DETECTED'));
+    expect(failedPayload).toBeDefined();
+    expect((failedPayload?.metadata as Record<string, unknown> | undefined)?.providerRoutingWarning).toBe('seeded-cycle-warning');
+    expect(
+      ((failedPayload?.metadata as Record<string, unknown> | undefined)?.governanceState as Record<string, unknown> | undefined)
+        ?.budgetRemaining
+    ).toBe(2);
+    expect(
+      ((failedPayload?.metadata as Record<string, unknown> | undefined)?.governancePolicy as Record<string, unknown> | undefined)
+        ?.selectionStrategy
+    ).toBe('latency-first');
   });
 });
