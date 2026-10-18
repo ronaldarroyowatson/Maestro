@@ -57,4 +57,46 @@ describe('OttoObservabilityBridge', () => {
     expect(telemetryPayloads.some((payload) => payload?.environment === 'local-dev')).toBe(true);
     expect(telemetryPayloads.some((payload) => payload?.deploymentChannel === 'stable')).toBe(true);
   });
+
+  it('forwards pipeline-failure metadata and normalizes error payloads', async () => {
+    const telemetryPayloads: Array<Record<string, unknown> | undefined> = [];
+    const bridge = new OttoObservabilityBridge({
+      logging: {
+        info: async () => {},
+        error: async () => {}
+      },
+      tracing: {
+        startSpan: async () => ({
+          annotate: async () => {},
+          end: async () => {}
+        })
+      },
+      telemetry: {
+        emit: async (_eventName, payload) => {
+          telemetryPayloads.push(payload);
+        }
+      }
+    });
+
+    const eventBus = new EventBus();
+    bridge.bind(eventBus);
+    eventBus.emit('PipelineFailed', {
+      runId: 'r2',
+      pipelineId: 'p2',
+      error: new Error('routing failed'),
+      metadata: {
+        providerRoutingWarning: 'preferred-provider-unavailable: fallback=alpha',
+        selectedProvidersByNode: {
+          n3: 'alpha'
+        }
+      }
+    });
+
+    await bridge.flush();
+
+    const failedPayload = telemetryPayloads.find((payload) => payload?.pipelineId === 'p2');
+    expect(failedPayload?.error).toBe('routing failed');
+    expect((failedPayload?.metadata as Record<string, unknown> | undefined)?.providerRoutingWarning).toContain('fallback=alpha');
+    expect(((failedPayload?.metadata as Record<string, unknown> | undefined)?.selectedProvidersByNode as Record<string, unknown>)?.n3).toBe('alpha');
+  });
 });

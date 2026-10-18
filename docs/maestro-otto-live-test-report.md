@@ -586,3 +586,20 @@ Status:
 Validation (completion pass):
 
 - `npm --prefix D:\OneDrive\Documents\GitHub\Maestro test` ✅ (62 files / 141 tests passed)
+
+Next implementation slice (active):
+
+1. Expand fallback/non-preferred routing metadata assertions in conductor runtime tests.
+2. Verify governance metadata presence in failure-mode observability payloads.
+
+Completion:
+
+- completed with expanded conductor + observability assertions for fallback warning propagation and non-preferred routing metadata visibility.
+
+Validation:
+
+- `npm --prefix D:\OneDrive\Documents\GitHub\Maestro test -- features/conductor/tests/conductor-provider-routing.integration.test.ts features/conductor/tests/otto-observability.test.ts features/conductor/tests/conductor-otto-observability.integration.test.ts` ✅
+- `npm --prefix D:\OneDrive\Documents\GitHub\Maestro run typecheck` ✅
+- `npm --prefix D:\OneDrive\Documents\GitHub\Maestro run verify:diagnostics-artifacts` ✅
+- `npm --prefix D:\OneDrive\Documents\GitHub\Maestro run validate:otto-ui-contract` ✅
+- `npm --prefix D:\OneDrive\Documents\GitHub\Maestro test` ✅ (62 files / 144 tests passed)

@@ -82,6 +82,8 @@
   - added routing integration coverage for multi-run budget handoff and fallback recovery
   - added governance metadata shape assertions in diagnostics artifact verification
   - added conductor pipeline-event governance metadata emission for runtime trace visibility
+  - expanded routing integration assertions for fallback warning metadata and non-preferred selected-provider visibility
+  - expanded observability bridge tests for pipeline-failure governance metadata forwarding
 
 ## 0.1.9
 

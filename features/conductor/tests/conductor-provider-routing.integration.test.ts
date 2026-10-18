@@ -7,8 +7,9 @@ import { ProviderRegistry } from '../../provider-registry/index.js';
 import { Reviewer } from '../../reviewer/index.js';
 import { RulesEngine } from '../../rules-engine/index.js';
 import { Conductor } from '../index.js';
+import type { ConductorRuntimeTelemetryMetadata } from '../services/event-bus/index.js';
 
-function routingPipeline(): Pipeline {
+function routingPipeline(providerId: string = 'preferred'): Pipeline {
   const now = new Date();
   return {
     id: 'p-routing',
@@ -28,7 +29,7 @@ function routingPipeline(): Pipeline {
           instanceId: 'n3',
           nodeTypeId: 'agent',
           config: {
-            providerId: 'preferred',
+            providerId,
             fallbackProviderId: 'alpha',
             agentDescriptorId: 'alpha:model-a',
             promptTemplateId: 't1'
@@ -459,5 +460,93 @@ describe('conductor provider routing integration', () => {
     expect(governanceState.budgetRemaining).toBe(1);
     expect((firstResult.nodeResults.get('n3')?.output as { text: string } | undefined)?.text).toBe('response:beta');
     expect((secondResult.nodeResults.get('n3')?.output as { text: string } | undefined)?.text).toBe('response:alpha');
+  });
+
+  it('emits fallback warning metadata when preferred-provider resolution is empty', async () => {
+    const prompt = new PromptEngine();
+    const context = new ContextEngine();
+    const rules = new RulesEngine();
+    const reviewer = new Reviewer(rules, prompt);
+    prompt.registerTemplate({
+      id: 't1',
+      version: '1.0.0',
+      contentHash: 'h',
+      status: 'active',
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      changelog: 'init',
+      title: 'routing-template',
+      template: 'Echo: {{output}}',
+      variables: ['output']
+    });
+
+    const providerRegistry = new ProviderRegistry();
+    providerRegistry.register(providerAdapter('alpha', 10));
+    providerRegistry.register(providerAdapter('beta', 4));
+
+    let completedMetadata: ConductorRuntimeTelemetryMetadata | undefined;
+    const conductor = new Conductor({
+      promptEngine: prompt,
+      contextEngine: context,
+      reviewer,
+      providerRegistry: {
+        run: async (providerId, request) => providerRegistry.run(providerId, request)
+      },
+      providerRouting: {
+        resolvePreferredProviderId: async () => undefined
+      },
+      serviceRegistry: new Map([['service', async (_config, executionContext) => String(executionContext.metadata.input ?? '').toUpperCase()]])
+    });
+    conductor.eventBus.subscribe('PipelineCompleted', (payload) => {
+      completedMetadata = payload.metadata;
+    });
+
+    const result = await conductor.run(routingPipeline(), 'hello');
+
+    expect(result.status === 'completed' || result.status === 'partial').toBe(true);
+    expect(String(completedMetadata?.providerRoutingWarning ?? '')).toContain('fallback=alpha');
+    expect((completedMetadata?.selectedProvidersByNode as Record<string, unknown> | undefined)?.n3).toBe('alpha');
+  });
+
+  it('emits selected-provider metadata for non-preferred routing without fallback warning', async () => {
+    const prompt = new PromptEngine();
+    const context = new ContextEngine();
+    const rules = new RulesEngine();
+    const reviewer = new Reviewer(rules, prompt);
+    prompt.registerTemplate({
+      id: 't1',
+      version: '1.0.0',
+      contentHash: 'h',
+      status: 'active',
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      changelog: 'init',
+      title: 'routing-template',
+      template: 'Echo: {{output}}',
+      variables: ['output']
+    });
+
+    const providerRegistry = new ProviderRegistry();
+    providerRegistry.register(providerAdapter('alpha', 10));
+
+    let completedMetadata: ConductorRuntimeTelemetryMetadata | undefined;
+    const conductor = new Conductor({
+      promptEngine: prompt,
+      contextEngine: context,
+      reviewer,
+      providerRegistry: {
+        run: async (providerId, request) => providerRegistry.run(providerId, request)
+      },
+      serviceRegistry: new Map([['service', async (_config, executionContext) => String(executionContext.metadata.input ?? '').toUpperCase()]])
+    });
+    conductor.eventBus.subscribe('PipelineCompleted', (payload) => {
+      completedMetadata = payload.metadata;
+    });
+
+    const result = await conductor.run(routingPipeline('alpha'), 'hello');
+
+    expect(result.status === 'completed' || result.status === 'partial').toBe(true);
+    expect(completedMetadata?.providerRoutingWarning).toBeUndefined();
+    expect((completedMetadata?.selectedProvidersByNode as Record<string, unknown> | undefined)?.n3).toBe('alpha');
   });
 });
