@@ -36,6 +36,7 @@ The workspace root appears to be the active Maestro runtime repository based on:
 - The upstream handoff contract phase is complete in-repo: `otto/modules/maestro/upstream-handoff.json` defines deterministic source-to-target sync mappings for `otto-command-service` and `otto-ui`, and `src/shared/utils/ottoUpstreamIntegrationContract.ts` validates mapping integrity and command-boundary consistency.
 - External bridge execution is now automated and validated locally: `scripts/sync-otto-upstreams.ts` can check drift and apply sync mappings to sibling Otto repos, and a local apply+recheck run has completed successfully.
 - Active phase is upstream publication + live verification: commit/push the synced mappings in the external Otto repositories and verify command-service and UI ingestion from their live branches/PRs.
+- Upstream publication has been initiated: `otto-systems/otto-command-service#1` and `otto-systems/otto-ui#1` are open with the synchronized Maestro module artifacts for review/merge.
 
 ## Existing Otto Alignment
 
