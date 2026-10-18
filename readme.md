@@ -44,6 +44,7 @@ Otto integration validation and bridge helpers:
 npm run validate:otto-upstream-contract
 npm run check:otto-upstreams
 npm run sync:otto-upstreams
+npm run verify:otto-upstreams-live
 ```
 
 ## Otto integration boundaries
