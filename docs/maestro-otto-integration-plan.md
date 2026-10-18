@@ -88,12 +88,14 @@ This section is intentionally added before major implementation changes.
 - Additional governance trace hardening implemented: cooldown/blocked-state transition telemetry coverage under repeated failure pressure with deterministic transition-shape assertions.
 - Additional governance trace hardening implemented: mixed governance mutation telemetry coverage for `reserveBudget` interactions with cooldown/blocked transitions and deterministic budget-preservation assertions under reserve pressure.
 - Additional governance trace hardening implemented: cross-run mixed-mutation telemetry coverage with consistent fallback warning assertions across cooldown/blocked/budget-reserve permutations.
-- Current execution focus: expanding continuity invariants for broader governance mutation combinations and warning/error-shape determinism.
+- Otto UI startup hardening implemented in local `otto-ui`: preload bridge compatibility fix (`preload.cjs`) plus renderer-readiness startup gating before Electron `loadURL` to avoid blank-shell launches.
+- Additional governance trace hardening implemented: deterministic warning-shape coverage across resolver-error vs resolver-unavailable fallback permutations (integration + diagnostics verifier).
+- Current execution focus: continuing governance warning/error-shape invariants and packaging the next sync checkpoint.
 
 ### Next Step
 
-1. Expand telemetry assertions for broader governance mutation combinations (including resolver-error vs unavailable warning-shape determinism).
-2. Extend diagnostics artifact checks for warning/error-shape consistency across mixed mutation and fallback permutations.
+1. Expand telemetry assertions for remaining governance mutation combinations not yet represented in workflow diagnostics artifacts.
+2. Extend diagnostics artifact checks for warning/error-shape consistency across additional fallback and policy-pressure permutations.
 3. Run integrated validation pass and prepare commit/push checkpoint.
 
 ## End-of-Day Checkpoint (2026-10-17)

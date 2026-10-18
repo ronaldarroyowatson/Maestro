@@ -643,3 +643,24 @@ Validation:
 - `npm --prefix D:\OneDrive\Documents\GitHub\Maestro run verify:diagnostics-artifacts` ✅
 - `npm --prefix D:\OneDrive\Documents\GitHub\Maestro run validate:otto-ui-contract` ✅
 - `npm --prefix D:\OneDrive\Documents\GitHub\Maestro test` ✅ (62 files / 154 tests passed)
+
+---
+
+## Session Continuation: Resolver Warning-Shape Determinism + UI Startup Gate Verification (2026-10-18)
+
+Objective:
+
+- enforce deterministic fallback-warning shape across resolver error/unavailable permutations and verify Otto UI renderer startup order hardening.
+
+Changes:
+
+- added observability integration coverage for resolver-error (`preferred-provider-error`) and resolver-unavailable (`preferred-provider-unavailable`) warning-shape permutations with deterministic fallback id continuity assertions.
+- extended diagnostics artifact verification with matching workflow-level warning-shape assertions across the same resolver permutations.
+- verified Otto UI startup gate behavior in local `otto-ui` by launching Electron before Vite and confirming renderer connection once the dev server became ready.
+
+Validation:
+
+- `npm --prefix D:\OneDrive\Documents\GitHub\Maestro test -- features/conductor/tests/conductor-otto-observability.integration.test.ts` ✅ (12 tests passed)
+- `npm --prefix D:\OneDrive\Documents\GitHub\Maestro run verify:diagnostics-artifacts` ✅
+- `npm --prefix D:\OneDrive\Documents\GitHub\Maestro run typecheck` ✅
+- `npm --prefix D:\OneDrive\Documents\GitHub\otto-ui run typecheck` ✅

@@ -106,6 +106,8 @@
   - expanded diagnostics artifact verification for reserve-budget continuity invariants across repeated mutation failures
   - added cross-run mixed-mutation telemetry assertions for consistent fallback warning shape across cooldown/blocked/budget-reserve permutations
   - expanded diagnostics artifact verification for warning consistency across mixed governance mutation permutations
+  - added resolver warning-shape determinism assertions for `preferred-provider-error` vs `preferred-provider-unavailable` fallback permutations
+  - expanded diagnostics artifact verification for resolver warning-shape continuity across fallback failure paths
 
 ## 0.1.9
 

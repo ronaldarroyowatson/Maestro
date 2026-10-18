@@ -882,6 +882,86 @@ async function main(): Promise<void> {
     throw new Error('Diagnostics verification failed: fallback-cascade providerRoutingWarning did not include expected fallback details.');
   }
 
+  let warningShapeRoutingAttempt = 0;
+  const warningShapeSnapshots: string[] = [];
+  const warningShapeBridge = new OttoObservabilityBridge({
+    runtimeContext: {
+      environment: 'ci',
+      deploymentChannel: 'stable',
+      hostOs: process.platform
+    },
+    logging: {
+      info: async () => {},
+      error: async () => {}
+    },
+    tracing: {
+      startSpan: async () => ({
+        annotate: async () => {},
+        end: async () => {}
+      })
+    },
+    telemetry: {
+      emit: async (eventName, payload) => {
+        if (eventName === 'maestro.node.failed' && String(payload?.nodeId ?? '') === 'n2') {
+          const metadata = payload?.metadata as Record<string, unknown> | undefined;
+          warningShapeSnapshots.push(String(metadata?.providerRoutingWarning ?? ''));
+        }
+      }
+    }
+  });
+  const warningShapeConductor = new Conductor({
+    promptEngine: prompt,
+    contextEngine: context,
+    reviewer,
+    providerRegistry: {
+      run: async (providerId) => {
+        if (providerId === 'diag-alpha') {
+          throw new Error('fallback provider execution failed');
+        }
+        return { text: `diag:${providerId}`, tokensUsed: 1, latencyMs: 1, rawResponse: { providerId } };
+      }
+    },
+    providerRouting: {
+      resolvePreferredProviderId: async () => {
+        warningShapeRoutingAttempt += 1;
+        if (warningShapeRoutingAttempt === 1) {
+          throw new Error('health snapshot unavailable');
+        }
+        return undefined;
+      }
+    },
+    serviceRegistry: new Map([['service', async () => 'noop']])
+  });
+  warningShapeBridge.bind(warningShapeConductor.eventBus);
+  const warningShapeFirstResult = await warningShapeConductor.run(
+    diagnosticsRuntimeFallbackCascadeFailurePipelineWithGovernanceMetadata(),
+    'hello-warning-1'
+  );
+  const warningShapeSecondResult = await warningShapeConductor.run(
+    diagnosticsRuntimeFallbackCascadeFailurePipelineWithGovernanceMetadata(),
+    'hello-warning-2'
+  );
+  await warningShapeBridge.flush();
+  if (warningShapeFirstResult.status !== 'partial' || warningShapeSecondResult.status !== 'partial') {
+    throw new Error('Diagnostics verification failed: warning-shape fallback runs did not produce partial status.');
+  }
+  if (warningShapeSnapshots.length !== 2) {
+    throw new Error('Diagnostics verification failed: warning-shape expected exactly two node-failed snapshots.');
+  }
+  if (
+    !warningShapeSnapshots[0].includes('preferred-provider-error') ||
+    !warningShapeSnapshots[0].includes('health snapshot unavailable') ||
+    !warningShapeSnapshots[0].includes('fallback=diag-alpha')
+  ) {
+    throw new Error('Diagnostics verification failed: warning-shape resolver-error snapshot mismatch.');
+  }
+  if (
+    !warningShapeSnapshots[1].includes('preferred-provider-unavailable') ||
+    !warningShapeSnapshots[1].includes('fallback=diag-alpha')
+  ) {
+    throw new Error('Diagnostics verification failed: warning-shape resolver-unavailable snapshot mismatch.');
+  }
+
   let driftGovernanceState: ProviderGovernanceState = {
     blockedProviderIds: [],
     cooldownUntilByProviderId: {},

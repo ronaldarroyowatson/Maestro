@@ -31,6 +31,8 @@ Reserve-budget pressure paths are also covered, asserting deterministic budget p
 when preferred-provider selection is constrained by `reserveBudget` and fallback execution fails.
 Cross-run mixed-mutation paths also assert consistent fallback warning shape (`preferred-provider-unavailable`
 with fallback id) across cooldown, blocked, and reserve-budget constrained permutations.
+Resolver warning-shape permutations are also covered so fallback paths preserve deterministic warning contracts
+across both resolver-error (`preferred-provider-error`) and resolver-unavailable (`preferred-provider-unavailable`) cases.
 
 ## Structure
 - models/: runtime contracts and execution result models

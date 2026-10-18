@@ -875,6 +875,84 @@ describe('conductor + otto observability bridge', () => {
     );
   });
 
+  it('keeps deterministic warning shape across resolver-error and resolver-unavailable fallback paths', async () => {
+    const prompt = new PromptEngine();
+    const context = new ContextEngine();
+    const rules = new RulesEngine();
+    const reviewer = new Reviewer(rules, prompt);
+    prompt.registerTemplate({
+      id: 't1',
+      version: '1.0.0',
+      contentHash: 'h',
+      status: 'active',
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      changelog: 'init',
+      title: 't',
+      template: 'Echo: {{output}}',
+      variables: ['output']
+    });
+
+    let routingAttempt = 0;
+    const warningSnapshots: string[] = [];
+    const bridge = new OttoObservabilityBridge({
+      runtimeContext: { environment: 'test', deploymentChannel: 'stable', hostOs: 'windows' },
+      logging: { info: async () => {}, error: async () => {} },
+      tracing: {
+        startSpan: async () => ({
+          annotate: async () => {},
+          end: async () => {}
+        })
+      },
+      telemetry: {
+        emit: async (eventName, payload) => {
+          if (eventName === 'maestro.node.failed' && String(payload?.nodeId ?? '') === 'n2') {
+            const metadata = payload?.metadata as Record<string, unknown> | undefined;
+            warningSnapshots.push(String(metadata?.providerRoutingWarning ?? ''));
+          }
+        }
+      }
+    });
+
+    const conductor = new Conductor({
+      promptEngine: prompt,
+      contextEngine: context,
+      reviewer,
+      providerRegistry: {
+        run: async (providerId) => {
+          if (providerId === 'alpha') {
+            throw new Error('fallback provider execution failed');
+          }
+          return { text: 'agent-output', tokensUsed: 1, latencyMs: 1, rawResponse: {} };
+        }
+      },
+      providerRouting: {
+        resolvePreferredProviderId: async () => {
+          routingAttempt += 1;
+          if (routingAttempt === 1) {
+            throw new Error('health snapshot unavailable');
+          }
+          return undefined;
+        }
+      },
+      serviceRegistry: new Map([['service', async () => 'noop']])
+    });
+
+    bridge.bind(conductor.eventBus);
+    const first = await conductor.run(runtimeFallbackCascadeFailurePipelineWithGovernanceMetadata(), 'hello-warning-1');
+    const second = await conductor.run(runtimeFallbackCascadeFailurePipelineWithGovernanceMetadata(), 'hello-warning-2');
+    await bridge.flush();
+
+    expect(first.status).toBe('partial');
+    expect(second.status).toBe('partial');
+    expect(warningSnapshots).toHaveLength(2);
+    expect(warningSnapshots[0]).toContain('preferred-provider-error');
+    expect(warningSnapshots[0]).toContain('health snapshot unavailable');
+    expect(warningSnapshots[1]).toContain('preferred-provider-unavailable');
+    expect(warningSnapshots[0]).toContain('fallback=alpha');
+    expect(warningSnapshots[1]).toContain('fallback=alpha');
+  });
+
   it('emits governance policy-state drift telemetry across repeated failure runs', async () => {
     const prompt = new PromptEngine();
     const context = new ContextEngine();
