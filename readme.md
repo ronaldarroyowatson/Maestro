@@ -45,6 +45,7 @@ npm run validate:otto-upstream-contract
 npm run check:otto-upstreams
 npm run sync:otto-upstreams
 npm run verify:otto-upstreams-live
+npm run verify:observability-bridge-diagnostics
 ```
 
 ## Otto integration boundaries

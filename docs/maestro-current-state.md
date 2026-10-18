@@ -38,7 +38,8 @@ The workspace root appears to be the active Maestro runtime repository based on:
 - Upstream publication + live verification is complete: `otto-systems/otto-command-service#1` and `otto-systems/otto-ui#1` are merged, and live default-branch parity is now machine-verified by `scripts/verify-otto-upstreams-live.ts`.
 - The dedicated Maestro-to-Otto observability bridge is now implemented as a first-class adapter in `features/otto-observability-bridge/index.ts`, and conductor observability forwarding has been refactored to route through this shared bridge boundary.
 - UI wiring parity milestone is now completed in Otto UI: Maestro module panels for workflow/runtime/registry/timeline/diagnostics are contract-backed and no longer rely on static placeholder panel stubs.
-- Active integration focus has returned to observability hardening: explicit failure diagnostics/reporting coverage and installer/runtime event parity validation.
+- Observability hardening parity milestone is completed: bridge diagnostics snapshots now capture forwarding/failure telemetry, and installer/runtime parity verification is automated through `scripts/verify-observability-bridge-diagnostics.ts` with emitted diagnostics artifacts.
+- Active integration focus now shifts to richer runtime-backed UI data sources behind the contract-driven panel surfaces.
 
 ## Existing Otto Alignment
 
@@ -60,6 +61,7 @@ The workspace root appears to be the active Maestro runtime repository based on:
 - The next architectural milestone is the Otto-first service-contract core: event envelopes, shared graph definitions, graph service API contracts, event bus subscription contracts, workflow runtime state shapes, and checkpoint contracts are being formalized before the deeper runtime graph implementation begins.
 - The current codebase has crossed from contract-layer work into the first concrete execution layer: graph persistence + traversal is now implemented in-memory and validated; the next service slice is the Workflow Runtime state machine and checkpoint manager.
 - Dedicated Maestro-to-Otto extension bridge module now exists (`features/otto-observability-bridge`), but additional diagnostics and production hardening checks are still in progress.
+- Dedicated Maestro-to-Otto extension bridge module exists and now includes diagnostics/parity verification; remaining work is production-depth data plumbing for richer live UI panel state.
 - No end-to-end local Otto install runbook/report in this repo.
 
 ## Risks and Constraints

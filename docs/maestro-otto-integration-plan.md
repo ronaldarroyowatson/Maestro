@@ -81,11 +81,12 @@ This section is intentionally added before major implementation changes.
 18. Upstream publication + live verification completed: `otto-systems/otto-command-service#1` and `otto-systems/otto-ui#1` are merged, and `scripts/verify-otto-upstreams-live.ts` confirms that upstream `main` content matches Maestro handoff sources for all mapped artifacts.
 19. Maestro-to-Otto observability bridge adapter completed: `features/otto-observability-bridge/index.ts` now provides a deterministic event-envelope forwarder (logging/tracing/telemetry) and conductor observability now routes through this adapter boundary.
 20. Otto UI Maestro surfaces are now contract-wired beyond placeholder bindings: panel rendering for workflow/runtime/registry/timeline/diagnostics uses contract/bootstrap/module metadata via `maestroPanelBindingService` and `MaestroModulePage` rather than static panel stubs.
+21. Observability hardening diagnostics parity completed: bridge diagnostics snapshots and installer/runtime parity verification are now implemented in `features/otto-observability-bridge/index.ts` and `scripts/verify-observability-bridge-diagnostics.ts`, with artifact output under `dist/diagnostics/observability-bridge-diagnostics.json`.
 
 ### In Progress
 
-- Active phase: observability bridge hardening and diagnostics parity validation.
-- Current execution step: add explicit failure diagnostics/reporting flows for bridge forwarding and verify parity across installer/runtime event pipelines.
+- Active phase: deepen product-surface integration from contract-driven UI panels to richer runtime-backed data sources.
+- Current execution step: replace remaining static panel data in Otto UI bindings with runtime snapshots/events from Maestro services where safe adapter boundaries already exist.
 - Backbone feature implementation phase in Maestro.
 - Phase 1 contract core refinement: finalize service boundary contracts for discovery, state checkpointing, capability classification, and resource lifecycle metadata before introducing the first functional Otto graph service.
 - Active execution objective: introduce explicit Workflow Runtime adapter contracts for run lifecycle, state transitions, checkpointing, and pause/resume/cancel operations, then wire the shared types into the public index and validate with TypeScript checks.

@@ -49,6 +49,10 @@
   - `features/otto-observability-bridge/index.ts`
   - `features/otto-observability-bridge/tests/otto-observability-extension-bridge.test.ts`
   - conductor observability forwarding now routes through this adapter boundary
+- Added observability hardening diagnostics + parity verification:
+  - bridge diagnostics snapshots and installer/runtime parity verification in `features/otto-observability-bridge/index.ts`
+  - diagnostics artifact generator `scripts/verify-observability-bridge-diagnostics.ts`
+  - npm script `verify:observability-bridge-diagnostics`
 - Extended Otto UI Maestro panel wiring to replace static panel placeholders with contract/bootstrap-driven bindings across workflow/runtime/registry/timeline/diagnostics surfaces.
 - Added Otto ecosystem capability mapping doc:
   - `docs/maestro-otto-ecosystem-capability-map.md`
