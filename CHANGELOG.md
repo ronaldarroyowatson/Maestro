@@ -100,6 +100,8 @@
   - expanded diagnostics artifact verification for multi-failure and fallback-cascade telemetry invariants
   - added governance policy-state drift telemetry assertions across repeated failure runs with deterministic budget-sequence checks
   - expanded diagnostics artifact verification for policy-state drift continuity invariants
+  - added cooldown/blocked-state transition telemetry assertions under repeated failure pressure with deterministic mutation-shape checks
+  - expanded diagnostics artifact verification for cooldown/blocked governance-mutation continuity invariants
 
 ## 0.1.9
 

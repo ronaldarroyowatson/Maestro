@@ -85,12 +85,13 @@ This section is intentionally added before major implementation changes.
 - Additional governance trace hardening implemented: multi-failure layer telemetry coverage with deterministic `maestro.node.failed` cardinality and continuity-metadata assertions.
 - Additional governance trace hardening implemented: fallback-cascade failure telemetry coverage when preferred-provider resolution fails and fallback provider execution fails.
 - Additional governance trace hardening implemented: governance policy-state drift telemetry coverage across repeated failure runs with deterministic budget-sequence assertions.
-- Current execution focus: expanding telemetry invariants for policy-state continuity under broader governance mutation paths.
+- Additional governance trace hardening implemented: cooldown/blocked-state transition telemetry coverage under repeated failure pressure with deterministic transition-shape assertions.
+- Current execution focus: expanding telemetry invariants for mixed governance mutation scenarios and continuity guarantees.
 
 ### Next Step
 
-1. Expand telemetry assertions for broader governance mutation paths (cooldown/blocked-state transitions under failure pressure).
-2. Extend diagnostics artifact checks for policy-state continuity invariants across mixed mutation scenarios.
+1. Expand telemetry assertions for mixed governance mutation scenarios (`reserveBudget` interactions with cooldown/blocked transitions).
+2. Extend diagnostics artifact checks for continuity guarantees across mixed mutation and fallback permutations.
 3. Run integrated validation pass and prepare commit/push checkpoint.
 
 ## End-of-Day Checkpoint (2026-10-17)

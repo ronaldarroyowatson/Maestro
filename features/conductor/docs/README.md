@@ -25,6 +25,8 @@ and fallback-cascade failures preserve routing-warning context when preferred re
 before fallback-provider execution also fails.
 Repeated failure runs can carry governance policy/state metadata that demonstrates deterministic
 budget drift continuity across runs (`governanceState.budgetRemaining` sequence assertions).
+Governance mutation-path checks also cover cooldown and blocked-state transitions, verifying
+deterministic mutation shape continuity in `maestro.node.failed` telemetry metadata.
 
 ## Structure
 - models/: runtime contracts and execution result models

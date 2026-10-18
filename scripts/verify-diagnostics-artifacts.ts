@@ -326,6 +326,46 @@ function diagnosticsRuntimePolicyStateDriftFailurePipelineWithGovernanceMetadata
   };
 }
 
+function diagnosticsRuntimeGovernanceMutationFailurePipelineWithGovernanceMetadata(): Pipeline {
+  const now = new Date();
+  return {
+    id: 'p-diagnostics-runtime-governance-mutation',
+    version: '1.0.0',
+    contentHash: 'hash-runtime-governance-mutation',
+    status: 'active',
+    createdAt: now,
+    updatedAt: now,
+    changelog: 'init',
+    metadata: {
+      name: 'diagnostics-runtime-governance-mutation',
+      description: 'cooldown and blocked-state transition telemetry checks under repeated failure pressure',
+      tags: [],
+      createdAt: now,
+      updatedAt: now
+    } as Pipeline['metadata'],
+    graph: {
+      graphId: 'g-diagnostics-runtime-governance-mutation',
+      nodes: [
+        { instanceId: 'n1', nodeTypeId: 'trigger', config: { role: 'entry' }, position: { x: 0, y: 0 } },
+        {
+          instanceId: 'n2',
+          nodeTypeId: 'agent',
+          config: {
+            providerId: 'preferred',
+            fallbackProviderId: 'diag-alpha',
+            agentDescriptorId: 'diag-alpha:model-a',
+            promptTemplateId: 't1',
+            maxRetries: 0
+          },
+          position: { x: 1, y: 0 }
+        },
+        { instanceId: 'n3', nodeTypeId: 'trigger', config: { role: 'exit' }, position: { x: 2, y: 0 } }
+      ],
+      edges: [{ edgeId: 'e1', fromNodeId: 'n1', fromPort: 'out', toNodeId: 'n2', toPort: 'in' }]
+    }
+  };
+}
+
 function adapter(providerId: string, latencyMs: number): ProviderAdapter {
   return {
     providerId,
@@ -952,6 +992,125 @@ async function main(): Promise<void> {
     });
   }
 
+  let mutationGovernanceState: ProviderGovernanceState = {
+    blockedProviderIds: [],
+    cooldownUntilByProviderId: {},
+    budgetRemaining: 4,
+    reserveBudget: 0
+  };
+  let mutationRunCount = 0;
+  const runtimeGovernanceMutationTelemetryEvents: Array<{ eventName: string; payload: Record<string, unknown> | undefined }> = [];
+  const runtimeGovernanceMutationSnapshots: Array<{ budget: number | undefined; blockedCount: number; cooldownCount: number; warning: string }> = [];
+  const runtimeGovernanceMutationBridge = new OttoObservabilityBridge({
+    runtimeContext: {
+      environment: 'ci',
+      deploymentChannel: 'stable',
+      hostOs: process.platform
+    },
+    logging: {
+      info: async () => {},
+      error: async () => {}
+    },
+    tracing: {
+      startSpan: async () => ({
+        annotate: async () => {},
+        end: async () => {}
+      })
+    },
+    telemetry: {
+      emit: async (eventName, payload) => {
+        runtimeGovernanceMutationTelemetryEvents.push({ eventName, payload });
+        if (eventName === 'maestro.node.failed' && String(payload?.nodeId ?? '') === 'n2') {
+          const metadata = payload?.metadata as Record<string, unknown> | undefined;
+          const state = metadata?.governanceState as Record<string, unknown> | undefined;
+          const blocked = state?.blockedProviderIds as unknown[] | undefined;
+          const cooldown = state?.cooldownUntilByProviderId as Record<string, unknown> | undefined;
+          runtimeGovernanceMutationSnapshots.push({
+            budget: typeof state?.budgetRemaining === 'number' ? state.budgetRemaining : undefined,
+            blockedCount: Array.isArray(blocked) ? blocked.length : 0,
+            cooldownCount: cooldown ? Object.keys(cooldown).length : 0,
+            warning: String(metadata?.providerRoutingWarning ?? '')
+          });
+        }
+      }
+    }
+  });
+  const runtimeGovernanceMutationConductor = new Conductor({
+    promptEngine: prompt,
+    contextEngine: context,
+    reviewer,
+    providerRegistry: {
+      run: async () => {
+        throw new Error('intentional governance mutation failure');
+      }
+    },
+    providerRouting: {
+      resolvePreferredProviderId: async ({ context: executionContext }) => {
+        mutationRunCount += 1;
+        const evaluatedAt =
+          mutationRunCount === 1 ? new Date('2026-10-18T00:00:00.000Z') : new Date('2026-10-18T00:20:00.000Z');
+        const basePolicy =
+          mutationRunCount === 1
+            ? {
+                providerCostByProviderId: { 'diag-alpha': 2 },
+                cooldownUntilByProviderId: { shadow: '2026-10-18T00:10:00.000Z' }
+              }
+            : {
+                providerCostByProviderId: { 'diag-alpha': 2 },
+                blockedProviderIds: ['diag-alpha']
+              };
+
+        const policy = providerRegistry.createSelectionPolicyWithGovernance(basePolicy, mutationGovernanceState, evaluatedAt);
+        executionContext.metadata.governancePolicy = policy;
+        executionContext.metadata.governanceState = mutationGovernanceState;
+
+        const selectedProviderId = await providerRegistry.resolvePreferredProviderId(policy, ['diag-alpha']);
+        mutationGovernanceState = providerRegistry.createNextGovernanceState({
+          previousState: mutationGovernanceState,
+          policy,
+          selectedProviderId,
+          evaluatedAt
+        });
+        executionContext.metadata.governanceState = mutationGovernanceState;
+        return selectedProviderId;
+      }
+    },
+    serviceRegistry: new Map([['service', async () => 'noop']])
+  });
+  runtimeGovernanceMutationBridge.bind(runtimeGovernanceMutationConductor.eventBus);
+  const runtimeGovernanceMutationFirstResult = await runtimeGovernanceMutationConductor.run(
+    diagnosticsRuntimeGovernanceMutationFailurePipelineWithGovernanceMetadata(),
+    'hello-mutation-1'
+  );
+  const runtimeGovernanceMutationSecondResult = await runtimeGovernanceMutationConductor.run(
+    diagnosticsRuntimeGovernanceMutationFailurePipelineWithGovernanceMetadata(),
+    'hello-mutation-2'
+  );
+  await runtimeGovernanceMutationBridge.flush();
+  if (runtimeGovernanceMutationFirstResult.status !== 'partial' || runtimeGovernanceMutationSecondResult.status !== 'partial') {
+    throw new Error('Diagnostics verification failed: governance-mutation failure runs did not produce partial status.');
+  }
+  if (runtimeGovernanceMutationSnapshots.length !== 2) {
+    throw new Error('Diagnostics verification failed: governance-mutation expected exactly two node-failed snapshots.');
+  }
+  if (
+    runtimeGovernanceMutationSnapshots[0].budget !== 2 ||
+    runtimeGovernanceMutationSnapshots[0].blockedCount !== 0 ||
+    runtimeGovernanceMutationSnapshots[0].cooldownCount !== 1
+  ) {
+    throw new Error('Diagnostics verification failed: governance-mutation first snapshot mismatch.');
+  }
+  if (
+    runtimeGovernanceMutationSnapshots[1].budget !== 2 ||
+    runtimeGovernanceMutationSnapshots[1].blockedCount !== 1 ||
+    runtimeGovernanceMutationSnapshots[1].cooldownCount !== 0
+  ) {
+    throw new Error('Diagnostics verification failed: governance-mutation second snapshot mismatch.');
+  }
+  if (!runtimeGovernanceMutationSnapshots[1].warning.includes('fallback=diag-alpha')) {
+    throw new Error('Diagnostics verification failed: governance-mutation warning did not include expected fallback details.');
+  }
+
   const diagnosticsDir = path.resolve('dist', 'diagnostics');
   await mkdir(diagnosticsDir, { recursive: true });
 
@@ -976,6 +1135,7 @@ async function main(): Promise<void> {
     runtimeFallbackCascadeNodeFailure: fallbackCascadeNodeFailedPayload,
     runtimePolicyStateDriftNodeFailures: runtimePolicyStateDriftNodeFailures.map((event) => event.payload),
     runtimePolicyStateDriftBudgets,
+    runtimeGovernanceMutationNodeFailureSnapshots: runtimeGovernanceMutationSnapshots,
     emittedMetadata: emittedGovernanceMetadata,
     telemetryEvents,
     routedProviders

@@ -632,6 +632,7 @@ Changes:
 - runtime multi-failure layer telemetry coverage now asserts deterministic `maestro.node.failed` event cardinality and continuity metadata across same-layer failures.
 - fallback-cascade telemetry coverage now asserts preferred-resolution failure + fallback-provider execution failure propagation on `maestro.node.failed`.
 - governance policy-state drift telemetry coverage now asserts deterministic budget-sequence continuity across repeated failure runs.
+- cooldown/blocked-state transition telemetry coverage now asserts deterministic mutation-shape continuity across repeated failure pressure runs.
 
 Validation:
 
@@ -639,4 +640,4 @@ Validation:
 - `npm --prefix D:\OneDrive\Documents\GitHub\Maestro run typecheck` ✅
 - `npm --prefix D:\OneDrive\Documents\GitHub\Maestro run verify:diagnostics-artifacts` ✅
 - `npm --prefix D:\OneDrive\Documents\GitHub\Maestro run validate:otto-ui-contract` ✅
-- `npm --prefix D:\OneDrive\Documents\GitHub\Maestro test` ✅ (62 files / 151 tests passed)
+- `npm --prefix D:\OneDrive\Documents\GitHub\Maestro test` ✅ (62 files / 152 tests passed)
