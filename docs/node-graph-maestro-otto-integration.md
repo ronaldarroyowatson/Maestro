@@ -57,3 +57,11 @@ Integrate node graph execution contracts with runtime and discovery registry dat
 - Validation:
   - `features/node-graph/tests/otto-node-engine-client-loader.test.ts`
   - `tests/node-graph/phase-n-client-loader.test.ts`
+
+## Phase O Extension: Orchestration Entrypoint
+
+- Service: `features/node-graph/services/otto-node-engine-orchestrator/index.ts`
+  - Composes runtime client loading, fallback-safe adapter initialization, and discovery graph sync execution.
+  - Returns explicit client availability status alongside graph sync results.
+- Validation:
+  - `features/node-graph/tests/otto-node-engine-orchestrator.test.ts`
