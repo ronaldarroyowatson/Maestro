@@ -33,7 +33,7 @@ describe('otto node engine client loader', () => {
   it('Invalid Module Contract Test', async () => {
     const loader = new OttoNodeEngineClientLoader({
       moduleName: '@otto/invalid-module',
-      importModule: async () => ({})
+      importModule: async () => ({ apiVersion: '1.0.0' })
     });
 
     const result = await loader.load();
@@ -45,6 +45,7 @@ describe('otto node engine client loader', () => {
     const loader = new OttoNodeEngineClientLoader({
       moduleName: '@otto/mock-engine',
       importModule: async () => ({
+        apiVersion: '1.0.0',
         createMaestroClient: () => ({
           async createGraph(input: GraphDefinition): Promise<GraphPersistenceResult> {
             return { graphId: input.graphId, version: input.version, persistedAt: new Date(), snapshotCreated: true };
@@ -77,6 +78,85 @@ describe('otto node engine client loader', () => {
     const result = await loader.load();
     expect(result.status).toBe('available');
     expect(result.client).toBeDefined();
+  });
+
+  it('Version Compatibility Test', async () => {
+    const loader = new OttoNodeEngineClientLoader({
+      moduleName: '@otto/mock-engine',
+      requiredApiVersion: '1.2.0',
+      importModule: async () => ({
+        apiVersion: '1.5.0',
+        createMaestroClient: () => ({
+          async createGraph(input: GraphDefinition): Promise<GraphPersistenceResult> {
+            return { graphId: input.graphId, version: input.version, persistedAt: new Date(), snapshotCreated: true };
+          },
+          async persistGraph(request: GraphPersistenceRequest): Promise<GraphPersistenceResult> {
+            return {
+              graphId: request.graph.graphId,
+              version: request.graph.version,
+              persistedAt: new Date(),
+              snapshotCreated: true
+            };
+          },
+          async getGraph(): Promise<GraphDefinition | undefined> {
+            return graph();
+          },
+          async executeGraph(): Promise<WorkflowRunResult> {
+            return {
+              runId: 'run-1',
+              pipelineId: 'pipe-1',
+              state: { state: 'complete', retryCount: 0, startedAt: new Date(), updatedAt: new Date() }
+            };
+          },
+          async buildGraphFromDiscovery(): Promise<GraphDefinition> {
+            return graph();
+          }
+        })
+      })
+    });
+
+    const result = await loader.load();
+    expect(result.status).toBe('available');
+  });
+
+  it('Version Mismatch Test', async () => {
+    const loader = new OttoNodeEngineClientLoader({
+      moduleName: '@otto/mock-engine',
+      requiredApiVersion: '2.0.0',
+      importModule: async () => ({
+        apiVersion: '1.5.0',
+        createMaestroClient: () => ({
+          async createGraph(input: GraphDefinition): Promise<GraphPersistenceResult> {
+            return { graphId: input.graphId, version: input.version, persistedAt: new Date(), snapshotCreated: true };
+          },
+          async persistGraph(request: GraphPersistenceRequest): Promise<GraphPersistenceResult> {
+            return {
+              graphId: request.graph.graphId,
+              version: request.graph.version,
+              persistedAt: new Date(),
+              snapshotCreated: true
+            };
+          },
+          async getGraph(): Promise<GraphDefinition | undefined> {
+            return graph();
+          },
+          async executeGraph(): Promise<WorkflowRunResult> {
+            return {
+              runId: 'run-1',
+              pipelineId: 'pipe-1',
+              state: { state: 'complete', retryCount: 0, startedAt: new Date(), updatedAt: new Date() }
+            };
+          },
+          async buildGraphFromDiscovery(): Promise<GraphDefinition> {
+            return graph();
+          }
+        })
+      })
+    });
+
+    const result = await loader.load();
+    expect(result.status).toBe('unavailable');
+    expect(result.reason).toContain('incompatible');
   });
 
   it('Feature Flag Disabled Test', async () => {

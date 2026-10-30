@@ -43,6 +43,7 @@ export class MaestroOttoNodeEngineService {
   static async create(input: {
     featureFlags: OttoNodeEngineFeatureFlags;
     moduleName?: string;
+    requiredApiVersion?: string;
   }): Promise<{ service: MaestroOttoNodeEngineService; clientStatus: 'available' | 'unavailable'; reason?: string }> {
     if (!input.featureFlags.enableOttoNodeEngine) {
       return {
@@ -52,7 +53,7 @@ export class MaestroOttoNodeEngineService {
       };
     }
 
-    const loader = new OttoNodeEngineClientLoader({ moduleName: input.moduleName });
+    const loader = new OttoNodeEngineClientLoader({ moduleName: input.moduleName, requiredApiVersion: input.requiredApiVersion });
     const loaded = await loader.load();
     return {
       service: new MaestroOttoNodeEngineService(input.featureFlags, loaded.client),

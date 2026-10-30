@@ -18,6 +18,7 @@ export class OttoNodeEngineOrchestrator {
     discovery: DiscoveryGraphSource;
     context?: DiscoveryScanContext;
     moduleName?: string;
+    requiredApiVersion?: string;
     observabilityBridge?: ObservabilityBridgeAdapter;
   }): Promise<OttoNodeEngineOrchestratorResult> {
     const runId = randomUUID();
@@ -33,7 +34,8 @@ export class OttoNodeEngineOrchestrator {
 
     const initialized = await MaestroOttoNodeEngineService.create({
       featureFlags: input.featureFlags,
-      moduleName: input.moduleName
+      moduleName: input.moduleName,
+      requiredApiVersion: input.requiredApiVersion
     });
     try {
       const sync = new DiscoveryGraphSyncService(initialized.service);
