@@ -1,4 +1,6 @@
 import { createHash, randomUUID } from 'node:crypto';
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { dirname, resolve } from 'node:path';
 import { HistoryEngine, type SecurityAuditEntry } from '../history-engine/index.js';
 import { SandboxEngine, type SandboxScope } from '../sandbox-engine/index.js';
 
@@ -47,19 +49,93 @@ export type ApprovalDecision = {
   reason?: string;
 };
 
+export type AiSecurityEngineOptions = {
+  statePath?: string;
+};
+
 export class AiSecurityEngine {
   readonly sandboxEngine: SandboxEngine;
   readonly historyEngine: HistoryEngine;
   private readonly policies = new Map<string, SecurityPolicy>();
   private readonly approvalLedger = new Map<string, boolean>();
+  private readonly statePath?: string;
 
-  constructor(sandboxEngine = new SandboxEngine(), historyEngine = new HistoryEngine()) {
+  constructor(sandboxEngine = new SandboxEngine(), historyEngine = new HistoryEngine(), options: AiSecurityEngineOptions = {}) {
     this.sandboxEngine = sandboxEngine;
     this.historyEngine = historyEngine;
+    this.statePath = options.statePath ? resolve(options.statePath) : undefined;
+    this.loadPersistedState();
+  }
+
+  private loadPersistedState(): void {
+    if (!this.statePath || !existsSync(this.statePath)) {
+      return;
+    }
+
+    try {
+      const parsed = JSON.parse(readFileSync(this.statePath, 'utf8')) as {
+        security?: {
+          policies?: SecurityPolicy[];
+          approvalLedger?: Array<[string, boolean]>;
+        };
+        policies?: SecurityPolicy[];
+        approvalLedger?: Array<[string, boolean]>;
+      };
+
+      const persistedSecurity = parsed.security ?? parsed;
+
+      for (const policy of persistedSecurity.policies ?? []) {
+        this.policies.set(policy.agentId, policy);
+      }
+
+      for (const [approvalId, used] of persistedSecurity.approvalLedger ?? []) {
+        this.approvalLedger.set(approvalId, used);
+      }
+    } catch {
+      // Ignore corrupt persisted state and start a clean in-memory state.
+    }
+  }
+
+  private persistState(): void {
+    if (!this.statePath) {
+      return;
+    }
+
+    try {
+      mkdirSync(dirname(this.statePath), { recursive: true });
+      const existing = this.readPersistedStateFile();
+      const payload = {
+        ...existing,
+        security: {
+          policies: [...this.policies.values()],
+          approvalLedger: [...this.approvalLedger.entries()]
+        }
+      };
+      writeFileSync(this.statePath, JSON.stringify(payload, null, 2));
+    } catch {
+      // Ignore durable storage failures while preserving runtime safety.
+    }
+  }
+
+  private readPersistedStateFile(): Record<string, unknown> {
+    if (!this.statePath || !existsSync(this.statePath)) {
+      return {};
+    }
+
+    try {
+      const content = readFileSync(this.statePath, 'utf8');
+      if (!content.trim()) {
+        return {};
+      }
+      return JSON.parse(content) as Record<string, unknown>;
+    } catch {
+      return {};
+    }
   }
 
   registerPolicy(policy: SecurityPolicy): void {
     this.policies.set(policy.agentId, policy);
+    this.persistState();
   }
 
   createApproval(action: SandboxAction, userId: string): SecurityApproval {
@@ -124,6 +200,7 @@ export class AiSecurityEngine {
     }
 
     this.approvalLedger.set(approval.approvalId, true);
+    this.persistState();
     return { allowed: true };
   }
 

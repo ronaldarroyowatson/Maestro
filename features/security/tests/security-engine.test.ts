@@ -1,3 +1,6 @@
+import { mkdtempSync } from 'node:fs';
+import { join } from 'node:path';
+import { tmpdir } from 'node:os';
 import { describe, expect, it } from 'vitest';
 import { AiSecurityEngine } from '../index.js';
 import { HistoryEngine } from '../services/history-engine/index.js';
@@ -151,6 +154,32 @@ describe('Maestro security sandbox validation', () => {
     const spoofed = security.executeAction(action, spoofedApproval, { status: 'draft' });
     expect(spoofed.allowed).toBe(false);
     expect(spoofed.reason).toMatch(/invalid or spoofed/i);
+  });
+
+  it('Approval and snapshot state persist across engine restarts', () => {
+    const storageDir = mkdtempSync(join(tmpdir(), 'maestro-security-'));
+    const storagePath = join(storageDir, 'security-state.json');
+    const history = new HistoryEngine({ storagePath });
+    const before = { documents: ['draft.md'], status: 'draft' };
+    const snapshot = history.snapshot('before-edit', before);
+
+    const security = new AiSecurityEngine(new SandboxEngine(), history, { statePath: storagePath });
+    security.registerPolicy(buildPolicy('agent-a'));
+
+    const action = buildAllowedWriteAction('agent-a');
+    const approval = security.createApproval(action, 'user-1');
+    const allowed = security.executeAction(action, approval, { status: 'draft' });
+    expect(allowed.allowed).toBe(true);
+
+    const recoveredHistory = new HistoryEngine({ storagePath });
+    expect(recoveredHistory.restore(snapshot.id)?.checksum).toBe(recoveredHistory.hashState(before));
+    expect(recoveredHistory.getAuditLog().length).toBeGreaterThan(0);
+
+    const reloadedSecurity = new AiSecurityEngine(new SandboxEngine(), recoveredHistory, { statePath: storagePath });
+    reloadedSecurity.registerPolicy(buildPolicy('agent-a'));
+    const replay = reloadedSecurity.executeAction(action, approval, { status: 'draft' });
+    expect(replay.allowed).toBe(false);
+    expect(replay.reason).toContain('replay');
   });
 
   it('Approval is required for privileged operations and missing approvals are denied', () => {

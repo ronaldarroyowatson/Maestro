@@ -1,4 +1,10 @@
 import { createHash } from 'node:crypto';
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { dirname, resolve } from 'node:path';
+
+export type HistoryEngineOptions = {
+  storagePath?: string;
+};
 
 export type SandboxStateSnapshot = {
   id: string;
@@ -23,6 +29,89 @@ export type SecurityAuditEntry = {
 export class HistoryEngine {
   private readonly snapshots = new Map<string, SandboxStateSnapshot>();
   private readonly auditLog: SecurityAuditEntry[] = [];
+  private readonly storagePath?: string;
+
+  constructor(options: HistoryEngineOptions = {}) {
+    this.storagePath = options.storagePath ? resolve(options.storagePath) : undefined;
+    this.loadState();
+  }
+
+  private loadState(): void {
+    if (!this.storagePath || !existsSync(this.storagePath)) {
+      return;
+    }
+
+    try {
+      const content = readFileSync(this.storagePath, 'utf8');
+      if (!content.trim()) {
+        return;
+      }
+
+      const parsed = JSON.parse(content) as {
+        snapshots?: Array<SandboxStateSnapshot & { createdAt: string }>;
+        auditLog?: Array<SecurityAuditEntry & { timestamp: string }>;
+      };
+
+      this.snapshots.clear();
+      for (const snapshot of parsed.snapshots ?? []) {
+        this.snapshots.set(snapshot.id, {
+          ...snapshot,
+          createdAt: new Date(snapshot.createdAt)
+        });
+      }
+
+      this.auditLog.length = 0;
+      this.auditLog.push(
+        ...(parsed.auditLog ?? []).map((entry) => ({
+          ...entry,
+          timestamp: new Date(entry.timestamp)
+        }))
+      );
+    } catch {
+      // Ignore corrupt persisted history and start cleanly.
+    }
+  }
+
+  private persistState(): void {
+    if (!this.storagePath) {
+      return;
+    }
+
+    try {
+      mkdirSync(dirname(this.storagePath), { recursive: true });
+      const existing = this.tryReadMergedState();
+      const state = {
+        ...existing,
+        snapshots: [...this.snapshots.values()].map((snapshot) => ({
+          ...snapshot,
+          createdAt: snapshot.createdAt.toISOString()
+        })),
+        auditLog: this.auditLog.map((entry) => ({
+          ...entry,
+          timestamp: entry.timestamp.toISOString()
+        }))
+      };
+      writeFileSync(this.storagePath, JSON.stringify(state, null, 2));
+    } catch {
+      // Ignore disk-write failures and keep runtime behavior deterministic in-memory.
+    }
+  }
+
+  private tryReadMergedState(): Record<string, unknown> {
+    if (!this.storagePath || !existsSync(this.storagePath)) {
+      return {};
+    }
+
+    try {
+      const content = readFileSync(this.storagePath, 'utf8');
+      if (!content.trim()) {
+        return {};
+      }
+      return JSON.parse(content) as Record<string, unknown>;
+    } catch {
+      return {};
+    }
+  }
 
   snapshot(label: string, state: Record<string, unknown>): SandboxStateSnapshot {
     const snapshot: SandboxStateSnapshot = {
@@ -34,6 +123,7 @@ export class HistoryEngine {
     };
 
     this.snapshots.set(snapshot.id, snapshot);
+    this.persistState();
     return snapshot;
   }
 
@@ -47,6 +137,7 @@ export class HistoryEngine {
 
   record(entry: SecurityAuditEntry): SecurityAuditEntry {
     this.auditLog.push(entry);
+    this.persistState();
     return entry;
   }
 

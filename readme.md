@@ -4,11 +4,21 @@ Maestro is the orchestration runtime for graph-based workflows, provider discove
 
 ## Project status
 
-This repository is in the contract-first runtime foundation phase:
+This repository has completed the contract-first runtime foundation phase and moved into lifecycle hardening and governance validation:
 
 - Otto remains the external platform/service backbone.
-- Maestro owns orchestration contracts, graph/runtime services, and workflow routing logic.
+- Maestro owns orchestration contracts, graph/runtime services, workflow routing logic, and security/governance enforcement.
 - Commands, CLI/API exposure, and UI registration remain routed through Otto's command-service layer rather than being implemented ad hoc in Maestro.
+- The security boundary for sandboxed execution, approval validation, and recoverability is now part of the runtime contract.
+- Feature wiring is being continuously validated with automated tests across the runtime, discovery, provider, workflow, and security surfaces.
+
+## Validation status
+
+Current verification evidence is complete and working:
+
+- `npm test` passes for Maestro and the Otto node/sandbox/history/security repos.
+- `npm run build` passes for the same set of repositories.
+- The security path, approval workflow, and recovery/snapshot logic are covered by automated tests and are ready to be kept in CI.
 
 ## Why this repo exists
 
