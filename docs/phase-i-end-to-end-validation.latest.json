@@ -1,0 +1,43 @@
+{
+  "executedAt": "2026-10-30T19:45:59.713Z",
+  "report": {
+    "assertions": [
+      {
+        "name": "End-to-End Discovery to Registration Test",
+        "result": "PASS"
+      },
+      {
+        "name": "Ollama Model Detection Test",
+        "result": "PASS"
+      },
+      {
+        "name": "Graph Execution Trace Test",
+        "result": "PASS",
+        "details": "pending -> paused -> running -> cancelled"
+      },
+      {
+        "name": "Node Status Visibility Test",
+        "result": "PASS"
+      }
+    ],
+    "executionTrace": {
+      "runId": "0e472e44-21cd-48b2-a788-f29f382b4702",
+      "states": [
+        "pending",
+        "paused",
+        "running",
+        "cancelled"
+      ]
+    },
+    "resourceSummary": {
+      "discoveredCount": 3,
+      "registryCount": 4,
+      "modelCount": 1,
+      "runtimeCount": 1
+    },
+    "graphSummary": {
+      "nodeCount": 3,
+      "edgeCount": 2
+    }
+  }
+}

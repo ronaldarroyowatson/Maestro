@@ -8,7 +8,7 @@ The workspace root appears to be the active Maestro runtime repository based on:
 - Feature-first runtime modules under `features/`
 - Shared contracts under `src/shared`
 - Integration and feature tests under `tests/` and `features/**/tests`
-- Current minor release baseline is `0.3.0`.
+- Current minor release baseline is `0.4.0`.
 
 ## What Works Today
 
@@ -50,6 +50,8 @@ The workspace root appears to be the active Maestro runtime repository based on:
 - Phase G validation artifacts are documented in `docs/node-graph-phase-g-validation.md` and `docs/node-graph-property-inspector.md`.
 - Phase H is now completed for Maestro + Otto integration in repository scope: `features/node-graph/services/maestro-otto-integration/index.ts` now builds registry-aware graph execution plans, validates graph-to-runtime readiness, maps node resource bindings to unified `ResourceNode` inventory, and executes runtime-backed workflow runs.
 - Phase H validation artifacts are documented in `docs/node-graph-phase-h-validation.md` and `docs/node-graph-maestro-otto-integration.md`.
+- Phase I is now completed for first end-to-end validation in repository scope: `features/node-graph/services/end-to-end-validation/index.ts` now validates discovery-to-registration-to-graph-runtime flow and produces a deterministic lifecycle execution trace with PASS/FAIL assertions.
+- Phase I validation artifacts are documented in `docs/node-graph-phase-i-validation.md`, `docs/node-graph-phase-i-walkthrough.md`, and `docs/phase-i-end-to-end-validation.latest.json`.
 - The command-service rule remains intact: the module manifest explicitly declares the external `otto-command-service` layer as the source of command exposure, while Maestro provides the contract package, runtime logic, and manifest bootstrap metadata that Otto consumes.
 - Repository hygiene and public release readiness are now being standardized to the broader Otto ecosystem norm: canonical docs, a permissive MIT license, contribution/security policies, and a public GitHub visibility pass are being completed so the project is ready for broader adoption and open-source collaboration.
 - Repository hygiene/public release readiness has been completed for the current phase: MIT licensing, canonical OSS docs, and public repository visibility are now in place.
