@@ -106,6 +106,12 @@
   - `features/node-graph/tests/otto-node-engine-orchestrator.test.ts`
   - `docs/node-graph-otto-orchestrator.md`
   - `docs/node-graph-phase-o-validation.md`
+- Added Phase P Otto node-engine telemetry artifacts:
+  - `docs/node-graph-otto-telemetry.md`
+  - `docs/node-graph-phase-p-validation.md`
+- Updated node-engine orchestration telemetry wiring:
+  - `features/node-graph/services/otto-node-engine-orchestrator/index.ts`
+  - `features/node-graph/tests/otto-node-engine-orchestrator.test.ts`
 
 ### Changed
 

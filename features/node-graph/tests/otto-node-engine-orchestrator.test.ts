@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import type { MaestroEventEnvelope } from '../../../src/shared/index.js';
 import type { ResourceNode } from '../../../src/shared/index.js';
 import { OttoNodeEngineOrchestrator } from '../services/otto-node-engine-orchestrator/index.js';
 
@@ -54,5 +55,61 @@ describe('otto node engine orchestrator', () => {
 
     expect(result.clientStatus).toBe('unavailable');
     expect(typeof result.reason).toBe('string');
+  });
+
+  it('Telemetry Event Emission Test', async () => {
+    const orchestrator = new OttoNodeEngineOrchestrator();
+    const events: Array<MaestroEventEnvelope<Record<string, unknown>>> = [];
+
+    await orchestrator.runDiscoverySync({
+      featureFlags: { enableOttoNodeEngine: false },
+      discovery: {
+        async scanAll() {
+          return { resources: [{ id: 'model:ollama:tinyllama' }] };
+        },
+        registry: {
+          list: () => [resource('model:ollama:tinyllama', 'model')]
+        }
+      },
+      observabilityBridge: {
+        async forwardEvent(event) {
+          events.push(event);
+        }
+      }
+    });
+
+    expect(events.map((event) => event.eventType)).toEqual([
+      'maestro.node-engine.sync.started',
+      'maestro.node-engine.sync.completed'
+    ]);
+  });
+
+  it('Disconnected Service Test', async () => {
+    const orchestrator = new OttoNodeEngineOrchestrator();
+    const events: Array<MaestroEventEnvelope<Record<string, unknown>>> = [];
+
+    await expect(async () => {
+      await orchestrator.runDiscoverySync({
+        featureFlags: { enableOttoNodeEngine: false },
+        discovery: {
+          async scanAll() {
+            throw new Error('discovery offline');
+          },
+          registry: {
+            list: () => []
+          }
+        },
+        observabilityBridge: {
+          async forwardEvent(event) {
+            events.push(event);
+          }
+        }
+      });
+    }).rejects.toThrow('discovery offline');
+
+    expect(events.map((event) => event.eventType)).toEqual([
+      'maestro.node-engine.sync.started',
+      'maestro.node-engine.sync.failed'
+    ]);
   });
 });
