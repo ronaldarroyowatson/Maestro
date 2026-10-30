@@ -83,3 +83,12 @@ Integrate node graph execution contracts with runtime and discovery registry dat
 - Validation:
   - `features/node-graph/tests/node-engine-diagnostics.test.ts`
   - `npm run verify:node-engine-sync-diagnostics`
+
+## Phase R Extension: Version Compatibility Enforcement
+
+- Loader update: `features/node-graph/services/otto-node-engine-client-loader/index.ts`
+  - Enforces `apiVersion` compatibility against required loader version constraints.
+- Integration update:
+  - `MaestroOttoNodeEngineService.create(...)` and `OttoNodeEngineOrchestrator` now support `requiredApiVersion`.
+- Validation:
+  - `features/node-graph/tests/otto-node-engine-client-loader.test.ts`

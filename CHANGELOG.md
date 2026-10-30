@@ -118,6 +118,14 @@
   - `scripts/verify-node-engine-sync-diagnostics.ts`
   - `docs/node-graph-sync-diagnostics.md`
   - `docs/node-graph-phase-q-validation.md`
+- Added Phase R node-engine version compatibility artifacts:
+  - `docs/node-graph-otto-version-compatibility.md`
+  - `docs/node-graph-phase-r-validation.md`
+- Updated node-engine loading contracts for compatibility enforcement:
+  - `features/node-graph/services/otto-node-engine-client-loader/index.ts`
+  - `features/node-graph/services/otto-node-engine-integration/index.ts`
+  - `features/node-graph/services/otto-node-engine-orchestrator/index.ts`
+  - `features/node-graph/tests/otto-node-engine-client-loader.test.ts`
 
 ### Changed
 
