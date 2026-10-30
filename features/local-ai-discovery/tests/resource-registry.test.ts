@@ -74,4 +74,69 @@ describe('local AI resource registry', () => {
     expect(registry.lookup('model:missing')).toBeUndefined();
     expect(registry.lookup('runtime:ollama')).toBeDefined();
   });
+
+  it('Health State Transition Test', () => {
+    const registry = new ResourceRegistry();
+    registry.create(buildNode('runtime:ollama', 'Ollama Runtime', 'runtime', 'healthy'));
+
+    const degraded = registry.updateHealth('runtime:ollama', { healthy: false, reason: 'probe timeout' });
+    expect(degraded?.status).toBe('degraded');
+    const healthRecord = degraded?.metadata.health as { reason?: string } | undefined;
+    expect(healthRecord?.reason).toBe('probe timeout');
+
+    const healthy = registry.updateHealth('runtime:ollama', { healthy: true });
+    expect(healthy?.status).toBe('healthy');
+  });
+
+  it('Categorization and Tagging Test', () => {
+    const registry = new ResourceRegistry();
+    registry.create(buildNode('model:tinyllama', 'tinyllama:latest', 'model'));
+
+    registry.assignCategory('model:tinyllama', 'llm');
+    registry.addTags('model:tinyllama', ['local', 'favorite', 'favorite']);
+    registry.removeTags('model:tinyllama', ['healthy']);
+
+    const filtered = registry.filter({ category: 'llm', tags: ['local'] });
+    expect(filtered).toHaveLength(1);
+    expect(filtered[0]?.tags.includes('healthy')).toBe(false);
+  });
+
+  it('Missing Status Marking Test', () => {
+    const registry = new ResourceRegistry();
+    registry.create(buildNode('runtime:ollama', 'Ollama Runtime', 'runtime', 'healthy'));
+    registry.create(buildNode('model:tinyllama', 'tinyllama:latest', 'model', 'healthy'));
+
+    const marked = registry.markMissingForAbsent(['runtime:ollama']);
+    expect(marked).toBe(1);
+    expect(registry.lookup('model:tinyllama')?.status).toBe('missing');
+  });
+
+  it('Inventory Snapshot Test', () => {
+    const registry = new ResourceRegistry();
+    registry.create(buildNode('runtime:ollama', 'Ollama Runtime', 'runtime', 'healthy'));
+    registry.create(buildNode('model:tinyllama', 'tinyllama:latest', 'model', 'detected'));
+    registry.assignCategory('model:tinyllama', 'llm');
+
+    const snapshot = registry.getInventorySnapshot();
+    expect(snapshot.total).toBe(2);
+    expect(snapshot.byType.runtime).toBe(1);
+    expect(snapshot.byStatus.detected).toBe(1);
+    expect(snapshot.byCategory.llm).toBe(1);
+  });
+
+  it('Duplicate Resource Merge Test', () => {
+    const registry = new ResourceRegistry();
+    registry.create(buildNode('model:tinyllama', 'tinyllama:latest', 'model'));
+
+    registry.upsert({
+      ...buildNode('model:tinyllama', 'tinyllama:latest', 'model'),
+      tags: ['model', 'favorite'],
+      metadata: { source: 'new-source', note: 'updated' }
+    });
+
+    const node = registry.lookup('model:tinyllama');
+    expect(node?.tags.includes('favorite')).toBe(true);
+    expect(node?.metadata.note).toBe('updated');
+    expect(node?.createdAt.toISOString()).toBe('2026-10-29T00:00:00.000Z');
+  });
 });

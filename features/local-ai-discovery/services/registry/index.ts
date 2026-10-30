@@ -4,18 +4,22 @@ export interface ResourceRegistryFilter {
   type?: ResourceNode['type'];
   status?: ResourceNode['status'];
   tags?: string[];
+  category?: string;
   nameContains?: string;
+}
+
+export interface ResourceInventorySnapshot {
+  total: number;
+  byType: Record<string, number>;
+  byStatus: Record<string, number>;
+  byCategory: Record<string, number>;
 }
 
 export class ResourceRegistry {
   private readonly resources = new Map<string, ResourceNode>();
 
   create(node: ResourceNode): ResourceNode {
-    this.resources.set(node.id, {
-      ...node,
-      relationships: node.relationships ?? []
-    });
-    return this.resources.get(node.id)!;
+    return this.upsert(node);
   }
 
   update(nodeId: string, next: Partial<ResourceNode>): ResourceNode | undefined {
@@ -69,6 +73,10 @@ export class ResourceRegistry {
         return false;
       }
 
+      if (criteria.category && String(node.metadata.category ?? '') !== criteria.category) {
+        return false;
+      }
+
       if (lowerName && !node.name.toLowerCase().includes(lowerName)) {
         return false;
       }
@@ -117,12 +125,111 @@ export class ResourceRegistry {
     return updated;
   }
 
+  updateHealth(nodeId: string, health: { healthy: boolean; reason?: string; checkedAt?: Date }): ResourceNode | undefined {
+    const nextStatus: ResourceNode['status'] = health.healthy ? 'healthy' : 'degraded';
+    const checkedAt = (health.checkedAt ?? new Date()).toISOString();
+    return this.update(nodeId, {
+      status: nextStatus,
+      metadata: {
+        ...(this.lookup(nodeId)?.metadata ?? {}),
+        health: {
+          healthy: health.healthy,
+          reason: health.reason,
+          checkedAt
+        }
+      },
+      lastSeen: health.checkedAt ?? new Date()
+    });
+  }
+
+  assignCategory(nodeId: string, category: string): ResourceNode | undefined {
+    const node = this.resources.get(nodeId);
+    if (!node) {
+      return undefined;
+    }
+
+    return this.update(nodeId, {
+      metadata: {
+        ...node.metadata,
+        category
+      }
+    });
+  }
+
+  addTags(nodeId: string, tags: string[]): ResourceNode | undefined {
+    const node = this.resources.get(nodeId);
+    if (!node) {
+      return undefined;
+    }
+
+    const nextTags = new Set(node.tags);
+    for (const tag of tags) {
+      if (tag.trim()) {
+        nextTags.add(tag.trim());
+      }
+    }
+
+    return this.update(nodeId, {
+      tags: Array.from(nextTags)
+    });
+  }
+
+  removeTags(nodeId: string, tags: string[]): ResourceNode | undefined {
+    const node = this.resources.get(nodeId);
+    if (!node) {
+      return undefined;
+    }
+
+    const removeSet = new Set(tags);
+    return this.update(nodeId, {
+      tags: node.tags.filter((tag) => !removeSet.has(tag))
+    });
+  }
+
   removeMissing(lastSeenBefore: Date): number {
     const toRemove = Array.from(this.resources.values()).filter((node) => node.status === 'missing' && node.lastSeen.getTime() < lastSeenBefore.getTime());
     for (const node of toRemove) {
       this.resources.delete(node.id);
     }
     return toRemove.length;
+  }
+
+  markMissingForAbsent(activeResourceIds: string[], options: { ignoreIds?: string[] } = {}): number {
+    const active = new Set(activeResourceIds);
+    const ignored = new Set(options.ignoreIds ?? []);
+    let marked = 0;
+
+    for (const node of this.resources.values()) {
+      if (ignored.has(node.id)) {
+        continue;
+      }
+
+      if (!active.has(node.id) && node.status !== 'missing') {
+        this.updateStatus(node.id, 'missing', 'Resource not present in latest discovery scan');
+        marked += 1;
+      }
+    }
+
+    return marked;
+  }
+
+  getInventorySnapshot(): ResourceInventorySnapshot {
+    const snapshot: ResourceInventorySnapshot = {
+      total: 0,
+      byType: {},
+      byStatus: {},
+      byCategory: {}
+    };
+
+    for (const node of this.resources.values()) {
+      snapshot.total += 1;
+      snapshot.byType[node.type] = (snapshot.byType[node.type] ?? 0) + 1;
+      snapshot.byStatus[node.status] = (snapshot.byStatus[node.status] ?? 0) + 1;
+      const category = String(node.metadata.category ?? 'uncategorized');
+      snapshot.byCategory[category] = (snapshot.byCategory[category] ?? 0) + 1;
+    }
+
+    return snapshot;
   }
 
   addRelationship(fromNodeId: string, toNodeId: string, kind: ResourceRelationship['kind'], metadata: Record<string, unknown> = {}): ResourceRelationship | undefined {
@@ -158,7 +265,31 @@ export class ResourceRegistry {
   }
 
   upsert(node: ResourceNode): ResourceNode {
-    return this.create(node);
+    const existing = this.resources.get(node.id);
+    if (!existing) {
+      const created = {
+        ...node,
+        tags: Array.from(new Set(node.tags)),
+        relationships: node.relationships ?? []
+      };
+      this.resources.set(node.id, created);
+      return created;
+    }
+
+    const merged: ResourceNode = {
+      ...existing,
+      ...node,
+      createdAt: existing.createdAt,
+      tags: Array.from(new Set([...existing.tags, ...node.tags])),
+      metadata: {
+        ...existing.metadata,
+        ...node.metadata
+      },
+      relationships: existing.relationships.length > 0 ? existing.relationships : node.relationships ?? []
+    };
+
+    this.resources.set(node.id, merged);
+    return merged;
   }
 }
 

@@ -4,6 +4,7 @@ import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 import {
+  BaseDiscoveryScanner,
   EndpointScanner,
   LocalAiDiscoveryService,
   LocalModelScanner,
@@ -210,5 +211,41 @@ describe('local AI discovery framework', () => {
     expect(result.resources.some((resource) => resource.type === 'runtime' && resource.id === 'runtime:ollama')).toBe(true);
     expect(result.resources.some((resource) => resource.type === 'model' && resource.id === 'model:ollama:tinyllama:latest')).toBe(true);
     expect(result.graph.edges.some((edge) => edge.from === 'runtime:ollama' && edge.to === 'model:ollama:tinyllama:latest')).toBe(true);
+  });
+
+  it('Resource Removal Detection Test', async () => {
+    class ToggleScanner extends BaseDiscoveryScanner {
+      private callCount = 0;
+
+      constructor() {
+        super('toggle-scanner', 'model');
+      }
+
+      async scan(): Promise<Array<{ id: string; name: string; type: 'model'; path: string; status: 'detected'; metadata: Record<string, unknown>; discoveredBy: string; lastSeen: Date }>> {
+        this.callCount += 1;
+        if (this.callCount === 1) {
+          return [{
+            id: 'model:toggle',
+            name: 'toggle-model',
+            type: 'model',
+            path: 'C:\\models\\toggle.gguf',
+            status: 'detected',
+            metadata: {},
+            discoveredBy: this.id,
+            lastSeen: new Date()
+          }];
+        }
+        return [];
+      }
+    }
+
+    const service = new LocalAiDiscoveryService([new ToggleScanner()]);
+    await service.scanAll({ rootPath: 'C:\\workspace' });
+    const firstNode = service.registry.lookup('model:toggle');
+    expect(firstNode?.status).toBe('detected');
+
+    await service.scanAll({ rootPath: 'C:\\workspace' });
+    const secondNode = service.registry.lookup('model:toggle');
+    expect(secondNode?.status).toBe('missing');
   });
 });

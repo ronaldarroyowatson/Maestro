@@ -662,6 +662,9 @@ export class LocalAiDiscoveryService {
       }
     }
 
+    const activeIds = [deviceNode.id, ...deduped.map((resource) => resource.id)];
+    this.registry.markMissingForAbsent(activeIds);
+
     const graph = new ResourceNodeGraphBuilder().build([
       {
         id: deviceNode.id,
