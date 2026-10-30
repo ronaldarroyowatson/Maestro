@@ -763,6 +763,8 @@ Documentation updates:
 - future vision and extension roadmap
 - cross-platform expansion strategy
 
+Current implementation status: Phase J is complete in documentation scope. The future-state vision now defines remote/distributed discovery targets, graph execution expansion objectives, and unified-resource guardrails to keep the graph-first `ResourceNode` architecture consistent as Maestro grows beyond local environments.
+
 ### 12.8 Recommended architecture diagram for the full initiative
 
 ```mermaid

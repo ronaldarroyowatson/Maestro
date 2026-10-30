@@ -91,6 +91,7 @@ This section is intentionally added before major implementation changes.
 28. Phase G node property inspector completed in repository scope: node inspector panel contract metadata is defined and wired, and runtime-backed selected-node inspection/update validation is implemented with explicit failure-mode and edge-case coverage.
 29. Phase H Maestro + Otto integration completed in repository scope: runtime-backed graph execution integration now includes registry-aware resource mapping, deterministic execution-plan layering, graph-to-runtime run creation, and end-to-end integration tests for dependency, mapping, and scale scenarios.
 30. Phase I first end-to-end test completed in repository scope: discovery-to-registration-to-graph-runtime validation is implemented with deterministic lifecycle trace assertions, PASS/FAIL reporting, and real-machine validation artifact generation.
+31. Phase J future vision completed in repository scope: long-term remote/distributed discovery and orchestration roadmap has been formalized with graph-first and unified-ResourceNode guardrails.
 
 ### In Progress
 
