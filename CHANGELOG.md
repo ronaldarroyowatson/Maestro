@@ -77,6 +77,9 @@
   - `features/node-graph/tests/end-to-end-validation.test.ts`
   - `tests/node-graph/phase-i-end-to-end.test.ts`
   - `scripts/validate-phase-i-end-to-end.ts`
+- Added Phase J future vision artifacts:
+  - `docs/maestro-phase-j-future-vision.md`
+  - `docs/node-graph-phase-j-validation.md`
 
 ### Changed
 
