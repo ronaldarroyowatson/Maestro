@@ -80,6 +80,11 @@
 - Added Phase J future vision artifacts:
   - `docs/maestro-phase-j-future-vision.md`
   - `docs/node-graph-phase-j-validation.md`
+- Added Phase K remote discovery foundation artifacts:
+  - `features/local-ai-discovery/services/remote-discovery/index.ts`
+  - `features/local-ai-discovery/tests/remote-discovery.test.ts`
+  - `docs/local-ai-remote-discovery-foundation.md`
+  - `docs/local-ai-discovery-phase-k-validation.md`
 
 ### Changed
 
@@ -137,7 +142,7 @@
   - `getHealthSnapshot(providerIds?)` with sorted entries, isolated failures, summary counts
   - deterministic preferred-provider selection (latency, then provider id tie-break)
 - Added end-of-day documentation checkpoint updates for integration status and next-session execution handoff.
-- Bumped Maestro minor version from `0.3.0` to `0.4.0` in package, Otto module, and payload metadata.
+- Bumped Maestro minor version from `0.4.0` to `0.5.0` in package, Otto module, and payload metadata.
 - Added conductor/provider-registry routing integration coverage:
   - agent routing support for `providerId: "preferred"` with `fallbackProviderId` recovery behavior
   - new conductor integration test validating preferred-provider and fallback error-mode recovery

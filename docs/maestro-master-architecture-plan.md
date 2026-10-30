@@ -765,6 +765,34 @@ Documentation updates:
 
 Current implementation status: Phase J is complete in documentation scope. The future-state vision now defines remote/distributed discovery targets, graph execution expansion objectives, and unified-resource guardrails to keep the graph-first `ResourceNode` architecture consistent as Maestro grows beyond local environments.
 
+#### Phase K — Remote Discovery Contract Foundation
+
+Objective: establish deterministic remote-target discovery contracts that feed the same unified graph/resource architecture.
+
+Core tasks:
+- Define remote discovery target contracts.
+- Define remote scanner interface for host/container/cloud targets.
+- Implement orchestration service for scanner x target execution.
+- Produce explicit failure records for connection/auth/type failures.
+- Preserve normalized discovery output for unified registry ingestion.
+
+Milestones:
+- remote target contracts implemented
+- scanner registration/execution pipeline implemented
+- duplicate prevention and normalized output behavior validated
+
+Testing requirements:
+- scanner registration tests
+- remote discovery execution tests
+- duplicate merge tests
+- disconnected service failure tests
+
+Documentation updates:
+- remote discovery architecture doc
+- phase validation report
+
+Current implementation status: Phase K is complete in this repository's contract/runtime scope. The local AI discovery feature now includes a remote discovery orchestrator with target-based scanner execution, deterministic deduplication, explicit failure reporting, and normalized discovery output aligned to the unified ResourceNode model.
+
 ### 12.8 Recommended architecture diagram for the full initiative
 
 ```mermaid

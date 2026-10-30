@@ -8,6 +8,16 @@ import type {
   ResourceRelationship as SharedResourceRelationship
 } from '../../src/shared/index.js';
 import { ResourceRegistry } from './services/registry/index.js';
+export {
+  RemoteDiscoveryOrchestrator
+} from './services/remote-discovery/index.js';
+export type {
+  RemoteDiscoveryScanContext,
+  RemoteDiscoveryScanFailure,
+  RemoteDiscoveryScanResult,
+  RemoteDiscoveryScanner,
+  RemoteDiscoveryTarget
+} from './services/remote-discovery/index.js';
 
 export type LocalAiResourceType = SharedResourceNode['type'];
 export type ResourceRelationship = SharedResourceRelationship;
