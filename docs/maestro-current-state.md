@@ -8,7 +8,7 @@ The workspace root appears to be the active Maestro runtime repository based on:
 - Feature-first runtime modules under `features/`
 - Shared contracts under `src/shared`
 - Integration and feature tests under `tests/` and `features/**/tests`
-- Current minor release baseline is `0.4.0`.
+- Current minor release baseline is `0.5.0`.
 
 ## What Works Today
 
@@ -54,6 +54,8 @@ The workspace root appears to be the active Maestro runtime repository based on:
 - Phase I validation artifacts are documented in `docs/node-graph-phase-i-validation.md`, `docs/node-graph-phase-i-walkthrough.md`, and `docs/phase-i-end-to-end-validation.latest.json`.
 - Phase J is now completed for future-state planning in repository scope: `docs/maestro-phase-j-future-vision.md` captures remote/distributed discovery and orchestration expansion goals while preserving unified Resource Node and graph-first constraints.
 - Phase J validation artifact is documented in `docs/node-graph-phase-j-validation.md`.
+- Phase K is now completed for remote discovery contract foundation: `features/local-ai-discovery/services/remote-discovery/index.ts` introduces deterministic target-based scanner orchestration with explicit failure reporting and unified resource normalization.
+- Phase K validation artifacts are documented in `docs/local-ai-discovery-phase-k-validation.md` and `docs/local-ai-remote-discovery-foundation.md`.
 - The command-service rule remains intact: the module manifest explicitly declares the external `otto-command-service` layer as the source of command exposure, while Maestro provides the contract package, runtime logic, and manifest bootstrap metadata that Otto consumes.
 - Repository hygiene and public release readiness are now being standardized to the broader Otto ecosystem norm: canonical docs, a permissive MIT license, contribution/security policies, and a public GitHub visibility pass are being completed so the project is ready for broader adoption and open-source collaboration.
 - Repository hygiene/public release readiness has been completed for the current phase: MIT licensing, canonical OSS docs, and public repository visibility are now in place.

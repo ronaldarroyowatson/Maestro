@@ -92,6 +92,7 @@ This section is intentionally added before major implementation changes.
 29. Phase H Maestro + Otto integration completed in repository scope: runtime-backed graph execution integration now includes registry-aware resource mapping, deterministic execution-plan layering, graph-to-runtime run creation, and end-to-end integration tests for dependency, mapping, and scale scenarios.
 30. Phase I first end-to-end test completed in repository scope: discovery-to-registration-to-graph-runtime validation is implemented with deterministic lifecycle trace assertions, PASS/FAIL reporting, and real-machine validation artifact generation.
 31. Phase J future vision completed in repository scope: long-term remote/distributed discovery and orchestration roadmap has been formalized with graph-first and unified-ResourceNode guardrails.
+32. Phase K remote discovery contract foundation completed: deterministic remote target discovery contracts and scanner orchestration are now implemented with explicit failure reporting and unified resource normalization output.
 
 ### In Progress
 
