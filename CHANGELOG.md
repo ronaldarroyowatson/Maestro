@@ -72,6 +72,11 @@
   - `features/node-graph/services/maestro-otto-integration/index.ts`
   - `features/node-graph/tests/maestro-otto-integration.test.ts`
   - `tests/node-graph/maestro-otto-integration-phase-h.test.ts`
+- Added Phase I end-to-end validation artifacts:
+  - `features/node-graph/services/end-to-end-validation/index.ts`
+  - `features/node-graph/tests/end-to-end-validation.test.ts`
+  - `tests/node-graph/phase-i-end-to-end.test.ts`
+  - `scripts/validate-phase-i-end-to-end.ts`
 
 ### Changed
 
@@ -129,7 +134,7 @@
   - `getHealthSnapshot(providerIds?)` with sorted entries, isolated failures, summary counts
   - deterministic preferred-provider selection (latency, then provider id tie-break)
 - Added end-of-day documentation checkpoint updates for integration status and next-session execution handoff.
-- Bumped Maestro minor version from `0.2.0` to `0.3.0` in package, Otto module, and payload metadata.
+- Bumped Maestro minor version from `0.3.0` to `0.4.0` in package, Otto module, and payload metadata.
 - Added conductor/provider-registry routing integration coverage:
   - agent routing support for `providerId: "preferred"` with `fallbackProviderId` recovery behavior
   - new conductor integration test validating preferred-provider and fallback error-mode recovery

@@ -12,6 +12,7 @@ export {
   MaestroOttoIntegrationService,
   DEFAULT_MAESTRO_OTTO_INTEGRATION_SERVICE
 } from './services/maestro-otto-integration/index.js';
+export { runPhaseIEndToEndValidation, buildPhaseIGraph } from './services/end-to-end-validation/index.js';
 export type { ExecutionLayer, TopologicalOrder } from './models/types.js';
 
 /** Node-graph facade that composes graph modules and exposes feature API. */

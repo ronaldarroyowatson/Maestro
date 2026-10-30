@@ -45,6 +45,15 @@ These files are referenced by `otto/maestro-payload.json` under the `ui` section
 - validates execution readiness for graph-to-runtime orchestration handoff,
 - creates runtime workflow runs using the shared workflow runtime contracts.
 
+## Phase I End-to-End Validation
+
+`features/node-graph/services/end-to-end-validation/index.ts` provides a full validation path that:
+
+- runs local discovery and registry collection,
+- builds a runtime-bound graph using discovered resources,
+- executes a runtime run through the integration layer,
+- verifies lifecycle trace and node-status visibility assertions.
+
 ## Settings Model
 
 `ui/settings/maestro-ui-settings.json` provides:
