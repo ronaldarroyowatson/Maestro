@@ -333,6 +333,82 @@ export interface DiscoveryResourceRecord {
   metadata?: Record<string, unknown>;
 }
 
+export type LocalAiDiscoveryResourceType =
+  | 'device'
+  | 'ollama'
+  | 'lmstudio'
+  | 'model'
+  | 'mcp'
+  | 'endpoint'
+  | 'runtime'
+  | 'agent'
+  | 'tool'
+  | 'workflow'
+  | 'container'
+  | 'service'
+  | 'repository'
+  | 'dataset'
+  | 'vector-db'
+  | 'gpu'
+  | 'other';
+
+export interface DetectedResource {
+  id: string;
+  name: string;
+  type: LocalAiDiscoveryResourceType;
+  path?: string;
+  status: 'detected' | 'healthy' | 'degraded' | 'missing' | 'unknown';
+  metadata: Record<string, unknown>;
+  discoveredBy: string;
+  lastSeen: Date;
+}
+
+export interface DiscoveryScanContext {
+  rootPath?: string;
+  environment?: Record<string, string | undefined>;
+}
+
+export interface DiscoveryScanResult {
+  resources: DetectedResource[];
+  graph: ResourceGraph;
+  scannedAt: Date;
+}
+
+export interface DiscoveryScanner {
+  readonly id: string;
+  readonly type: string;
+  scan(context: DiscoveryScanContext): Promise<DetectedResource[]>;
+}
+
+export interface ResourceRelationship {
+  id: string;
+  from: string;
+  to: string;
+  kind: 'contains' | 'hosts' | 'depends_on' | 'routes_to' | 'executes' | 'provides' | 'references' | 'connects_to';
+  metadata?: Record<string, unknown>;
+}
+
+export interface ResourceNode {
+  id: string;
+  name: string;
+  type: LocalAiDiscoveryResourceType;
+  status: 'detected' | 'healthy' | 'degraded' | 'missing' | 'unknown';
+  tags: string[];
+  metadata: Record<string, unknown>;
+  relationships: ResourceRelationship[];
+  discoveredBy: string;
+  createdAt: Date;
+  lastSeen: Date;
+  path?: string;
+}
+
+export interface ResourceGraph {
+  graphId: string;
+  nodes: ResourceNode[];
+  edges: ResourceRelationship[];
+  scannedAt: Date;
+}
+
 export interface ContextEntity {
   contextId: string;
   name: string;

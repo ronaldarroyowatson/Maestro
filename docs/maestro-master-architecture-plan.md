@@ -378,7 +378,393 @@ The shared Otto-first contract layer now includes graph traversal, event-bus pub
 
 ---
 
-## 12) Migration Path from Tracer-Bullet to Target Platform
+## 12) New Major Initiative: Local AI Ecosystem Discovery and Visual Orchestration
+
+### 12.1 Strategic intent
+
+Add a new major roadmap initiative to the Maestro platform: "Local AI Ecosystem Discovery and Visual Orchestration".
+
+The long-term objective is for Maestro to automatically discover, catalog, visualize, and orchestrate AI resources available on a local machine and eventually across networked machines and remote environments. This work expands Maestro beyond orchestration runtime management into a living AI system inventory and visual execution plane.
+
+This initiative must be implemented as a direct extension of the Otto-first architecture:
+
+- Otto remains the reusable platform substrate for scanning, inventory, lifecycle monitoring, registry state, runtime eventing, and graph execution.
+- Maestro remains the product-facing orchestration and visualization layer that renders discovery results, workflow layouts, runtime state, and governance decisions.
+- The initiative does not replace the existing contract-first graph and workflow work; it layers on top of it as the next strategic product expansion.
+
+### 12.2 Initiative scope
+
+This initiative covers five core themes:
+
+1. Local AI resource discovery and normalization
+2. Repeatable local testing and validation environment
+3. Centralized resource registry and health tracking
+4. Otto/Maestro UI integration for AI discovery and workflow execution
+5. Continuous discovery + graph-based orchestration for local AI resources
+
+### 12.3 Discovery architecture
+
+```mermaid
+flowchart LR
+    subgraph Scanners[Discovery Scanners]
+        O[OllamaScanner]
+        M[LocalModelScanner]
+        L[LMStudioScanner]
+        P[MCPScanner]
+        D[DockerScanner]
+        A[AgentScanner]
+        E[EndpointScanner]
+    end
+
+    subgraph Normalize[Normalization Layer]
+        N[DetectedResource Normalizer]
+        C[Capability Classifier]
+    end
+
+    subgraph Registry[Resource Registry]
+        R[Registry Store]
+        T[Health + Status Tracker]
+        H[Search / Filter / Tagging]
+    end
+
+    subgraph UX[Maestro Surface]
+        UI[AI Discovery UI]
+        G[Visual Workflow Graph]
+        V[Resource Explorer]
+    end
+
+    O --> N
+    M --> N
+    L --> N
+    P --> N
+    D --> N
+    A --> N
+    E --> N
+    N --> C
+    C --> R
+    R --> T
+    T --> H
+    H --> UI
+    H --> V
+    H --> G
+```
+
+### 12.4 Recommended technology stack
+
+- Discovery runtime: Node.js + TypeScript service adapters
+- File system scanning: `chokidar`, `fs/promises`, native OS APIs
+- Background scheduling: `cron`/`node-schedule` or a lightweight worker loop
+- Registry persistence: SQLite for local dev, PostgreSQL for longer-term production
+- Event bus: existing Otto event bus; optionally NATS/RabbitMQ later
+- Graph/UI orchestration: existing Otto graph contracts + Maestro product layers; optional `reactflow`/custom graph renderer for visual workflow surfaces
+- Metrics and health: existing registry health snapshot contracts and performance telemetry layers
+- Local AI API integration: Ollama REST API, LM Studio local API compatibility endpoints, OpenAI-compatible endpoints, local MCP server discovery metadata
+- Search and metadata: structured tags + optional vector index when needed
+
+### 12.5 Recommended execution order
+
+1. Phase A — Local AI Discovery Framework
+2. Phase B — Local Test Environment
+3. Phase C — Resource Registry
+4. Phase D — Initial UI Integration
+5. Phase E — Continuous Discovery System
+6. Phase F — Otto Node Graph Foundation
+7. Phase G — Node Property Inspector
+8. Phase H — Maestro + Otto Integration
+9. Phase I — First End-to-End Workflow Test
+10. Phase J — Future Vision Document
+
+This ordering keeps the platform grounded in actual local evidence before introducing a larger visual orchestrator.
+
+### 12.6 Dependencies and blockers
+
+- Discovery accuracy depends on existing registry and capability-classification contracts.
+- UI integration depends on the Otto-first module manifest and contract loader working correctly.
+- Visual orchestration depends on the Otto node-graph foundation being available and stable.
+- Continuous discovery must avoid interfering with active AI workloads and should use throttled scheduling and incremental scans.
+- Local environment validation requires a working Ollama/LM Studio or equivalent local runtime to verify discovery and metadata extraction in real conditions.
+- The registry must remain the source of truth; scanners should upsert records and emit events rather than mutating runtime state directly.
+
+### 12.7 Implementation phases A-J
+
+Current implementation status: Phase A is implemented and validated. The core design rule remains the unified resource-node model, and the repo now contains a fully executable discovery framework under `features/local-ai-discovery/index.ts` with initial scanners for Ollama, local model files, LM Studio, MCP configuration, AI-development repositories, and local endpoints. Discovery results are assembled into a graph-first `ResourceNode`/`ResourceGraph` structure so discovered entities can be visualized, connected, and later promoted into workflow-executable nodes without maintaining parallel list-only systems.
+Phase B is now implemented as a repeatable local validation harness. The repo includes `features/local-ai-discovery/services/test-environment/index.ts` and the runnable script `scripts/verify-local-ai-discovery-env.ts`, which cover Ollama runtime detection, installation commands, starter-model definitions (`TinyLlama`, `Phi`, `Gemma`), and deterministic model metadata validation. This phase establishes the local dev test environment needed before the registry and UI work can fully consume discovery data.
+#### Phase A — Local AI Discovery Framework
+
+Objective: create a modular, plugin-driven discovery framework for local AI resources.
+
+Core tasks:
+- Define a `DiscoveryScanner` contract and normalized `DetectedResource` model.
+- Implement `OllamaScanner`, `LocalModelScanner`, `LMStudioScanner`, `MCPScanner`, `DockerScanner`, `AgentScanner`, and `EndpointScanner` adapters.
+- Normalize path, metadata, type, status, lastSeen, and discoveredBy values.
+- Capture duplicates, stale entries, and re-discovered resources in a deterministic manner.
+- Ensure scanner modules can be added without modifying core orchestration logic.
+
+Milestones:
+- scanner contract exists
+- sample local detection run returns normalized resources
+- discovery output is registry-ready
+
+Testing requirements:
+- scanner contract tests
+- integration tests for representative local resources
+- duplicate detection tests
+- stale-resource detection tests
+
+Documentation updates:
+- discovery framework README section
+- scanner registry and extension points
+- example output contracts
+
+#### Phase B — Development and Test Environment
+
+Objective: create a repeatable local testing environment for AI discovery and runtime validation.
+
+Core tasks:
+- Define and automate an Ollama installation workflow for development environments.
+- Download a lightweight test model (for example TinyLlama or Phi) and verify metadata extraction.
+- Validate model detection, runtime detection, and local endpoint detection.
+- Document setup steps, expected outputs, and troubleshooting.
+
+Milestones:
+- local dev machine can install and detect Ollama
+- small model can be downloaded and discovered
+- runtime + metadata checks pass in CI/local automation
+
+Testing requirements:
+- runtime discovery test
+- model discovery test
+- metadata extraction test
+- resource duplication test
+- resource update test
+- resource removal detection test
+
+Documentation updates:
+- local setup guide with commands, expected artifacts, and verification steps
+- troubleshooting section for missing services and model detection issues
+
+#### Phase C — Resource Registry
+
+Objective: provide the canonical source of truth for AI resources.
+
+Core tasks:
+- Define the registry resource schema for models, agents, MCP servers, tools, endpoints, workflows, and future resource types.
+- Implement add/update/remove/search/filter/tagging/categorization operations.
+- Track health state, lastSeen, source, and metadata for all discovered resources.
+- Expose registry APIs that discovery and UI layers can consume without direct data mutation.
+
+Milestones:
+- registry persists discovered resources deterministically
+- health state transitions and field updates are consistent
+- UI can query grouped resource inventory
+
+Testing requirements:
+- registry CRUD tests
+- health state transitions
+- search/filter/categorization validation
+- duplicate merge semantics
+
+Documentation updates:
+- registry schema and lifecycle docs
+- health-state definitions
+- operations guide
+
+#### Phase D — Initial UI Integration
+
+Objective: add a new Maestro section named "AI Discovery".
+
+Core tasks:
+- Add new page or panel under Maestro for discovery status and inventory.
+- Add actions: Run First Scan, Rescan Device, Continuous Discovery Toggle.
+- Display counts, discovery logs, scan status, and last scan time.
+- Group discovered items by type: models, agents, MCP servers, tools, endpoints, other.
+- Provide expandable details for each resource item.
+
+Milestones:
+- page renders with health and status cards
+- discovery logs stream into UI
+- resources are grouped and searchable
+
+Testing requirements:
+- page rendering contract tests
+- grouping logic validation
+- empty-state and degraded-state tests
+
+Documentation updates:
+- AI discovery page contract
+- UX and interaction behaviors
+
+#### Phase E — Continuous Discovery System
+
+Objective: create a background discovery service that remains low-impact and low-noise.
+
+Core tasks:
+- Create scheduler and incremental rescan loop.
+- Support pause/resume and configurable intervals.
+- Add throttling and resource-aware scan windows.
+- Use file-system watchers or event-driven notifications where available.
+- Minimize CPU, RAM, and disk churn while avoiding interference with active AI workloads.
+
+Milestones:
+- scheduler can run incremental scans without disrupting active workloads
+- throttling and pause/resume work as expected
+- change detection produces updates without full re-scan storms
+
+Testing requirements:
+- scheduler interval tests
+- pause/resume tests
+- throttling and low-resource validation
+- event-driven update tests
+
+Documentation updates:
+- scan policy and scheduling guide
+- operational considerations for low-impact discovery
+
+#### Phase F — Otto Node Graph Foundation
+
+Objective: create a reusable node-based workflow system inside Otto for visual orchestration.
+
+Core tasks:
+- Build reusable graph components with pan/zoom/grid/minimap/theme support.
+- Support node grouping, labels, comments, selection, validation, and runtime statuses.
+- Support connectors, typed ports, validation, and status indicators.
+- Support branch logic, filters, splitters, mergers, and routing conditions.
+
+Milestones:
+- graph canvas renders and supports editing
+- node properties and value changes are reflected immediately
+- execution state is visible on graph elements
+
+Testing requirements:
+- graph rendering contract tests
+- node lifecycle tests
+- connection/disconnection tests
+- graph validation tests
+
+Documentation updates:
+- node graph component contract and interaction model
+- visual orchestration design guide
+
+#### Phase G — Node Property Inspector
+
+Objective: implement a property editor side panel for selected nodes.
+
+Core tasks:
+- Display node name, type, properties, configuration, validation state, and connected I/O.
+- Allow live editing from the side panel.
+- Ensure updates are immediately reflected in the graph state.
+- Validate changed properties before execution.
+
+Milestones:
+- inspector reflects selected node state and runtime values
+- edits propagate instantly to graph schema and execution context
+
+Testing requirements:
+- inspector rendering tests
+- property validation tests
+- live reflection tests
+
+Documentation updates:
+- node inspector API and UX patterns
+
+#### Phase H — Maestro + Otto Integration
+
+Objective: integrate Otto's node graph module directly into Maestro.
+
+Core tasks:
+- Share component architecture, style layer, and state contracts.
+- Reuse node definitions and registry-driven metadata.
+- Ensure Maestro can render and execute user-defined workflows driven by discovered local resources.
+- Add orchestration boundaries between UI, orchestration policy, and Otto runtime services.
+
+Milestones:
+- Maestro renders Otto node graph surfaces in the workflow product layer
+- user-defined graph workflows execute through the existing controlled runtime path
+
+Testing requirements:
+- Maestro + Otto integration tests
+- rendering contract tests
+- workflow execution tests from graph to runtime
+
+Documentation updates:
+- integration architecture doc
+- shared component contract and boundaries
+
+#### Phase I — First End-to-End Test
+
+Objective: validate the full flow from local AI discovery to visual graph execution.
+
+Workflow:
+
+Local AI Discovery
+
+Start -> Scan Device -> Detect Ollama -> Locate Models -> Register Resources -> Update UI -> Display Graph
+
+Success criteria:
+- local AI resources are detected
+- resources are registered
+- results are visible in UI
+- graph execution can be observed live
+- node statuses are visible and consistent
+
+Testing requirements:
+- end-to-end discovery-to-registration test
+- graph execution trace test
+- UI state check to confirm results display
+
+Documentation updates:
+- product walkthrough and success criteria
+
+#### Phase J — Future Vision Document
+
+Objective: capture the longer-term operating model beyond local discovery.
+
+Future discovery targets:
+- network devices
+- remote servers
+- remote agents
+- containers and Kubernetes
+- cloud AI resources
+- GPU inventories
+- distributed workflows
+
+Future graph capabilities:
+- agent orchestration
+- multi-agent workflows
+- dynamic tool routing
+- resource allocation
+- automated task planning
+- self-discovery feedback loops
+
+Milestones:
+- future-state architecture doc approved
+- gap analysis for remote and distributed environments
+- roadmap update for next expansion phases
+
+Documentation updates:
+- future vision and extension roadmap
+- cross-platform expansion strategy
+
+### 12.8 Recommended architecture diagram for the full initiative
+
+```mermaid
+flowchart TD
+    A[Discovery Scheduler] --> B[Scanner Layer]
+    B --> C[Normalization + Classification]
+    C --> D[Registry + Health Tracking]
+    D --> E[UI Inventory + Graph Explorer]
+    D --> F[Workflow Runtime Routing]
+    F --> G[Otto Node Graph]
+    G --> H[Maestro Visual Orchestration]
+    H --> I[End-to-End AI Workflow Execution]
+    I --> J[Continuous Feedback + Re-scan Loop]
+``` 
+
+This initiative should be treated as a major expansion of the existing architecture, not as an isolated feature. It fits naturally into the current Otto-first service model and will create the next strategic product layer for Maestro after the current runtime/registry/workflow contracts are stabilized.
+
+---
+
+## 13) Migration Path from Tracer-Bullet to Target Platform
 
 1. **Stabilize current contracts** (no breaking changes to Otto integration foundation).
 2. **Introduce service façades** in Maestro to call Otto services behind interfaces.
