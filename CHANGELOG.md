@@ -101,6 +101,11 @@
   - `tests/node-graph/phase-n-client-loader.test.ts`
   - `docs/node-graph-otto-client-loader.md`
   - `docs/node-graph-phase-n-validation.md`
+- Added Phase O Otto node-engine orchestration artifacts:
+  - `features/node-graph/services/otto-node-engine-orchestrator/index.ts`
+  - `features/node-graph/tests/otto-node-engine-orchestrator.test.ts`
+  - `docs/node-graph-otto-orchestrator.md`
+  - `docs/node-graph-phase-o-validation.md`
 
 ### Changed
 
