@@ -8,7 +8,8 @@
     "showTracingPanel": true,
     "logVerbosity": "info",
     "traceSamplingRate": 1,
-    "telemetryEnabled": true
+    "telemetryEnabled": true,
+    "enableOttoNodeEngine": false
   },
   "availableViews": [
     "install-status",

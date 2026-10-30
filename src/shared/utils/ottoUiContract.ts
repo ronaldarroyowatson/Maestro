@@ -12,6 +12,7 @@ interface MaestroPanels {
 interface MaestroUiSettings {
   defaults: {
     startView: string;
+    enableOttoNodeEngine?: boolean;
   };
   availableViews: string[];
 }
@@ -186,6 +187,9 @@ export function validateMaestroOttoUiContract(repoRoot: string): OttoUiContractV
     problems.push(
       `UI settings default start view '${settings.defaults.startView}' is not declared in availableViews.`
     );
+  }
+  if (typeof settings.defaults.enableOttoNodeEngine !== 'boolean') {
+    problems.push("UI settings defaults must include boolean 'enableOttoNodeEngine'.");
   }
 
   const requiredActions = new Set(['run-first-scan', 'rescan-device', 'continuous-discovery-toggle']);
