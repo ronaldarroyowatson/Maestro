@@ -25,6 +25,7 @@ export interface OttoNodeEngineClient {
     policy?: WorkflowExecutionPolicy;
   }): Promise<WorkflowRunResult>;
   buildGraphFromDiscovery(resources: ResourceNode[]): Promise<GraphDefinition>;
+  healthCheck?(): Promise<{ ok: boolean; details?: string }>;
 }
 
 export interface OttoNodeEngineFeatureFlags {

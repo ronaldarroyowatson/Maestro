@@ -159,6 +159,89 @@ describe('otto node engine client loader', () => {
     expect(result.reason).toContain('incompatible');
   });
 
+  it('Connection Handshake Test', async () => {
+    const loader = new OttoNodeEngineClientLoader({
+      moduleName: '@otto/mock-engine',
+      importModule: async () => ({
+        apiVersion: '1.0.0',
+        createMaestroClient: () => ({
+          async createGraph(input: GraphDefinition): Promise<GraphPersistenceResult> {
+            return { graphId: input.graphId, version: input.version, persistedAt: new Date(), snapshotCreated: true };
+          },
+          async persistGraph(request: GraphPersistenceRequest): Promise<GraphPersistenceResult> {
+            return {
+              graphId: request.graph.graphId,
+              version: request.graph.version,
+              persistedAt: new Date(),
+              snapshotCreated: true
+            };
+          },
+          async getGraph(): Promise<GraphDefinition | undefined> {
+            return graph();
+          },
+          async executeGraph(): Promise<WorkflowRunResult> {
+            return {
+              runId: 'run-1',
+              pipelineId: 'pipe-1',
+              state: { state: 'complete', retryCount: 0, startedAt: new Date(), updatedAt: new Date() }
+            };
+          },
+          async buildGraphFromDiscovery(): Promise<GraphDefinition> {
+            return graph();
+          },
+          async healthCheck(): Promise<{ ok: boolean; details?: string }> {
+            return { ok: true };
+          }
+        })
+      })
+    });
+
+    const result = await loader.load();
+    expect(result.status).toBe('available');
+  });
+
+  it('Disconnected Service Test', async () => {
+    const loader = new OttoNodeEngineClientLoader({
+      moduleName: '@otto/mock-engine',
+      importModule: async () => ({
+        apiVersion: '1.0.0',
+        createMaestroClient: () => ({
+          async createGraph(input: GraphDefinition): Promise<GraphPersistenceResult> {
+            return { graphId: input.graphId, version: input.version, persistedAt: new Date(), snapshotCreated: true };
+          },
+          async persistGraph(request: GraphPersistenceRequest): Promise<GraphPersistenceResult> {
+            return {
+              graphId: request.graph.graphId,
+              version: request.graph.version,
+              persistedAt: new Date(),
+              snapshotCreated: true
+            };
+          },
+          async getGraph(): Promise<GraphDefinition | undefined> {
+            return graph();
+          },
+          async executeGraph(): Promise<WorkflowRunResult> {
+            return {
+              runId: 'run-1',
+              pipelineId: 'pipe-1',
+              state: { state: 'complete', retryCount: 0, startedAt: new Date(), updatedAt: new Date() }
+            };
+          },
+          async buildGraphFromDiscovery(): Promise<GraphDefinition> {
+            return graph();
+          },
+          async healthCheck(): Promise<{ ok: boolean; details?: string }> {
+            return { ok: false, details: 'transport unavailable' };
+          }
+        })
+      })
+    });
+
+    const result = await loader.load();
+    expect(result.status).toBe('unavailable');
+    expect(result.reason).toContain('health check failed');
+  });
+
   it('Feature Flag Disabled Test', async () => {
     const created = await MaestroOttoNodeEngineService.create({
       featureFlags: { enableOttoNodeEngine: false }

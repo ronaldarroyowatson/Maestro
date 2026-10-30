@@ -49,11 +49,22 @@ export class OttoNodeEngineClientLoader {
           reason: `Module '${this.moduleName}' does not export createMaestroClient().`
         };
       }
+      const client = loaded.createMaestroClient();
+      if (typeof client.healthCheck === 'function') {
+        const health = await client.healthCheck();
+        if (!health.ok) {
+          return {
+            status: 'unavailable',
+            moduleName: this.moduleName,
+            reason: `Module '${this.moduleName}' health check failed: ${health.details ?? 'unknown failure'}.`
+          };
+        }
+      }
 
       return {
         status: 'available',
         moduleName: this.moduleName,
-        client: loaded.createMaestroClient()
+        client
       };
     } catch (error) {
       return {
