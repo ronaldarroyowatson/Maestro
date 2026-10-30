@@ -85,6 +85,10 @@
   - `features/local-ai-discovery/tests/remote-discovery.test.ts`
   - `docs/local-ai-remote-discovery-foundation.md`
   - `docs/local-ai-discovery-phase-k-validation.md`
+- Added Phase L Otto node engine adapter artifacts:
+  - `features/node-graph/services/otto-node-engine-integration/index.ts`
+  - `features/node-graph/tests/otto-node-engine-integration.test.ts`
+  - `docs/node-graph-phase-l-validation.md`
 
 ### Changed
 
@@ -188,6 +192,7 @@
   - expanded diagnostics artifact verification for warning consistency across mixed governance mutation permutations
   - added resolver warning-shape determinism assertions for `preferred-provider-error` vs `preferred-provider-unavailable` fallback permutations
   - expanded diagnostics artifact verification for resolver warning-shape continuity across fallback failure paths
+  - Bumped Maestro minor version from `0.5.0` to `0.6.0` in package, Otto module, and payload metadata.
 
 ## 0.1.9
 

@@ -93,10 +93,11 @@ This section is intentionally added before major implementation changes.
 30. Phase I first end-to-end test completed in repository scope: discovery-to-registration-to-graph-runtime validation is implemented with deterministic lifecycle trace assertions, PASS/FAIL reporting, and real-machine validation artifact generation.
 31. Phase J future vision completed in repository scope: long-term remote/distributed discovery and orchestration roadmap has been formalized with graph-first and unified-ResourceNode guardrails.
 32. Phase K remote discovery contract foundation completed: deterministic remote target discovery contracts and scanner orchestration are now implemented with explicit failure reporting and unified resource normalization output.
+33. Phase L Otto node-engine adapter integration completed: `features/node-graph/services/otto-node-engine-integration/index.ts` now provides feature-flagged Otto engine delegation (`enableOttoNodeEngine`) with graceful fallback for graph load/save, execution, and discovery-driven graph generation.
 
 ### In Progress
 
-- Active phase: deepen product-surface integration from contract-driven UI panels to richer runtime-backed data sources.
+- Active phase: extend Otto node-engine integration from contract adapter to live package/runtime transport and end-to-end execution coverage.
 - Current execution step: replace remaining static panel data in Otto UI bindings with runtime snapshots/events from Maestro services where safe adapter boundaries already exist.
 - Nightly checkpoint (2026-10-17): Maestro repository is synced on `main`; upstream UI contract-wiring publication remains active in `otto-systems/otto-ui#2`.
 - Backbone feature implementation phase in Maestro.

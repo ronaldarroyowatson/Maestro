@@ -25,3 +25,14 @@ Integrate node graph execution contracts with runtime and discovery registry dat
 - Execution currently creates workflow runs and execution plans; node-by-node execution engines remain future work.
 - Resource mapping is deterministic and explicit, but still metadata/tag-driven for inferred matches.
 - Downstream Otto UI rendering remains external to this repository.
+
+## Phase L Extension: Otto Node Engine Adapter
+
+- Service: `features/node-graph/services/otto-node-engine-integration/index.ts`
+  - Adds `MaestroOttoNodeEngineService` for feature-flagged delegation to external Otto node-engine clients.
+  - Preserves graceful fallback when `enableOttoNodeEngine` is disabled or no client is configured.
+  - Keeps Maestro graph persistence, execution, and discovery-to-graph generation behavior deterministic in fallback mode.
+- Feature flag:
+  - `ui/settings/maestro-ui-settings.json` now includes `defaults.enableOttoNodeEngine`.
+- Validation:
+  - `features/node-graph/tests/otto-node-engine-integration.test.ts` verifies enabled delegation and disabled fallback behavior.
