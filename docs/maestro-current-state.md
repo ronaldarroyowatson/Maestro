@@ -70,6 +70,8 @@ The workspace root appears to be the active Maestro runtime repository based on:
 - Phase Q validation artifacts are documented in `docs/node-graph-phase-q-validation.md` and `docs/node-graph-sync-diagnostics.md`.
 - Phase R is now completed for node-engine version compatibility checks: `features/node-graph/services/otto-node-engine-client-loader/index.ts` now validates module `apiVersion` against required compatibility constraints and returns explicit mismatch diagnostics.
 - Phase R validation artifacts are documented in `docs/node-graph-phase-r-validation.md` and `docs/node-graph-otto-version-compatibility.md`.
+- Phase S is now completed for transport handshake verification: node-engine client loading now validates optional `healthCheck()` liveness contracts and returns explicit unavailable status when transport checks fail.
+- Phase S validation artifacts are documented in `docs/node-graph-phase-s-validation.md` and `docs/node-graph-otto-transport-handshake.md`.
 - The command-service rule remains intact: the module manifest explicitly declares the external `otto-command-service` layer as the source of command exposure, while Maestro provides the contract package, runtime logic, and manifest bootstrap metadata that Otto consumes.
 - Repository hygiene and public release readiness are now being standardized to the broader Otto ecosystem norm: canonical docs, a permissive MIT license, contribution/security policies, and a public GitHub visibility pass are being completed so the project is ready for broader adoption and open-source collaboration.
 - Repository hygiene/public release readiness has been completed for the current phase: MIT licensing, canonical OSS docs, and public repository visibility are now in place.

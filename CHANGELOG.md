@@ -126,6 +126,13 @@
   - `features/node-graph/services/otto-node-engine-integration/index.ts`
   - `features/node-graph/services/otto-node-engine-orchestrator/index.ts`
   - `features/node-graph/tests/otto-node-engine-client-loader.test.ts`
+- Added Phase S node-engine transport handshake artifacts:
+  - `docs/node-graph-otto-transport-handshake.md`
+  - `docs/node-graph-phase-s-validation.md`
+- Updated node-engine loading contracts for runtime transport liveness checks:
+  - `features/node-graph/services/otto-node-engine-client-loader/index.ts`
+  - `features/node-graph/services/otto-node-engine-integration/index.ts`
+  - `features/node-graph/tests/otto-node-engine-client-loader.test.ts`
 
 ### Changed
 

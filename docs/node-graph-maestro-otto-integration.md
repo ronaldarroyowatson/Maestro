@@ -92,3 +92,12 @@ Integrate node graph execution contracts with runtime and discovery registry dat
   - `MaestroOttoNodeEngineService.create(...)` and `OttoNodeEngineOrchestrator` now support `requiredApiVersion`.
 - Validation:
   - `features/node-graph/tests/otto-node-engine-client-loader.test.ts`
+
+## Phase S Extension: Runtime Transport Handshake
+
+- Client contract update:
+  - `OttoNodeEngineClient` now supports optional `healthCheck()` for transport liveness validation.
+- Loader update:
+  - `OttoNodeEngineClientLoader` executes `healthCheck()` when available and fails fast on unhealthy transport.
+- Validation:
+  - `features/node-graph/tests/otto-node-engine-client-loader.test.ts`

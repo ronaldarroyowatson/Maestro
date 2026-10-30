@@ -100,10 +100,11 @@ This section is intentionally added before major implementation changes.
 37. Phase P orchestrator telemetry wiring completed: node-engine orchestration now emits start/completed/failed observability events through the bridge adapter without changing fallback-safe execution behavior.
 38. Phase Q diagnostics artifact generation completed: node-engine sync telemetry snapshots and sequence verification are now produced by `features/node-graph/services/node-engine-diagnostics/index.ts` and `scripts/verify-node-engine-sync-diagnostics.ts`.
 39. Phase R version compatibility checks completed: node-engine client loading now enforces `apiVersion` major-version compatibility and surfaces explicit mismatch diagnostics for transport/package contract safety.
+40. Phase S transport handshake checks completed: node-engine client loading now executes optional runtime `healthCheck()` probes and fails fast with explicit diagnostics on unhealthy transport.
 
 ### In Progress
 
-- Active phase: extend published package transport verification with real package integration tests and runtime handshake checks.
+- Active phase: extend published package integration tests against the standalone `otto-node-engine` repository with end-to-end loading assertions.
 - Current execution step: replace remaining static panel data in Otto UI bindings with runtime snapshots/events from Maestro services where safe adapter boundaries already exist.
 - Nightly checkpoint (2026-10-17): Maestro repository is synced on `main`; upstream UI contract-wiring publication remains active in `otto-systems/otto-ui#2`.
 - Backbone feature implementation phase in Maestro.
