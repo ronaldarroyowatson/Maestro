@@ -98,10 +98,11 @@ This section is intentionally added before major implementation changes.
 35. Phase N node-engine client loader completed: `features/node-graph/services/otto-node-engine-client-loader/index.ts` now provides explicit package-load diagnostics and `MaestroOttoNodeEngineService.create(...)` bootstrap wiring for runtime client availability checks with fallback-safe behavior.
 36. Phase O node-engine orchestrator completed: `features/node-graph/services/otto-node-engine-orchestrator/index.ts` now composes client loading, fallback-safe service initialization, and discovery-graph sync execution behind one deterministic entrypoint.
 37. Phase P orchestrator telemetry wiring completed: node-engine orchestration now emits start/completed/failed observability events through the bridge adapter without changing fallback-safe execution behavior.
+38. Phase Q diagnostics artifact generation completed: node-engine sync telemetry snapshots and sequence verification are now produced by `features/node-graph/services/node-engine-diagnostics/index.ts` and `scripts/verify-node-engine-sync-diagnostics.ts`.
 
 ### In Progress
 
-- Active phase: extend telemetry wiring into diagnostics artifact generation and published package transport verification.
+- Active phase: extend published package transport verification and version-compatibility contract checks for node-engine client loading.
 - Current execution step: replace remaining static panel data in Otto UI bindings with runtime snapshots/events from Maestro services where safe adapter boundaries already exist.
 - Nightly checkpoint (2026-10-17): Maestro repository is synced on `main`; upstream UI contract-wiring publication remains active in `otto-systems/otto-ui#2`.
 - Backbone feature implementation phase in Maestro.

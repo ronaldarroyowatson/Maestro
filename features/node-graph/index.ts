@@ -17,10 +17,12 @@ export { MaestroOttoNodeEngineService } from './services/otto-node-engine-integr
 export { OttoNodeEngineClientLoader } from './services/otto-node-engine-client-loader/index.js';
 export { DiscoveryGraphSyncService } from './services/discovery-graph-sync/index.js';
 export { OttoNodeEngineOrchestrator } from './services/otto-node-engine-orchestrator/index.js';
+export { buildNodeEngineSyncDiagnosticsSnapshot, verifyNodeEngineSyncDiagnostics } from './services/node-engine-diagnostics/index.js';
 export type { OttoNodeEngineClient, OttoNodeEngineFeatureFlags } from './services/otto-node-engine-integration/index.js';
 export type { OttoNodeEngineClientFactoryModule, OttoNodeEngineClientLoaderOptions, OttoNodeEngineClientLoaderResult } from './services/otto-node-engine-client-loader/index.js';
 export type { DiscoveryGraphSource, DiscoveryGraphSyncAssertion, DiscoveryGraphSyncResult } from './services/discovery-graph-sync/index.js';
 export type { OttoNodeEngineOrchestratorResult } from './services/otto-node-engine-orchestrator/index.js';
+export type { NodeEngineSyncDiagnosticsSnapshot, NodeEngineSyncDiagnosticsVerification } from './services/node-engine-diagnostics/index.js';
 export type { ExecutionLayer, TopologicalOrder } from './models/types.js';
 
 /** Node-graph facade that composes graph modules and exposes feature API. */
