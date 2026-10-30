@@ -68,6 +68,10 @@
   - `ui/panels/maestro-node-inspector-panel.json`
   - `features/node-graph/tests/property-inspector.test.ts`
   - `tests/node-graph/property-inspector-phase-g.test.ts`
+- Added Phase H Maestro + Otto integration artifacts:
+  - `features/node-graph/services/maestro-otto-integration/index.ts`
+  - `features/node-graph/tests/maestro-otto-integration.test.ts`
+  - `tests/node-graph/maestro-otto-integration-phase-h.test.ts`
 
 ### Changed
 

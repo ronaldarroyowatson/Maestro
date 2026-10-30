@@ -89,6 +89,7 @@ This section is intentionally added before major implementation changes.
 26. Phase E continuous discovery completed: local discovery now includes a background scheduler service with pause/resume, event-triggered rescans, incremental diffs, and throttled change-set output; validated through unit tests and real-machine continuous-scan evidence.
 27. Phase F node graph foundation completed in repository scope: node graph contracts now include canvas capabilities and typed port metadata, node graph panel contract metadata is defined, and runtime-backed UI-state projection/validation for node graph execution views is implemented and tested.
 28. Phase G node property inspector completed in repository scope: node inspector panel contract metadata is defined and wired, and runtime-backed selected-node inspection/update validation is implemented with explicit failure-mode and edge-case coverage.
+29. Phase H Maestro + Otto integration completed in repository scope: runtime-backed graph execution integration now includes registry-aware resource mapping, deterministic execution-plan layering, graph-to-runtime run creation, and end-to-end integration tests for dependency, mapping, and scale scenarios.
 
 ### In Progress
 

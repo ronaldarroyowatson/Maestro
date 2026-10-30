@@ -36,6 +36,15 @@ These files are referenced by `otto/maestro-payload.json` under the `ui` section
 - Applies live node property updates into graph snapshots.
 - Emits explicit validation errors/warnings for invalid node states.
 
+## Maestro + Otto Runtime Integration
+
+`features/node-graph/services/maestro-otto-integration/index.ts` provides `MaestroOttoIntegrationService`, which:
+
+- builds graph execution plans with deterministic dependency layers,
+- maps node resource bindings to discovered registry `ResourceNode` entities,
+- validates execution readiness for graph-to-runtime orchestration handoff,
+- creates runtime workflow runs using the shared workflow runtime contracts.
+
 ## Settings Model
 
 `ui/settings/maestro-ui-settings.json` provides:
