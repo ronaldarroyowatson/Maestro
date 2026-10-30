@@ -36,3 +36,13 @@ Integrate node graph execution contracts with runtime and discovery registry dat
   - `ui/settings/maestro-ui-settings.json` now includes `defaults.enableOttoNodeEngine`.
 - Validation:
   - `features/node-graph/tests/otto-node-engine-integration.test.ts` verifies enabled delegation and disabled fallback behavior.
+
+## Phase M Extension: Discovery Graph Sync
+
+- Service: `features/node-graph/services/discovery-graph-sync/index.ts`
+  - Connects `LocalAiDiscoveryService` output to `MaestroOttoNodeEngineService`.
+  - De-duplicates discovery resources before graph generation.
+  - Generates and persists graph snapshots from discovery registry output.
+- Validation:
+  - `features/node-graph/tests/discovery-graph-sync.test.ts`
+  - `tests/node-graph/phase-m-discovery-graph-sync.test.ts`

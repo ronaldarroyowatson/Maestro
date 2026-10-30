@@ -89,6 +89,12 @@
   - `features/node-graph/services/otto-node-engine-integration/index.ts`
   - `features/node-graph/tests/otto-node-engine-integration.test.ts`
   - `docs/node-graph-phase-l-validation.md`
+- Added Phase M discovery graph sync artifacts:
+  - `features/node-graph/services/discovery-graph-sync/index.ts`
+  - `features/node-graph/tests/discovery-graph-sync.test.ts`
+  - `tests/node-graph/phase-m-discovery-graph-sync.test.ts`
+  - `docs/node-graph-discovery-integration.md`
+  - `docs/node-graph-phase-m-validation.md`
 
 ### Changed
 
