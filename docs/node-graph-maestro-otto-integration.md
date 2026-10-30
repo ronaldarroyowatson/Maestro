@@ -65,3 +65,11 @@ Integrate node graph execution contracts with runtime and discovery registry dat
   - Returns explicit client availability status alongside graph sync results.
 - Validation:
   - `features/node-graph/tests/otto-node-engine-orchestrator.test.ts`
+
+## Phase P Extension: Orchestrator Telemetry Wiring
+
+- Service update: `features/node-graph/services/otto-node-engine-orchestrator/index.ts`
+  - Emits observability events for start/success/failure paths when an observability bridge is supplied.
+  - Preserves deterministic fallback behavior and explicit failure propagation.
+- Validation:
+  - `features/node-graph/tests/otto-node-engine-orchestrator.test.ts`
