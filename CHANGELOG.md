@@ -112,6 +112,12 @@
 - Updated node-engine orchestration telemetry wiring:
   - `features/node-graph/services/otto-node-engine-orchestrator/index.ts`
   - `features/node-graph/tests/otto-node-engine-orchestrator.test.ts`
+- Added Phase Q node-engine sync diagnostics artifacts:
+  - `features/node-graph/services/node-engine-diagnostics/index.ts`
+  - `features/node-graph/tests/node-engine-diagnostics.test.ts`
+  - `scripts/verify-node-engine-sync-diagnostics.ts`
+  - `docs/node-graph-sync-diagnostics.md`
+  - `docs/node-graph-phase-q-validation.md`
 
 ### Changed
 

@@ -73,3 +73,13 @@ Integrate node graph execution contracts with runtime and discovery registry dat
   - Preserves deterministic fallback behavior and explicit failure propagation.
 - Validation:
   - `features/node-graph/tests/otto-node-engine-orchestrator.test.ts`
+
+## Phase Q Extension: Sync Diagnostics Artifacts
+
+- Service: `features/node-graph/services/node-engine-diagnostics/index.ts`
+  - Builds node-engine sync event summaries and verifies start/completed/failed sequence integrity.
+- Script: `scripts/verify-node-engine-sync-diagnostics.ts`
+  - Runs deterministic success/failure orchestration paths and writes diagnostics artifact output.
+- Validation:
+  - `features/node-graph/tests/node-engine-diagnostics.test.ts`
+  - `npm run verify:node-engine-sync-diagnostics`
