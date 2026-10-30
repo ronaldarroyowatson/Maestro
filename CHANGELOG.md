@@ -95,6 +95,12 @@
   - `tests/node-graph/phase-m-discovery-graph-sync.test.ts`
   - `docs/node-graph-discovery-integration.md`
   - `docs/node-graph-phase-m-validation.md`
+- Added Phase N Otto node-engine client loader artifacts:
+  - `features/node-graph/services/otto-node-engine-client-loader/index.ts`
+  - `features/node-graph/tests/otto-node-engine-client-loader.test.ts`
+  - `tests/node-graph/phase-n-client-loader.test.ts`
+  - `docs/node-graph-otto-client-loader.md`
+  - `docs/node-graph-phase-n-validation.md`
 
 ### Changed
 
