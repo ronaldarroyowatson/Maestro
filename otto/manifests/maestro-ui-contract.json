@@ -10,7 +10,8 @@
     "settings": "ui/settings/maestro-ui-settings.json",
     "featureCatalog": "otto/manifests/maestro-feature-catalog.json",
     "discoveryPanelSpec": "ui/panels/maestro-ai-discovery-panel.json",
-    "nodeGraphPanelSpec": "ui/panels/maestro-node-graph-panel.json"
+    "nodeGraphPanelSpec": "ui/panels/maestro-node-graph-panel.json",
+    "nodeInspectorPanelSpec": "ui/panels/maestro-node-inspector-panel.json"
   },
   "pages": [
     {

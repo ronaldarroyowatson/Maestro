@@ -679,6 +679,8 @@ Testing requirements:
 Documentation updates:
 - node inspector API and UX patterns
 
+Current implementation status: Phase G is complete in this repository's contract/runtime scope. A node property inspector service now projects selected-node state (name, type, status, validation, connected I/O), applies live node property updates into graph snapshots, and enforces explicit node-level validation errors/warnings. Panel contract metadata for the node inspector is now wired into Maestro UI contracts and payload defaults.
+
 #### Phase H — Maestro + Otto Integration
 
 Objective: integrate Otto's node graph module directly into Maestro.

@@ -7,6 +7,7 @@ import { TopologicalSorter } from './services/topological-sorter/index.js';
 
 export { InMemoryGraphService };
 export { NodeGraphUiStateBuilder, DEFAULT_NODE_GRAPH_UI_STATE_BUILDER } from './services/ui-integration/index.js';
+export { NodePropertyInspector, DEFAULT_NODE_PROPERTY_INSPECTOR } from './services/property-inspector/index.js';
 export type { ExecutionLayer, TopologicalOrder } from './models/types.js';
 
 /** Node-graph facade that composes graph modules and exposes feature API. */

@@ -114,6 +114,10 @@
         "target": "{otto.configDir}/maestro/node-graph-panel.json"
       },
       {
+        "source": "ui/panels/maestro-node-inspector-panel.json",
+        "target": "{otto.configDir}/maestro/node-inspector-panel.json"
+      },
+      {
         "source": "otto/manifests/maestro-ui-contract.json",
         "target": "{otto.configDir}/maestro/ui-contract.json"
       },

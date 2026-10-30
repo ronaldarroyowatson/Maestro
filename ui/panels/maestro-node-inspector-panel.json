@@ -1,0 +1,38 @@
+{
+  "panel": "node-inspector",
+  "sourcePanel": "node-graph",
+  "statusFields": [
+    "selectedNodeId",
+    "nodeName",
+    "nodeType",
+    "nodeStatus",
+    "validationState"
+  ],
+  "propertyFields": [
+    "key",
+    "value",
+    "source",
+    "editable"
+  ],
+  "connectionFields": [
+    "incoming",
+    "outgoing"
+  ],
+  "actions": [
+    {
+      "id": "apply-node-property-update",
+      "label": "Apply Update",
+      "type": "command"
+    },
+    {
+      "id": "reset-node-property-update",
+      "label": "Reset Update",
+      "type": "command"
+    },
+    {
+      "id": "validate-node-properties",
+      "label": "Validate Properties",
+      "type": "command"
+    }
+  ]
+}

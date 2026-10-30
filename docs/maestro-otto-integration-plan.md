@@ -88,6 +88,7 @@ This section is intentionally added before major implementation changes.
 25. Phase D initial UI integration completed: `maestro.ai-discovery` is now a contract-backed surface across feature catalog, UI contract, panel navigation/settings, module registration, and panel spec assets, with runtime-backed state projection from discovery resources and dedicated validation tests.
 26. Phase E continuous discovery completed: local discovery now includes a background scheduler service with pause/resume, event-triggered rescans, incremental diffs, and throttled change-set output; validated through unit tests and real-machine continuous-scan evidence.
 27. Phase F node graph foundation completed in repository scope: node graph contracts now include canvas capabilities and typed port metadata, node graph panel contract metadata is defined, and runtime-backed UI-state projection/validation for node graph execution views is implemented and tested.
+28. Phase G node property inspector completed in repository scope: node inspector panel contract metadata is defined and wired, and runtime-backed selected-node inspection/update validation is implemented with explicit failure-mode and edge-case coverage.
 
 ### In Progress
 

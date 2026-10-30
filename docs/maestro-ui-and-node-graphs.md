@@ -4,6 +4,7 @@
 
 - Node graph definitions: `ui/nodes/maestro-node-graphs.json`
 - Node graph panel spec: `ui/panels/maestro-node-graph-panel.json`
+- Node inspector panel spec: `ui/panels/maestro-node-inspector-panel.json`
 - UI settings defaults: `ui/settings/maestro-ui-settings.json`
 - Navigation entries: `ui/navigation/maestro-panels.json`
 
@@ -26,6 +27,14 @@ These files are referenced by `otto/maestro-payload.json` under the `ui` section
 - Applies node/edge execution statuses.
 - Groups nodes for graph panel display.
 - Validates typed port compatibility and returns structured validation errors/warnings.
+
+## Node Property Inspector
+
+`features/node-graph/services/property-inspector/index.ts` provides `NodePropertyInspector`, which:
+
+- Builds selected-node inspector state (name, type, status, properties, validation, I/O connections).
+- Applies live node property updates into graph snapshots.
+- Emits explicit validation errors/warnings for invalid node states.
 
 ## Settings Model
 

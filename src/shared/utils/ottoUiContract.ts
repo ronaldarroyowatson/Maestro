@@ -65,6 +65,15 @@ interface MaestroNodeGraphPanelSpec {
   edgeFields: string[];
 }
 
+interface MaestroNodeInspectorPanelSpec {
+  panel: string;
+  sourcePanel: string;
+  statusFields: string[];
+  propertyFields: string[];
+  connectionFields: string[];
+  actions: Array<{ id: string; label: string; type: string }>;
+}
+
 export interface MaestroOttoUiContractPage {
   id: string;
   label: string;
@@ -85,6 +94,7 @@ export interface MaestroOttoUiContract {
     featureCatalog: string;
     discoveryPanelSpec: string;
     nodeGraphPanelSpec: string;
+    nodeInspectorPanelSpec: string;
   };
   pages: MaestroOttoUiContractPage[];
 }
@@ -114,6 +124,7 @@ export function validateMaestroOttoUiContract(repoRoot: string): OttoUiContractV
   const featureCatalogPath = path.join(repoRoot, contract.source.featureCatalog);
   const discoveryPanelSpecPath = path.join(repoRoot, contract.source.discoveryPanelSpec);
   const nodeGraphPanelSpecPath = path.join(repoRoot, contract.source.nodeGraphPanelSpec);
+  const nodeInspectorPanelSpecPath = path.join(repoRoot, contract.source.nodeInspectorPanelSpec);
 
   const panels = JSON.parse(readFileSync(panelsPath, 'utf8')) as MaestroPanels;
   const nodeGraphs = JSON.parse(readFileSync(nodeGraphsPath, 'utf8')) as MaestroNodeGraphs;
@@ -121,6 +132,7 @@ export function validateMaestroOttoUiContract(repoRoot: string): OttoUiContractV
   const featureCatalog = JSON.parse(readFileSync(featureCatalogPath, 'utf8')) as MaestroFeatureCatalog;
   const discoveryPanelSpec = JSON.parse(readFileSync(discoveryPanelSpecPath, 'utf8')) as MaestroAiDiscoveryPanelSpec;
   const nodeGraphPanelSpec = JSON.parse(readFileSync(nodeGraphPanelSpecPath, 'utf8')) as MaestroNodeGraphPanelSpec;
+  const nodeInspectorPanelSpec = JSON.parse(readFileSync(nodeInspectorPanelSpecPath, 'utf8')) as MaestroNodeInspectorPanelSpec;
 
   const entryPage = contract.pages.find((page) => page.id === contract.entryPageId);
   if (!entryPage) {
@@ -221,6 +233,52 @@ export function validateMaestroOttoUiContract(repoRoot: string): OttoUiContractV
   for (const field of requiredEdgeFields) {
     if (!nodeGraphPanelSpec.edgeFields.includes(field)) {
       problems.push(`Node graph panel spec missing edge field '${field}'.`);
+    }
+  }
+
+  if (nodeInspectorPanelSpec.panel !== 'node-inspector') {
+    problems.push(`Node inspector panel id '${nodeInspectorPanelSpec.panel}' is invalid.`);
+  }
+  if (nodeInspectorPanelSpec.sourcePanel !== 'node-graph') {
+    problems.push(`Node inspector source panel '${nodeInspectorPanelSpec.sourcePanel}' must be 'node-graph'.`);
+  }
+
+  const requiredInspectorStatusFields = new Set([
+    'selectedNodeId',
+    'nodeName',
+    'nodeType',
+    'nodeStatus',
+    'validationState'
+  ]);
+  for (const field of requiredInspectorStatusFields) {
+    if (!nodeInspectorPanelSpec.statusFields.includes(field)) {
+      problems.push(`Node inspector panel spec missing status field '${field}'.`);
+    }
+  }
+
+  const requiredInspectorPropertyFields = new Set(['key', 'value', 'source', 'editable']);
+  for (const field of requiredInspectorPropertyFields) {
+    if (!nodeInspectorPanelSpec.propertyFields.includes(field)) {
+      problems.push(`Node inspector panel spec missing property field '${field}'.`);
+    }
+  }
+
+  const requiredInspectorConnectionFields = new Set(['incoming', 'outgoing']);
+  for (const field of requiredInspectorConnectionFields) {
+    if (!nodeInspectorPanelSpec.connectionFields.includes(field)) {
+      problems.push(`Node inspector panel spec missing connection field '${field}'.`);
+    }
+  }
+
+  const requiredInspectorActions = new Set([
+    'apply-node-property-update',
+    'reset-node-property-update',
+    'validate-node-properties'
+  ]);
+  const declaredInspectorActions = new Set(nodeInspectorPanelSpec.actions.map((action) => action.id));
+  for (const action of requiredInspectorActions) {
+    if (!declaredInspectorActions.has(action)) {
+      problems.push(`Node inspector panel spec missing required action '${action}'.`);
     }
   }
 
