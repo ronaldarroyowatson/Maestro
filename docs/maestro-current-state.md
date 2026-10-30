@@ -107,6 +107,13 @@ The workspace root appears to be the active Maestro runtime repository based on:
 - Dedicated Maestro-to-Otto extension bridge module exists and now includes diagnostics/parity verification; remaining work is production-depth data plumbing for richer live UI panel state.
 - No end-to-end local Otto install runbook/report in this repo.
 
+## Security and Sandbox State
+
+- A deterministic security boundary is now present in `features/security`, with a sandbox engine, approved-action ledger, history snapshots, and audit logging.
+- The implementation explicitly prevents hidden modifications, path traversal, tool/MCP scope escapes, approval spoofing, and approval replay.
+- The engine requires an allowlisted target and valid approval before a risky action can run, and it keeps a recoverable state snapshot for auditability and rollback.
+- Security validation is documented in `docs/maestro-security-architecture.md` and `docs/security-validation-report.md`.
+
 ## Risks and Constraints
 
 - Current `readme.md` content is partially archival and needs production-readiness sections for Otto integration.

@@ -4,6 +4,21 @@
 
 ### Added
 
+- Added sandbox, audit, and approval enforcement modules for controlled AI execution:
+  - `features/security/index.ts`
+  - `features/security/services/sandbox-engine/index.ts`
+  - `features/security/services/history-engine/index.ts`
+  - `features/security/services/security-engine/index.ts`
+  - `features/security/tests/security-engine.test.ts`
+- Added security architecture and validation docs for sandbox isolation, approvals, and auditability.
+- Added standalone Otto security-support repositories:
+  - `otto-sandbox-engine`
+  - `otto-history-engine`
+  - `otto-ai-security-engine`
+- Bumped Maestro version to `0.7.0` and synchronized Otto module metadata.
+
+### Added
+
 - Added the first concrete Otto-first graph service implementation:
   - `features/node-graph/services/graph-service/index.ts`
   - `features/node-graph/tests/graph-service.test.ts`

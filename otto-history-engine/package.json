@@ -1,0 +1,11 @@
+{
+  "name": "otto-history-engine",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "State snapshots and auditable change histories for Otto execution graphs.",
+  "main": "./src/index.ts",
+  "scripts": {
+    "test": "echo 'No tests configured for this scaffold yet'"
+  }
+}

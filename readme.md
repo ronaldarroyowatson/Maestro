@@ -58,6 +58,17 @@ The architectural rule for this project is explicit:
 
 This means the source tree may contain manifests, service contracts, and runtime implementations, but the final command surface is still expected to be registered and exposed by Otto's upstream command-service layer.
 
+## Security and sandbox controls
+
+The runtime now includes a deterministic security boundary for AI execution:
+
+- `features/security/` - sandbox, history, and permission enforcement
+- `docs/maestro-security-architecture.md` - security architecture and policy model
+- `docs/security-validation-report.md` - validation evidence and test results
+- `docs/security-threat-model.md` - threat model and risk mitigations
+- `docs/permission-architecture.md` - enforceable permission model
+- `docs/sandbox-architecture.md` - execution boundary design
+
 ## Documentation
 
 - `docs/maestro-master-architecture-plan.md` - architecture and execution roadmap
