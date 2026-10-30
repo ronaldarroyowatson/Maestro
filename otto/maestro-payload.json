@@ -2,7 +2,7 @@
   "$schema": "./schemas/maestro-payload.schema.json",
   "schemaVersion": "1.0.0",
   "payloadId": "maestro-runtime-stable",
-  "payloadVersion": "0.1.9",
+  "payloadVersion": "0.2.0",
   "product": {
     "id": "maestro",
     "name": "Maestro Runtime",
@@ -104,6 +104,10 @@
       {
         "source": "ui/nodes/maestro-node-graphs.json",
         "target": "{otto.configDir}/maestro/node-graphs.json"
+      },
+      {
+        "source": "ui/panels/maestro-ai-discovery-panel.json",
+        "target": "{otto.configDir}/maestro/ai-discovery-panel.json"
       },
       {
         "source": "otto/manifests/maestro-ui-contract.json",

@@ -50,6 +50,15 @@
       "description": "Explores discovered resources, versions, health, and capability metadata."
     },
     {
+      "id": "maestro.ai-discovery",
+      "label": "AI Discovery",
+      "route": "/maestro/ai-discovery",
+      "panel": "ai-discovery",
+      "category": "discovery",
+      "status": "preview",
+      "description": "Runs discovery scans, reports status/logs, and groups discovered resources by type."
+    },
+    {
       "id": "maestro.node-graph",
       "label": "Node Graph",
       "route": "/maestro/node-graph",

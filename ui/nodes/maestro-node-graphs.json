@@ -49,6 +49,11 @@
           "label": "Runtime Monitor"
         },
         {
+          "id": "ai-discovery",
+          "type": "monitor.node",
+          "label": "AI Discovery"
+        },
+        {
           "id": "context-engine",
           "type": "tool.node",
           "label": "Context Engine"
@@ -103,6 +108,14 @@
         {
           "from": "execution-timeline",
           "to": "diagnostics"
+        },
+        {
+          "from": "runtime-monitor",
+          "to": "ai-discovery"
+        },
+        {
+          "from": "ai-discovery",
+          "to": "provider-registry"
         },
         {
           "from": "runtime-monitor",

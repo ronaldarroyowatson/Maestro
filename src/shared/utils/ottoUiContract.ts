@@ -33,6 +33,15 @@ interface MaestroFeatureCatalog {
   }>;
 }
 
+interface MaestroAiDiscoveryPanelSpec {
+  panel: string;
+  actions: Array<{ id: string; label: string; type: string }>;
+  statusFields: string[];
+  logField: string;
+  groups: string[];
+  resourceItemFields: string[];
+}
+
 export interface MaestroOttoUiContractPage {
   id: string;
   label: string;
@@ -51,6 +60,7 @@ export interface MaestroOttoUiContract {
     nodeGraphs: string;
     settings: string;
     featureCatalog: string;
+    discoveryPanelSpec: string;
   };
   pages: MaestroOttoUiContractPage[];
 }
@@ -78,11 +88,13 @@ export function validateMaestroOttoUiContract(repoRoot: string): OttoUiContractV
   const nodeGraphsPath = path.join(repoRoot, contract.source.nodeGraphs);
   const settingsPath = path.join(repoRoot, contract.source.settings);
   const featureCatalogPath = path.join(repoRoot, contract.source.featureCatalog);
+  const discoveryPanelSpecPath = path.join(repoRoot, contract.source.discoveryPanelSpec);
 
   const panels = JSON.parse(readFileSync(panelsPath, 'utf8')) as MaestroPanels;
   const nodeGraphs = JSON.parse(readFileSync(nodeGraphsPath, 'utf8')) as MaestroNodeGraphs;
   const settings = JSON.parse(readFileSync(settingsPath, 'utf8')) as MaestroUiSettings;
   const featureCatalog = JSON.parse(readFileSync(featureCatalogPath, 'utf8')) as MaestroFeatureCatalog;
+  const discoveryPanelSpec = JSON.parse(readFileSync(discoveryPanelSpecPath, 'utf8')) as MaestroAiDiscoveryPanelSpec;
 
   const entryPage = contract.pages.find((page) => page.id === contract.entryPageId);
   if (!entryPage) {
@@ -104,6 +116,11 @@ export function validateMaestroOttoUiContract(repoRoot: string): OttoUiContractV
     problems.push("Missing required page 'maestro.node-graph'.");
   }
 
+  const hasAiDiscoveryPage = contract.pages.some((page) => page.id === 'maestro.ai-discovery');
+  if (!hasAiDiscoveryPage) {
+    problems.push("Missing required page 'maestro.ai-discovery'.");
+  }
+
   const featureIds = new Set(featureCatalog.features.map((feature) => feature.id));
   for (const page of contract.pages) {
     if (!featureIds.has(page.id)) {
@@ -119,6 +136,25 @@ export function validateMaestroOttoUiContract(repoRoot: string): OttoUiContractV
     problems.push(
       `UI settings default start view '${settings.defaults.startView}' is not declared in availableViews.`
     );
+  }
+
+  const requiredActions = new Set(['run-first-scan', 'rescan-device', 'continuous-discovery-toggle']);
+  const declaredActions = new Set(discoveryPanelSpec.actions.map((action) => action.id));
+  for (const requiredAction of requiredActions) {
+    if (!declaredActions.has(requiredAction)) {
+      problems.push(`AI discovery panel spec missing required action '${requiredAction}'.`);
+    }
+  }
+
+  const requiredStatusFields = new Set(['scanStatus', 'resourceCounts', 'lastScanTime']);
+  for (const requiredField of requiredStatusFields) {
+    if (!discoveryPanelSpec.statusFields.includes(requiredField)) {
+      problems.push(`AI discovery panel spec missing status field '${requiredField}'.`);
+    }
+  }
+
+  if (discoveryPanelSpec.logField !== 'discoveryLogs') {
+    problems.push("AI discovery panel spec must expose 'discoveryLogs' as logField.");
   }
 
   return {

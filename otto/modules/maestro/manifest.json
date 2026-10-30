@@ -2,7 +2,7 @@
   "schemaVersion": "1.0.0",
   "moduleId": "maestro",
   "displayName": "Maestro",
-  "version": "0.1.10",
+  "version": "0.2.0",
   "runtime": "maestro",
   "entryPoint": "otto/modules/maestro/index.ts",
   "entryRoute": "/maestro/install-status",
@@ -22,6 +22,7 @@
     "maestro.repair",
     "maestro.uninstall",
     "maestro.workflow.builder",
+    "maestro.discovery.scan",
     "maestro.runtime.monitor",
     "maestro.registry.search",
     "maestro.execution.timeline",
@@ -34,6 +35,7 @@
       "otto/manifests/maestro-ui-contract.json",
       "otto/manifests/maestro-module-registration.json",
       "otto/manifests/maestro-feature-catalog.json",
+      "ui/panels/maestro-ai-discovery-panel.json",
       "otto/maestro-payload.json"
     ],
     "registersWith": "otto-command-service"

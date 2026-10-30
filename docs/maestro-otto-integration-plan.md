@@ -85,6 +85,7 @@ This section is intentionally added before major implementation changes.
 22. Post-Phase-A local discovery validation completed on a real machine with Ollama installed: `scripts/run-local-ai-discovery-validation.ts` + `docs/local-ai-discovery-validation-report.md` now capture scanner/registry/graph evidence and confirm next-gap priorities (runtime/model normalization and runtime->model edge completeness).
 23. Phase B validation hardening completed: Ollama runtime/model scanners now emit runtime and model Resource Nodes, repeated scans remain deduped, runtime->model relationships are created, and local validation output follows concise PASS/FAIL standards with evidence in `docs/local-ai-discovery-validation.latest.json`.
 24. Phase C registry hardening completed: local discovery `ResourceRegistry` now includes deterministic upsert semantics, search/filtering, categorization/tagging, status+health lifecycle APIs, stale-resource marking/removal, inventory snapshots, and duplicate relationship suppression with targeted tests and validation artifacts.
+25. Phase D initial UI integration completed: `maestro.ai-discovery` is now a contract-backed surface across feature catalog, UI contract, panel navigation/settings, module registration, and panel spec assets, with runtime-backed state projection from discovery resources and dedicated validation tests.
 
 ### In Progress
 

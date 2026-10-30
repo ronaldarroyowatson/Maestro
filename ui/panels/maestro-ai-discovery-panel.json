@@ -1,0 +1,45 @@
+{
+  "version": "1.0.0",
+  "panel": "ai-discovery",
+  "title": "AI Discovery",
+  "actions": [
+    {
+      "id": "run-first-scan",
+      "label": "Run First Scan",
+      "type": "primary"
+    },
+    {
+      "id": "rescan-device",
+      "label": "Rescan Device",
+      "type": "secondary"
+    },
+    {
+      "id": "continuous-discovery-toggle",
+      "label": "Continuous Discovery Toggle",
+      "type": "toggle"
+    }
+  ],
+  "statusFields": [
+    "scanStatus",
+    "resourceCounts",
+    "lastScanTime"
+  ],
+  "logField": "discoveryLogs",
+  "groups": [
+    "Models",
+    "Agents",
+    "MCP Servers",
+    "Tools",
+    "Endpoints",
+    "Other"
+  ],
+  "resourceItemFields": [
+    "name",
+    "description",
+    "status",
+    "version",
+    "path",
+    "metadata",
+    "expandableDetails"
+  ]
+}

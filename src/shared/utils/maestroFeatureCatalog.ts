@@ -3,7 +3,7 @@ export interface MaestroFeature {
   label: string;
   route: string;
   panel: string;
-  category: 'install' | 'workflow' | 'runtime' | 'registry' | 'diagnostics';
+  category: 'install' | 'workflow' | 'runtime' | 'registry' | 'diagnostics' | 'discovery';
   status: 'stable' | 'preview' | 'legacy';
   description?: string;
 }
@@ -53,6 +53,15 @@ export const MAESTRO_FEATURE_CATALOG: MaestroFeature[] = [
     category: 'registry',
     status: 'preview',
     description: 'Explores discovered resources, versions, health, and capability metadata.'
+  },
+  {
+    id: 'maestro.ai-discovery',
+    label: 'AI Discovery',
+    route: '/maestro/ai-discovery',
+    panel: 'ai-discovery',
+    category: 'discovery',
+    status: 'preview',
+    description: 'Runs discovery scans, monitors scan status, and groups discovered resources by type.'
   },
   {
     id: 'maestro.node-graph',

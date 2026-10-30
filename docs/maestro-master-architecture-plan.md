@@ -600,6 +600,8 @@ Documentation updates:
 - AI discovery page contract
 - UX and interaction behaviors
 
+Current implementation status: Phase D is complete in this repository's contract/runtime scope. The AI discovery section (`maestro.ai-discovery`) is now wired into feature catalog, UI contract, navigation, settings, module registration, and panel specification artifacts. A runtime-backed state projection service (`AiDiscoveryUiStateBuilder`) now provides scan status, controls, grouped resources, resource counts, logs, and last-scan metadata for Otto UI consumption.
+
 #### Phase E — Continuous Discovery System
 
 Objective: create a background discovery service that remains low-impact and low-noise.

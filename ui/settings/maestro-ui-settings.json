@@ -13,6 +13,7 @@
   "availableViews": [
     "install-status",
     "workflow-builder",
+    "ai-discovery",
     "runtime-monitor",
     "registry-browser",
     "node-graph",

@@ -8,7 +8,8 @@
     "navigation": "ui/navigation/maestro-panels.json",
     "nodeGraphs": "ui/nodes/maestro-node-graphs.json",
     "settings": "ui/settings/maestro-ui-settings.json",
-    "featureCatalog": "otto/manifests/maestro-feature-catalog.json"
+    "featureCatalog": "otto/manifests/maestro-feature-catalog.json",
+    "discoveryPanelSpec": "ui/panels/maestro-ai-discovery-panel.json"
   },
   "pages": [
     {
@@ -40,6 +41,12 @@
       "label": "Registry Browser",
       "route": "/maestro/registry-browser",
       "panel": "registry-browser"
+    },
+    {
+      "id": "maestro.ai-discovery",
+      "label": "AI Discovery",
+      "route": "/maestro/ai-discovery",
+      "panel": "ai-discovery"
     },
     {
       "id": "maestro.node-graph",

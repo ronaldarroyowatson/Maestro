@@ -29,6 +29,11 @@
       "panel": "registry-browser"
     },
     {
+      "id": "maestro.ai-discovery",
+      "label": "AI Discovery",
+      "panel": "ai-discovery"
+    },
+    {
       "id": "maestro.node-graph",
       "label": "Node Graph",
       "panel": "node-graph"

@@ -18,6 +18,7 @@ describe('maestro otto ui contract', () => {
     expect(features.some((feature) => feature.id === 'maestro.workflow-builder')).toBe(true);
     expect(features.some((feature) => feature.id === 'maestro.runtime-status')).toBe(true);
     expect(features.some((feature) => feature.id === 'maestro.runtime-monitor')).toBe(true);
+    expect(features.some((feature) => feature.id === 'maestro.ai-discovery')).toBe(true);
     expect(features.some((feature) => feature.id === 'maestro.registry-browser')).toBe(true);
     expect(features.some((feature) => feature.id === 'maestro.diagnostics')).toBe(true);
     expect(features.find((feature) => feature.id === 'maestro.runtime-status')?.status).toBe('legacy');

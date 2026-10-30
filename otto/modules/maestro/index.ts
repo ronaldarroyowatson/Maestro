@@ -1,7 +1,7 @@
 export const MAESTRO_OTTO_MODULE = {
   moduleId: 'maestro',
   displayName: 'Maestro',
-  version: '0.1.10',
+  version: '0.2.0',
   runtime: 'maestro',
   entryRoute: '/maestro/install-status',
   commandServiceLayer: 'otto-command-service',

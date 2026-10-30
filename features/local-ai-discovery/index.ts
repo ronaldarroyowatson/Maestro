@@ -821,3 +821,7 @@ function normalizeEndpointUrl(value: string): string {
 }
 
 export const DEFAULT_LOCAL_AI_DISCOVERY = new LocalAiDiscoveryService();
+export {
+  AiDiscoveryUiStateBuilder,
+  DEFAULT_AI_DISCOVERY_UI_STATE_BUILDER
+} from './services/ui-integration/index.js';
