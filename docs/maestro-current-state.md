@@ -8,6 +8,7 @@ The workspace root appears to be the active Maestro runtime repository based on:
 - Feature-first runtime modules under `features/`
 - Shared contracts under `src/shared`
 - Integration and feature tests under `tests/` and `features/**/tests`
+- Current minor release baseline is `0.3.0`.
 
 ## What Works Today
 

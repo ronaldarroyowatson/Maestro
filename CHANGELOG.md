@@ -58,6 +58,16 @@
   - `docs/maestro-otto-ecosystem-capability-map.md`
 - Added repository-level Copilot source-of-truth instructions:
   - `.github/copilot-instructions.md`
+- Added Phase F node graph foundation artifacts:
+  - `features/node-graph/services/ui-integration/index.ts`
+  - `ui/panels/maestro-node-graph-panel.json`
+  - `src/shared/utils/maestroNodeGraphContract.ts`
+  - `features/node-graph/tests/ui-integration.test.ts`
+- Added Phase G node property inspector artifacts:
+  - `features/node-graph/services/property-inspector/index.ts`
+  - `ui/panels/maestro-node-inspector-panel.json`
+  - `features/node-graph/tests/property-inspector.test.ts`
+  - `tests/node-graph/property-inspector-phase-g.test.ts`
 
 ### Changed
 
@@ -115,6 +125,7 @@
   - `getHealthSnapshot(providerIds?)` with sorted entries, isolated failures, summary counts
   - deterministic preferred-provider selection (latency, then provider id tie-break)
 - Added end-of-day documentation checkpoint updates for integration status and next-session execution handoff.
+- Bumped Maestro minor version from `0.2.0` to `0.3.0` in package, Otto module, and payload metadata.
 - Added conductor/provider-registry routing integration coverage:
   - agent routing support for `providerId: "preferred"` with `fallbackProviderId` recovery behavior
   - new conductor integration test validating preferred-provider and fallback error-mode recovery
