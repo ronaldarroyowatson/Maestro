@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import path from 'node:path';
-import { getMaestroFeatureCatalog, validateMaestroOttoUiContract } from '../../src/shared/index.js';
+import { getMaestroFeatureCatalog, validateMaestroNodeGraphContract, validateMaestroOttoUiContract } from '../../src/shared/index.js';
 
 describe('maestro otto ui contract', () => {
   it('is internally consistent and resolves an entry page route', () => {
@@ -23,5 +23,13 @@ describe('maestro otto ui contract', () => {
     expect(features.some((feature) => feature.id === 'maestro.diagnostics')).toBe(true);
     expect(features.find((feature) => feature.id === 'maestro.runtime-status')?.status).toBe('legacy');
     expect(features.some((feature) => feature.id === 'maestro.install-status' && feature.status === 'stable')).toBe(true);
+  });
+
+  it('validates the node graph foundation contract', () => {
+    const repoRoot = path.resolve(process.cwd());
+    const result = validateMaestroNodeGraphContract(repoRoot);
+
+    expect(result.ok).toBe(true);
+    expect(result.problems).toEqual([]);
   });
 });

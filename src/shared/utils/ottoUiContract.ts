@@ -17,8 +17,22 @@ interface MaestroUiSettings {
 }
 
 interface MaestroNodeGraphs {
+  canvas: {
+    pan: boolean;
+    zoom: boolean;
+    grid: boolean;
+    minimap: boolean;
+    theme: 'dark' | 'light' | 'system';
+    nodeSelection: boolean;
+  };
+  nodeTypes: Array<{
+    id: string;
+    ports: Array<{ id: string; direction: 'in' | 'out'; dataType: string; required: boolean }>;
+  }>;
   graphs: Array<{
     id: string;
+    nodes: Array<{ id: string; type: string }>;
+    edges: Array<{ id: string; from: string; to: string; fromPort: string; toPort: string }>;
   }>;
 }
 
@@ -42,6 +56,15 @@ interface MaestroAiDiscoveryPanelSpec {
   resourceItemFields: string[];
 }
 
+interface MaestroNodeGraphPanelSpec {
+  panel: string;
+  actions: Array<{ id: string; label: string; type: string }>;
+  canvasFeatures: string[];
+  statusFields: string[];
+  nodeFields: string[];
+  edgeFields: string[];
+}
+
 export interface MaestroOttoUiContractPage {
   id: string;
   label: string;
@@ -61,6 +84,7 @@ export interface MaestroOttoUiContract {
     settings: string;
     featureCatalog: string;
     discoveryPanelSpec: string;
+    nodeGraphPanelSpec: string;
   };
   pages: MaestroOttoUiContractPage[];
 }
@@ -89,12 +113,14 @@ export function validateMaestroOttoUiContract(repoRoot: string): OttoUiContractV
   const settingsPath = path.join(repoRoot, contract.source.settings);
   const featureCatalogPath = path.join(repoRoot, contract.source.featureCatalog);
   const discoveryPanelSpecPath = path.join(repoRoot, contract.source.discoveryPanelSpec);
+  const nodeGraphPanelSpecPath = path.join(repoRoot, contract.source.nodeGraphPanelSpec);
 
   const panels = JSON.parse(readFileSync(panelsPath, 'utf8')) as MaestroPanels;
   const nodeGraphs = JSON.parse(readFileSync(nodeGraphsPath, 'utf8')) as MaestroNodeGraphs;
   const settings = JSON.parse(readFileSync(settingsPath, 'utf8')) as MaestroUiSettings;
   const featureCatalog = JSON.parse(readFileSync(featureCatalogPath, 'utf8')) as MaestroFeatureCatalog;
   const discoveryPanelSpec = JSON.parse(readFileSync(discoveryPanelSpecPath, 'utf8')) as MaestroAiDiscoveryPanelSpec;
+  const nodeGraphPanelSpec = JSON.parse(readFileSync(nodeGraphPanelSpecPath, 'utf8')) as MaestroNodeGraphPanelSpec;
 
   const entryPage = contract.pages.find((page) => page.id === contract.entryPageId);
   if (!entryPage) {
@@ -131,6 +157,18 @@ export function validateMaestroOttoUiContract(repoRoot: string): OttoUiContractV
   if (nodeGraphs.graphs.length === 0) {
     problems.push('Node graph definitions are empty.');
   }
+  if (!nodeGraphs.canvas.pan || !nodeGraphs.canvas.zoom || !nodeGraphs.canvas.grid || !nodeGraphs.canvas.minimap) {
+    problems.push('Node graph canvas must enable pan, zoom, grid, and minimap.');
+  }
+  if (!['dark', 'light', 'system'].includes(nodeGraphs.canvas.theme)) {
+    problems.push(`Node graph theme '${nodeGraphs.canvas.theme}' is invalid.`);
+  }
+  if (!nodeGraphs.canvas.nodeSelection) {
+    problems.push('Node graph canvas must support nodeSelection.');
+  }
+  if (nodeGraphs.nodeTypes.length === 0) {
+    problems.push('Node graph node types are empty.');
+  }
 
   if (!settings.availableViews.includes(settings.defaults.startView)) {
     problems.push(
@@ -155,6 +193,35 @@ export function validateMaestroOttoUiContract(repoRoot: string): OttoUiContractV
 
   if (discoveryPanelSpec.logField !== 'discoveryLogs') {
     problems.push("AI discovery panel spec must expose 'discoveryLogs' as logField.");
+  }
+
+  const requiredGraphActions = new Set(['add-node', 'connect-nodes', 'disconnect-nodes', 'validate-graph']);
+  const declaredGraphActions = new Set(nodeGraphPanelSpec.actions.map((action) => action.id));
+  for (const requiredAction of requiredGraphActions) {
+    if (!declaredGraphActions.has(requiredAction)) {
+      problems.push(`Node graph panel spec missing required action '${requiredAction}'.`);
+    }
+  }
+
+  const requiredCanvasFeatures = new Set(['pan', 'zoom', 'grid', 'minimap', 'theme', 'nodeSelection']);
+  for (const feature of requiredCanvasFeatures) {
+    if (!nodeGraphPanelSpec.canvasFeatures.includes(feature)) {
+      problems.push(`Node graph panel spec missing canvas feature '${feature}'.`);
+    }
+  }
+
+  const requiredNodeFields = new Set(['id', 'type', 'label', 'status', 'group', 'ports', 'position']);
+  for (const field of requiredNodeFields) {
+    if (!nodeGraphPanelSpec.nodeFields.includes(field)) {
+      problems.push(`Node graph panel spec missing node field '${field}'.`);
+    }
+  }
+
+  const requiredEdgeFields = new Set(['id', 'fromNodeId', 'toNodeId', 'fromPort', 'toPort', 'status']);
+  for (const field of requiredEdgeFields) {
+    if (!nodeGraphPanelSpec.edgeFields.includes(field)) {
+      problems.push(`Node graph panel spec missing edge field '${field}'.`);
+    }
   }
 
   return {

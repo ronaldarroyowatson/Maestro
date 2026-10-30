@@ -110,6 +110,10 @@
         "target": "{otto.configDir}/maestro/ai-discovery-panel.json"
       },
       {
+        "source": "ui/panels/maestro-node-graph-panel.json",
+        "target": "{otto.configDir}/maestro/node-graph-panel.json"
+      },
+      {
         "source": "otto/manifests/maestro-ui-contract.json",
         "target": "{otto.configDir}/maestro/ui-contract.json"
       },

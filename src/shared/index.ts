@@ -96,6 +96,10 @@ export {
   validateMaestroOttoUiContract
 } from './utils/ottoUiContract.js';
 export {
+  loadMaestroNodeGraphContract,
+  validateMaestroNodeGraphContract
+} from './utils/maestroNodeGraphContract.js';
+export {
   getMaestroEntryFeature,
   getMaestroFeatureCatalog,
   MAESTRO_FEATURE_CATALOG

@@ -3,6 +3,7 @@
 ## UI Integration Artifacts
 
 - Node graph definitions: `ui/nodes/maestro-node-graphs.json`
+- Node graph panel spec: `ui/panels/maestro-node-graph-panel.json`
 - UI settings defaults: `ui/settings/maestro-ui-settings.json`
 - Navigation entries: `ui/navigation/maestro-panels.json`
 
@@ -12,9 +13,19 @@ These files are referenced by `otto/maestro-payload.json` under the `ui` section
 
 `ui/nodes/maestro-node-graphs.json` defines:
 
-- Node types for agents, tools, pipeline, and reviewer stages.
+- Canvas interaction capabilities (`pan`, `zoom`, `grid`, `minimap`, `theme`, `nodeSelection`).
+- Node types for agents, tools, pipeline, and reviewer stages with typed port contracts.
 - Visual metadata including labels, icons, and colors.
-- A default runtime graph with conductor, context, prompt, provider, and reviewer links.
+- A default runtime graph with explicit port-bound edges, node status defaults, and grouping metadata.
+
+## Node Graph Runtime Projection
+
+`features/node-graph/services/ui-integration/index.ts` provides `NodeGraphUiStateBuilder`, which:
+
+- Projects runtime graph definitions into deterministic UI state.
+- Applies node/edge execution statuses.
+- Groups nodes for graph panel display.
+- Validates typed port compatibility and returns structured validation errors/warnings.
 
 ## Settings Model
 

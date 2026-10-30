@@ -1,0 +1,58 @@
+{
+  "panel": "node-graph",
+  "actions": [
+    {
+      "id": "add-node",
+      "label": "Add Node",
+      "type": "command"
+    },
+    {
+      "id": "connect-nodes",
+      "label": "Connect Nodes",
+      "type": "command"
+    },
+    {
+      "id": "disconnect-nodes",
+      "label": "Disconnect Nodes",
+      "type": "command"
+    },
+    {
+      "id": "validate-graph",
+      "label": "Validate Graph",
+      "type": "command"
+    }
+  ],
+  "canvasFeatures": [
+    "pan",
+    "zoom",
+    "grid",
+    "minimap",
+    "theme",
+    "nodeSelection"
+  ],
+  "statusFields": [
+    "graphStatus",
+    "validationSummary",
+    "selectedNodeId",
+    "runtimeStatus"
+  ],
+  "nodeFields": [
+    "id",
+    "type",
+    "label",
+    "status",
+    "group",
+    "ports",
+    "position",
+    "comments"
+  ],
+  "edgeFields": [
+    "id",
+    "fromNodeId",
+    "toNodeId",
+    "fromPort",
+    "toPort",
+    "condition",
+    "status"
+  ]
+}

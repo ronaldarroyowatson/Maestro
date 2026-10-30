@@ -70,7 +70,7 @@ export const MAESTRO_FEATURE_CATALOG: MaestroFeature[] = [
     panel: 'node-graph',
     category: 'workflow',
     status: 'preview',
-    description: 'Visualizes graph structure and dependencies for workflow execution.'
+    description: 'Visualizes and validates graph structure, typed node ports, and runtime execution state.'
   },
   {
     id: 'maestro.execution-timeline',

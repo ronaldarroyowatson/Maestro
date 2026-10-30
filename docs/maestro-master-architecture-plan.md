@@ -655,6 +655,8 @@ Documentation updates:
 - node graph component contract and interaction model
 - visual orchestration design guide
 
+Current implementation status: Phase F is complete in this repository's contract/runtime scope. The node graph contract now declares canvas interaction capabilities, typed node ports, and port-bound edges; a runtime-backed `NodeGraphUiStateBuilder` now projects graph/runtime state into deterministic UI state with grouping and typed connection validation. Validation covers functional graph wiring, failure-path checks, and edge-case graph inputs.
+
 #### Phase G — Node Property Inspector
 
 Objective: implement a property editor side panel for selected nodes.
