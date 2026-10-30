@@ -71,7 +71,76 @@ Before completion, verify the smallest relevant set of checks:
 
 If a check fails, fix root causes or clearly document blockers.
 
-## 5) Decision Priority
+## 5) Mandatory Feature Validation Framework
+
+A feature is complete only when all of the following are done:
+
+1. Implementation is completed.
+2. Tests are created.
+3. Tests are executed.
+4. Results are documented.
+5. Common failure modes are evaluated.
+6. Relevant edge cases are evaluated.
+7. Documentation is updated.
+
+Required workflow for each new feature/module/subsystem/workflow/scanner/node/UI/API/discovery mechanism:
+
+1. Implement feature.
+2. Create validation tests.
+3. Run common failure mode tests.
+4. Fix failures.
+5. Re-test.
+6. Run edge case tests.
+7. Document results.
+
+Required test naming style:
+
+- Use simple human-readable names (for example: `Ollama Detection Test`, `Duplicate Resource Test`, `Resource Relationship Test`, `Invalid Endpoint Test`, `Empty Resource List Test`).
+
+Required test output style:
+
+- Keep outputs simple and reviewable by non-developers.
+- Prefer `PASS` / `FAIL` or concise status lines such as `PASS - Resource Created`, `FAIL - Duplicate Resource Added`.
+
+Minimum failure mode coverage expectations:
+
+- Missing files/configuration
+- Invalid input/nulls
+- Duplicate records
+- Unexpected resource types
+- Disconnected services/network failures
+- Corrupted metadata/malformed requests
+- Invalid state transitions
+- Permission failures
+
+Minimum edge case coverage expectations:
+
+- Empty datasets
+- Large datasets
+- Concurrent updates
+- Deep relationship graphs
+- Circular references
+- Rapid repeated scanning
+- Long resource names
+- Unicode content
+- Mixed OS path formats
+- Partially configured environments
+
+Phase completion rule:
+
+- No phase may be marked complete unless implementation, tests, failure-mode checks, edge-case checks, documented results, and documentation updates are all completed.
+
+Validation report format (required at phase end):
+
+- Feature
+- Tests Executed
+- Results (PASS/FAIL)
+- Failure Modes Tested
+- Edge Cases Tested
+- Known Limitations
+- Recommended Improvements
+
+## 6) Decision Priority
 
 When guidance conflicts, use this order:
 

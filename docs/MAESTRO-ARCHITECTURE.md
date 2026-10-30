@@ -78,3 +78,32 @@ Required machine-replacement checks:
 - local MCP server registration and configuration
 - runtime contract checks for Otto and Maestro
 - verification and recovery steps to ensure continuity after failure or relocation
+
+## Local AI Discovery Architecture Validation (Post-Phase-A)
+
+Real-machine validation was executed and recorded in:
+
+- `docs/local-ai-discovery-validation-report.md`
+- `docs/local-ai-discovery-validation.latest.json`
+- `scripts/run-local-ai-discovery-validation.ts`
+
+Key architecture conclusions:
+
+- The unified Resource Node model is correctly enforced for current scanner output.
+- Registry identity and duplicate suppression are stable across repeated scans.
+- Graph-friendly structures are present and relationship edges are generated.
+- Phase B revalidation confirmed runtime/model normalization: Ollama runtime and model metadata now enter the graph as first-class nodes with explicit runtime->model relationships.
+
+Current architecture gaps to close before Phase D/E:
+
+1. Ollama installation/storage representation can still be simplified to reduce semantic duplication between install roots and storage roots.
+2. Python virtual environment discovery is not yet implemented.
+3. Docker workload discovery is not yet implemented.
+4. Agent-framework and richer MCP runtime discovery are not yet implemented.
+
+Architecture correction path:
+
+- Keep runtime/model scanners as deterministic ingestion baselines and expand the same pattern to Python, Docker, and agent frameworks.
+- Normalize executable/runtime health as Resource Nodes (not side-channel metadata).
+- Continue attaching model nodes to runtime/storage parents with explicit edge kinds.
+- Keep rule-based scanner ingestion deterministic; add optional agent-assisted enrichment as a second-stage classifier.

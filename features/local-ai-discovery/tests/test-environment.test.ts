@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { LocalAiTestEnvironment } from '../services/test-environment/index.js';
 
 describe('local AI discovery test environment', () => {
-  it('surfaces a starter model set suitable for local validation', () => {
+  it('Starter Model Plan Test', () => {
     const env = new LocalAiTestEnvironment();
     const results = env.buildPlan();
 
@@ -11,7 +11,7 @@ describe('local AI discovery test environment', () => {
     expect(results.installSteps.length).toBeGreaterThan(0);
   });
 
-  it('verifies metadata for discovered model resources', () => {
+  it('Model Metadata Validation Test', () => {
     const env = new LocalAiTestEnvironment();
 
     const result = env.verifyModelMetadata({
@@ -33,11 +33,43 @@ describe('local AI discovery test environment', () => {
     expect(result.warnings).toEqual([]);
   });
 
-  it('returns a runtime status object even when Ollama is missing', () => {
+  it('Runtime Detection Test', () => {
     const env = new LocalAiTestEnvironment();
     const result = env.detectRuntime();
 
     expect(result.runtime).toBe('ollama');
     expect(['available', 'missing']).toContain(result.status);
+  });
+
+  it('Missing Configuration Test', () => {
+    const env = new LocalAiTestEnvironment();
+    const result = env.verifyModelMetadata({
+      id: 'model:missing',
+      name: 'missing',
+      type: 'model',
+      status: 'detected',
+      metadata: {},
+      discoveredBy: 'test-scanner',
+      lastSeen: new Date()
+    });
+
+    expect(result.valid).toBe(false);
+    expect(result.warnings.length).toBeGreaterThan(0);
+  });
+
+  it('Empty Resource List Test', () => {
+    const env = new LocalAiTestEnvironment();
+    const result = env.verifyModelMetadata({
+      id: 'runtime:ollama',
+      name: 'Ollama Runtime',
+      type: 'runtime',
+      status: 'healthy',
+      metadata: {},
+      discoveredBy: 'test-scanner',
+      lastSeen: new Date()
+    });
+
+    expect(result.valid).toBe(true);
+    expect(result.warnings).toEqual([]);
   });
 });

@@ -1,0 +1,597 @@
+{
+  "executedAt": "2026-10-30T01:47:58.969Z",
+  "context": {
+    "rootPath": "d:\\OneDrive\\Documents\\GitHub\\Maestro",
+    "ollamaDir": "C:\\Users\\ronal\\AppData\\Local\\Programs\\Ollama",
+    "ollamaModelsDir": "C:\\Users\\ronal\\.ollama\\models",
+    "ollamaHost": "http://127.0.0.1:11434"
+  },
+  "firstScan": {
+    "resourceCount": 5,
+    "graphNodeCount": 6,
+    "graphEdgeCount": 5,
+    "resourceTypes": {
+      "endpoint": 1,
+      "model": 1,
+      "ollama": 2,
+      "runtime": 1
+    }
+  },
+  "secondScan": {
+    "resourceCount": 5,
+    "graphNodeCount": 6,
+    "graphEdgeCount": 5,
+    "resourceTypes": {
+      "endpoint": 1,
+      "model": 1,
+      "ollama": 2,
+      "runtime": 1
+    }
+  },
+  "scannerBreakdown": [
+    {
+      "scannerId": "ollama-runtime-scanner",
+      "count": 1,
+      "resourceTypes": {
+        "runtime": 1
+      },
+      "sample": [
+        {
+          "id": "runtime:ollama",
+          "name": "Ollama Runtime",
+          "type": "runtime",
+          "path": "C:\\Users\\ronal\\AppData\\Local\\Programs\\Ollama\\ollama.exe"
+        }
+      ]
+    },
+    {
+      "scannerId": "ollama-scanner",
+      "count": 2,
+      "resourceTypes": {
+        "ollama": 2
+      },
+      "sample": [
+        {
+          "id": "ollama:C:\\Users\\ronal\\.ollama\\models",
+          "name": "Ollama",
+          "type": "ollama",
+          "path": "C:\\Users\\ronal\\.ollama\\models"
+        },
+        {
+          "id": "ollama:C:\\Users\\ronal\\AppData\\Local\\Programs\\Ollama",
+          "name": "Ollama",
+          "type": "ollama",
+          "path": "C:\\Users\\ronal\\AppData\\Local\\Programs\\Ollama"
+        }
+      ]
+    },
+    {
+      "scannerId": "ollama-model-scanner",
+      "count": 1,
+      "resourceTypes": {
+        "model": 1
+      },
+      "sample": [
+        {
+          "id": "model:ollama:tinyllama:latest",
+          "name": "tinyllama:latest",
+          "type": "model",
+          "path": "http://127.0.0.1:11434"
+        }
+      ]
+    },
+    {
+      "scannerId": "local-model-scanner",
+      "count": 0,
+      "resourceTypes": {},
+      "sample": []
+    },
+    {
+      "scannerId": "lmstudio-scanner",
+      "count": 0,
+      "resourceTypes": {},
+      "sample": []
+    },
+    {
+      "scannerId": "mcp-scanner",
+      "count": 0,
+      "resourceTypes": {},
+      "sample": []
+    },
+    {
+      "scannerId": "endpoint-scanner",
+      "count": 2,
+      "resourceTypes": {
+        "endpoint": 2
+      },
+      "sample": [
+        {
+          "id": "endpoint:http://127.0.0.1:11434",
+          "name": "127.0.0.1",
+          "type": "endpoint",
+          "path": "http://127.0.0.1:11434"
+        },
+        {
+          "id": "endpoint:http://127.0.0.1:11434",
+          "name": "127.0.0.1",
+          "type": "endpoint",
+          "path": "http://127.0.0.1:11434"
+        }
+      ]
+    },
+    {
+      "scannerId": "ai-repository-scanner",
+      "count": 0,
+      "resourceTypes": {},
+      "sample": []
+    }
+  ],
+  "localProbeEvidence": {
+    "ollamaExecutableProbe": [
+      {
+        "path": "C:\\Users\\ronal\\AppData\\Local\\Programs\\Ollama\\ollama.exe",
+        "exists": true
+      },
+      {
+        "path": "C:\\Program Files\\Ollama\\ollama.exe",
+        "exists": false
+      }
+    ],
+    "resolvedOllamaExecutable": "C:\\Users\\ronal\\AppData\\Local\\Programs\\Ollama\\ollama.exe",
+    "ollamaVersionOutput": "ollama version is 0.40.13",
+    "ollamaListOutput": "NAME                ID              SIZE      MODIFIED          \ntinyllama:latest    2644915ede35    637 MB    About an hour ago",
+    "ollamaApiTags": {
+      "models": [
+        {
+          "name": "tinyllama:latest",
+          "model": "tinyllama:latest",
+          "modified_at": "2026-10-29T19:18:35.6645852-05:00",
+          "size": 637700138,
+          "digest": "2644915ede352ea7bdfaff0bfac0be74c719d5d5202acb63a6fb095b52f394a4",
+          "details": {
+            "parent_model": "",
+            "format": "gguf",
+            "family": "llama",
+            "families": [
+              "llama"
+            ],
+            "parameter_size": "1B",
+            "quantization_level": "Q4_0",
+            "context_length": 2048,
+            "embedding_length": 2048,
+            "runner": "ggml"
+          },
+          "capabilities": [
+            "completion"
+          ]
+        }
+      ]
+    },
+    "mcpProbe": [
+      {
+        "path": "d:\\OneDrive\\Documents\\GitHub\\Maestro\\.vscode\\mcp.json",
+        "exists": false
+      },
+      {
+        "path": "d:\\OneDrive\\Documents\\GitHub\\Maestro\\mcp.json",
+        "exists": false
+      },
+      {
+        "path": "C:\\Users\\ronal\\.mcp",
+        "exists": false
+      },
+      {
+        "path": "C:\\Users\\ronal\\.config\\mcp",
+        "exists": false
+      }
+    ],
+    "dockerCommandAvailable": false,
+    "dockerContainers": [],
+    "dockerProbeError": "spawnSync docker ENOENT"
+  },
+  "registryAfterFirstScan": {
+    "count": 6,
+    "typeCounts": {
+      "endpoint": 1,
+      "device": 1,
+      "ollama": 2,
+      "runtime": 1,
+      "model": 1
+    }
+  },
+  "registryAfterSecondScan": {
+    "count": 6,
+    "typeCounts": {
+      "endpoint": 1,
+      "device": 1,
+      "ollama": 2,
+      "runtime": 1,
+      "model": 1
+    },
+    "duplicateIdCount": 0
+  },
+  "registryUpdateVerification": {
+    "sameResourceCountAcrossScans": true,
+    "updatedLastSeenNodeCount": 6
+  },
+  "relationshipEvidence": [
+    {
+      "nodeId": "endpoint:http://127.0.0.1:11434",
+      "nodeType": "endpoint",
+      "relationshipCount": 1,
+      "relationships": [
+        {
+          "id": "endpoint:http://127.0.0.1:11434<-runtime:ollama:connects_to",
+          "from": "endpoint:http://127.0.0.1:11434",
+          "to": "runtime:ollama",
+          "kind": "references",
+          "metadata": {
+            "inferred": true,
+            "relation": "runtime-endpoint"
+          }
+        }
+      ]
+    },
+    {
+      "nodeId": "device:d:\\OneDrive\\Documents\\GitHub\\Maestro",
+      "nodeType": "device",
+      "relationshipCount": 3,
+      "relationships": [
+        {
+          "id": "device:d:\\OneDrive\\Documents\\GitHub\\Maestro->ollama:C:\\Users\\ronal\\.ollama\\models:contains",
+          "from": "device:d:\\OneDrive\\Documents\\GitHub\\Maestro",
+          "to": "ollama:C:\\Users\\ronal\\.ollama\\models",
+          "kind": "contains",
+          "metadata": {
+            "inferred": true
+          }
+        },
+        {
+          "id": "device:d:\\OneDrive\\Documents\\GitHub\\Maestro->ollama:C:\\Users\\ronal\\AppData\\Local\\Programs\\Ollama:contains",
+          "from": "device:d:\\OneDrive\\Documents\\GitHub\\Maestro",
+          "to": "ollama:C:\\Users\\ronal\\AppData\\Local\\Programs\\Ollama",
+          "kind": "contains",
+          "metadata": {
+            "inferred": true
+          }
+        },
+        {
+          "id": "device:d:\\OneDrive\\Documents\\GitHub\\Maestro->runtime:ollama:contains",
+          "from": "device:d:\\OneDrive\\Documents\\GitHub\\Maestro",
+          "to": "runtime:ollama",
+          "kind": "contains",
+          "metadata": {
+            "inferred": true
+          }
+        }
+      ]
+    },
+    {
+      "nodeId": "ollama:C:\\Users\\ronal\\.ollama\\models",
+      "nodeType": "ollama",
+      "relationshipCount": 1,
+      "relationships": [
+        {
+          "id": "ollama:C:\\Users\\ronal\\.ollama\\models<-device:d:\\OneDrive\\Documents\\GitHub\\Maestro:contains",
+          "from": "ollama:C:\\Users\\ronal\\.ollama\\models",
+          "to": "device:d:\\OneDrive\\Documents\\GitHub\\Maestro",
+          "kind": "contains",
+          "metadata": {
+            "inferred": true
+          }
+        }
+      ]
+    },
+    {
+      "nodeId": "ollama:C:\\Users\\ronal\\AppData\\Local\\Programs\\Ollama",
+      "nodeType": "ollama",
+      "relationshipCount": 1,
+      "relationships": [
+        {
+          "id": "ollama:C:\\Users\\ronal\\AppData\\Local\\Programs\\Ollama<-device:d:\\OneDrive\\Documents\\GitHub\\Maestro:contains",
+          "from": "ollama:C:\\Users\\ronal\\AppData\\Local\\Programs\\Ollama",
+          "to": "device:d:\\OneDrive\\Documents\\GitHub\\Maestro",
+          "kind": "contains",
+          "metadata": {
+            "inferred": true
+          }
+        }
+      ]
+    },
+    {
+      "nodeId": "runtime:ollama",
+      "nodeType": "runtime",
+      "relationshipCount": 1,
+      "relationships": [
+        {
+          "id": "runtime:ollama<-device:d:\\OneDrive\\Documents\\GitHub\\Maestro:contains",
+          "from": "runtime:ollama",
+          "to": "device:d:\\OneDrive\\Documents\\GitHub\\Maestro",
+          "kind": "contains",
+          "metadata": {
+            "inferred": true
+          }
+        }
+      ]
+    },
+    {
+      "nodeId": "model:ollama:tinyllama:latest",
+      "nodeType": "model",
+      "relationshipCount": 1,
+      "relationships": [
+        {
+          "id": "model:ollama:tinyllama:latest<-runtime:ollama:contains",
+          "from": "model:ollama:tinyllama:latest",
+          "to": "runtime:ollama",
+          "kind": "contains",
+          "metadata": {
+            "inferred": true,
+            "parentType": "runtime"
+          }
+        }
+      ]
+    }
+  ],
+  "graphEvidence": {
+    "nodes": [
+      {
+        "id": "device:d:\\OneDrive\\Documents\\GitHub\\Maestro",
+        "name": "Local Machine",
+        "type": "device",
+        "status": "healthy",
+        "tags": [
+          "device",
+          "healthy",
+          "local-ai-discovery-service"
+        ],
+        "metadata": {
+          "rootPath": "d:\\OneDrive\\Documents\\GitHub\\Maestro",
+          "path": "d:\\OneDrive\\Documents\\GitHub\\Maestro",
+          "discoveredFrom": "local-ai-discovery-service",
+          "workflowNodeCompatible": false
+        },
+        "relationships": [],
+        "discoveredBy": "local-ai-discovery-service",
+        "createdAt": "2026-10-30T01:47:58.829Z",
+        "lastSeen": "2026-10-30T01:47:58.829Z",
+        "path": "d:\\OneDrive\\Documents\\GitHub\\Maestro"
+      },
+      {
+        "id": "endpoint:http://127.0.0.1:11434",
+        "name": "127.0.0.1",
+        "type": "endpoint",
+        "status": "healthy",
+        "tags": [
+          "endpoint",
+          "healthy",
+          "endpoint-scanner",
+          "openai-compatible"
+        ],
+        "metadata": {
+          "kind": "openai-compatible",
+          "url": "http://127.0.0.1:11434",
+          "runtimeId": "runtime:ollama",
+          "detectedFrom": "endpoint-scanner",
+          "path": "http://127.0.0.1:11434",
+          "discoveredFrom": "endpoint-scanner",
+          "workflowNodeCompatible": true
+        },
+        "relationships": [],
+        "discoveredBy": "endpoint-scanner",
+        "createdAt": "2026-10-30T01:47:58.829Z",
+        "lastSeen": "2026-10-30T01:47:58.829Z",
+        "path": "http://127.0.0.1:11434"
+      },
+      {
+        "id": "model:ollama:tinyllama:latest",
+        "name": "tinyllama:latest",
+        "type": "model",
+        "status": "healthy",
+        "tags": [
+          "model",
+          "healthy",
+          "ollama-model-scanner",
+          "ollama-runtime-model"
+        ],
+        "metadata": {
+          "kind": "ollama-runtime-model",
+          "runtimeId": "runtime:ollama",
+          "source": "ollama-api",
+          "modelName": "tinyllama:latest",
+          "modelId": "tinyllama:latest",
+          "sizeBytes": 637700138,
+          "digest": "2644915ede352ea7bdfaff0bfac0be74c719d5d5202acb63a6fb095b52f394a4",
+          "modifiedAt": "2026-10-29T19:18:35.6645852-05:00",
+          "details": {
+            "parent_model": "",
+            "format": "gguf",
+            "family": "llama",
+            "families": [
+              "llama"
+            ],
+            "parameter_size": "1B",
+            "quantization_level": "Q4_0",
+            "context_length": 2048,
+            "embedding_length": 2048,
+            "runner": "ggml"
+          },
+          "capabilities": [
+            "completion"
+          ],
+          "detectedFrom": "ollama-model-scanner",
+          "path": "http://127.0.0.1:11434",
+          "discoveredFrom": "ollama-model-scanner",
+          "workflowNodeCompatible": true
+        },
+        "relationships": [],
+        "discoveredBy": "ollama-model-scanner",
+        "createdAt": "2026-10-30T01:47:58.829Z",
+        "lastSeen": "2026-10-30T01:47:58.821Z",
+        "path": "http://127.0.0.1:11434"
+      },
+      {
+        "id": "ollama:C:\\Users\\ronal\\.ollama\\models",
+        "name": "Ollama",
+        "type": "ollama",
+        "status": "healthy",
+        "tags": [
+          "ollama",
+          "healthy",
+          "ollama-scanner",
+          "installation-root"
+        ],
+        "metadata": {
+          "kind": "installation-root",
+          "runtimeId": "runtime:ollama",
+          "detectedFrom": "ollama-scanner",
+          "path": "C:\\Users\\ronal\\.ollama\\models",
+          "discoveredFrom": "ollama-scanner",
+          "workflowNodeCompatible": false
+        },
+        "relationships": [],
+        "discoveredBy": "ollama-scanner",
+        "createdAt": "2026-10-30T01:47:58.829Z",
+        "lastSeen": "2026-10-30T01:47:58.805Z",
+        "path": "C:\\Users\\ronal\\.ollama\\models"
+      },
+      {
+        "id": "ollama:C:\\Users\\ronal\\AppData\\Local\\Programs\\Ollama",
+        "name": "Ollama",
+        "type": "ollama",
+        "status": "healthy",
+        "tags": [
+          "ollama",
+          "healthy",
+          "ollama-scanner",
+          "installation-root"
+        ],
+        "metadata": {
+          "kind": "installation-root",
+          "runtimeId": "runtime:ollama",
+          "detectedFrom": "ollama-scanner",
+          "path": "C:\\Users\\ronal\\AppData\\Local\\Programs\\Ollama",
+          "discoveredFrom": "ollama-scanner",
+          "workflowNodeCompatible": false
+        },
+        "relationships": [],
+        "discoveredBy": "ollama-scanner",
+        "createdAt": "2026-10-30T01:47:58.829Z",
+        "lastSeen": "2026-10-30T01:47:58.805Z",
+        "path": "C:\\Users\\ronal\\AppData\\Local\\Programs\\Ollama"
+      },
+      {
+        "id": "runtime:ollama",
+        "name": "Ollama Runtime",
+        "type": "runtime",
+        "status": "healthy",
+        "tags": [
+          "runtime",
+          "healthy",
+          "ollama-runtime-scanner"
+        ],
+        "metadata": {
+          "kind": "runtime",
+          "runtime": "ollama",
+          "executablePath": "C:\\Users\\ronal\\AppData\\Local\\Programs\\Ollama\\ollama.exe",
+          "endpoint": "http://127.0.0.1:11434",
+          "version": "ollama version is 0.40.13",
+          "modelCount": 1,
+          "runtimeProbeStatus": "reachable",
+          "detectedFrom": "ollama-runtime-scanner",
+          "path": "C:\\Users\\ronal\\AppData\\Local\\Programs\\Ollama\\ollama.exe",
+          "discoveredFrom": "ollama-runtime-scanner",
+          "workflowNodeCompatible": true
+        },
+        "relationships": [],
+        "discoveredBy": "ollama-runtime-scanner",
+        "createdAt": "2026-10-30T01:47:58.829Z",
+        "lastSeen": "2026-10-30T01:47:58.805Z",
+        "path": "C:\\Users\\ronal\\AppData\\Local\\Programs\\Ollama\\ollama.exe"
+      }
+    ],
+    "edges": [
+      {
+        "id": "runtime:ollama->endpoint:http://127.0.0.1:11434",
+        "from": "runtime:ollama",
+        "to": "endpoint:http://127.0.0.1:11434",
+        "kind": "contains",
+        "metadata": {
+          "inferred": true
+        }
+      },
+      {
+        "id": "runtime:ollama->model:ollama:tinyllama:latest",
+        "from": "runtime:ollama",
+        "to": "model:ollama:tinyllama:latest",
+        "kind": "contains",
+        "metadata": {
+          "inferred": true
+        }
+      },
+      {
+        "id": "runtime:ollama->ollama:C:\\Users\\ronal\\.ollama\\models",
+        "from": "runtime:ollama",
+        "to": "ollama:C:\\Users\\ronal\\.ollama\\models",
+        "kind": "contains",
+        "metadata": {
+          "inferred": true
+        }
+      },
+      {
+        "id": "runtime:ollama->ollama:C:\\Users\\ronal\\AppData\\Local\\Programs\\Ollama",
+        "from": "runtime:ollama",
+        "to": "ollama:C:\\Users\\ronal\\AppData\\Local\\Programs\\Ollama",
+        "kind": "contains",
+        "metadata": {
+          "inferred": true
+        }
+      },
+      {
+        "id": "device:d:\\OneDrive\\Documents\\GitHub\\Maestro->runtime:ollama",
+        "from": "device:d:\\OneDrive\\Documents\\GitHub\\Maestro",
+        "to": "runtime:ollama",
+        "kind": "contains",
+        "metadata": {
+          "inferred": true
+        }
+      }
+    ]
+  },
+  "testResults": [
+    {
+      "name": "Ollama Runtime Detected",
+      "result": "PASS"
+    },
+    {
+      "name": "Ollama Model Detected",
+      "result": "PASS"
+    },
+    {
+      "name": "Duplicate Resource Test",
+      "result": "PASS"
+    },
+    {
+      "name": "Resource Relationship Test",
+      "result": "PASS"
+    }
+  ],
+  "failureModesTested": [
+    "Missing Configuration Test",
+    "Invalid Endpoint Test",
+    "Malformed JSON Test",
+    "Duplicate Resource Test"
+  ],
+  "edgeCasesTested": [
+    "Empty Resource List Test",
+    "Large Scale Resource Scan Test",
+    "Rapid Repeated Scanning Test"
+  ],
+  "knownLimitations": [
+    "MCP, Docker, and Python environment scanners are still partial or not implemented as runtime scanners.",
+    "AI repository scanner currently depends on local manifest markers and may miss unconventional repository layouts."
+  ],
+  "recommendedImprovements": [
+    "Add PythonEnvironmentScanner, DockerScanner, and AgentFrameworkScanner.",
+    "Promote runtime/model relationship checks to required CI gating."
+  ]
+}

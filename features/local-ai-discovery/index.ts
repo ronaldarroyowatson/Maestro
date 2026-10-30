@@ -1,4 +1,5 @@
 import fs from 'node:fs/promises';
+import { spawnSync } from 'node:child_process';
 import os from 'node:os';
 import path from 'node:path';
 
@@ -97,7 +98,8 @@ export class OllamaScanner extends BaseDiscoveryScanner {
         path: directory,
         status: 'healthy',
         metadata: {
-          kind: 'installation',
+          kind: 'installation-root',
+          runtimeId: 'runtime:ollama',
           detectedFrom: 'ollama-scanner'
         },
         discoveredBy: this.id,
@@ -106,6 +108,86 @@ export class OllamaScanner extends BaseDiscoveryScanner {
     }
 
     return resources;
+  }
+}
+
+export class OllamaRuntimeScanner extends BaseDiscoveryScanner {
+  constructor() {
+    super('ollama-runtime-scanner', 'runtime');
+  }
+
+  async scan(context: DiscoveryScanContext): Promise<DetectedResource[]> {
+    const env = context.environment ?? process.env;
+    const endpoint = normalizeEndpointUrl(env.OLLAMA_HOST ?? 'http://127.0.0.1:11434');
+    const executablePath = await resolveOllamaExecutablePath(context);
+    const versionOutput = executablePath ? runCommand(executablePath, ['--version']) : undefined;
+    const tagsResponse = await fetchOllamaTags(endpoint);
+
+    const hasRuntimeSignal = Boolean(executablePath) || Boolean(tagsResponse.ok);
+    if (!hasRuntimeSignal) {
+      return [];
+    }
+
+    return [
+      {
+        id: 'runtime:ollama',
+        name: 'Ollama Runtime',
+        type: 'runtime',
+        path: executablePath ?? endpoint,
+        status: tagsResponse.ok ? 'healthy' : 'detected',
+        metadata: {
+          kind: 'runtime',
+          runtime: 'ollama',
+          executablePath,
+          endpoint,
+          version: versionOutput?.stdout?.trim() || undefined,
+          modelCount: tagsResponse.models.length,
+          runtimeProbeStatus: tagsResponse.ok ? 'reachable' : 'cli-only',
+          runtimeProbeError: tagsResponse.error,
+          detectedFrom: 'ollama-runtime-scanner'
+        },
+        discoveredBy: this.id,
+        lastSeen: new Date()
+      }
+    ];
+  }
+}
+
+export class OllamaModelScanner extends BaseDiscoveryScanner {
+  constructor() {
+    super('ollama-model-scanner', 'model');
+  }
+
+  async scan(context: DiscoveryScanContext): Promise<DetectedResource[]> {
+    const env = context.environment ?? process.env;
+    const endpoint = normalizeEndpointUrl(env.OLLAMA_HOST ?? 'http://127.0.0.1:11434');
+    const tagsResponse = await fetchOllamaTags(endpoint);
+    if (!tagsResponse.ok || tagsResponse.models.length === 0) {
+      return [];
+    }
+
+    return tagsResponse.models.map((model) => ({
+      id: `model:ollama:${model.name}`,
+      name: model.name,
+      type: 'model' as const,
+      path: endpoint,
+      status: 'healthy' as const,
+      metadata: {
+        kind: 'ollama-runtime-model',
+        runtimeId: 'runtime:ollama',
+        source: 'ollama-api',
+        modelName: model.name,
+        modelId: model.model,
+        sizeBytes: model.size,
+        digest: model.digest,
+        modifiedAt: model.modified_at,
+        details: model.details ?? {},
+        capabilities: model.capabilities ?? [],
+        detectedFrom: 'ollama-model-scanner'
+      },
+      discoveredBy: this.id,
+      lastSeen: new Date()
+    }));
   }
 }
 
@@ -154,9 +236,9 @@ export class LocalModelScanner extends BaseDiscoveryScanner {
 
   async scan(context: DiscoveryScanContext): Promise<DetectedResource[]> {
     const baseDir = context.rootPath ?? os.homedir();
+    const ollamaRoot = context.environment?.OLLAMA_MODELS_DIR ?? path.join(baseDir, '.ollama', 'models');
     const candidateRoots = [
-      context.environment?.OLLAMA_MODELS_DIR,
-      path.join(baseDir, '.ollama', 'models'),
+      ollamaRoot,
       path.join(baseDir, 'models'),
       path.join(baseDir, '.cache'),
       path.join(baseDir, 'AppData', 'Local')
@@ -183,6 +265,8 @@ export class LocalModelScanner extends BaseDiscoveryScanner {
             fileName: path.basename(file.path),
             fileExtension: path.extname(file.path),
             sizeBytes: file.size,
+            runtimeId: file.path.startsWith(ollamaRoot) ? 'runtime:ollama' : undefined,
+            ollamaRootId: file.path.startsWith(ollamaRoot) ? `ollama:${ollamaRoot}` : undefined,
             detectedFrom: 'local-model-scanner'
           },
           discoveredBy: this.id,
@@ -242,16 +326,16 @@ export class EndpointScanner extends BaseDiscoveryScanner {
   async scan(context: DiscoveryScanContext): Promise<DetectedResource[]> {
     const env = context.environment ?? process.env;
     const baseUrls = [
-      env.OLLAMA_HOST,
-      env.LMSTUDIO_API_BASE,
-      env.OPENAI_API_BASE,
-      env.OPENAI_BASE_URL,
-      env.LOCAL_LLM_BASE_URL,
-      env.MAESTRO_LOCAL_MODEL_BASE_URL
-    ].filter((candidate): candidate is string => Boolean(candidate));
+      { url: env.OLLAMA_HOST, runtimeId: 'runtime:ollama' },
+      { url: env.LMSTUDIO_API_BASE, runtimeId: undefined },
+      { url: env.OPENAI_API_BASE, runtimeId: undefined },
+      { url: env.OPENAI_BASE_URL, runtimeId: undefined },
+      { url: env.LOCAL_LLM_BASE_URL, runtimeId: undefined },
+      { url: env.MAESTRO_LOCAL_MODEL_BASE_URL, runtimeId: undefined }
+    ].filter((candidate): candidate is { url: string; runtimeId?: string } => Boolean(candidate.url));
 
-    return baseUrls.map((baseUrl) => {
-      const normalizedBaseUrl = normalizeEndpointUrl(baseUrl);
+    return baseUrls.map((entry) => {
+      const normalizedBaseUrl = normalizeEndpointUrl(entry.url);
       return {
         id: `endpoint:${normalizedBaseUrl}`,
         name: new URL(normalizedBaseUrl).hostname,
@@ -261,6 +345,7 @@ export class EndpointScanner extends BaseDiscoveryScanner {
         metadata: {
           kind: 'openai-compatible',
           url: normalizedBaseUrl,
+          runtimeId: entry.runtimeId,
           detectedFrom: 'endpoint-scanner'
         },
         discoveredBy: this.id,
@@ -341,18 +426,31 @@ export class ResourceNodeGraphBuilder {
 
   private inferParent(node: ResourceNode, nodeMap: Map<string, ResourceNode>): ResourceNode | undefined {
     if (node.type === 'model') {
+      const runtimeId = node.metadata.runtimeId as string | undefined;
       const modelRootId = node.metadata.modelRootId as string | undefined;
       const ollamaRootId = node.metadata.ollamaRootId as string | undefined;
-      const parentId = modelRootId ?? ollamaRootId;
+      const parentId = runtimeId ?? modelRootId ?? ollamaRootId;
       if (parentId && nodeMap.has(parentId)) {
         return nodeMap.get(parentId);
       }
     }
 
     if (node.type === 'endpoint' || node.type === 'tool' || node.type === 'mcp') {
+      const runtimeId = node.metadata.runtimeId as string | undefined;
+      if (runtimeId && nodeMap.has(runtimeId)) {
+        return nodeMap.get(runtimeId);
+      }
+
       const service = Array.from(nodeMap.values()).find((candidate) => candidate.type === 'service' || candidate.type === 'runtime' || candidate.type === 'ollama' || candidate.type === 'lmstudio');
       if (service) {
         return service;
+      }
+    }
+
+    if (node.type === 'ollama') {
+      const runtimeId = node.metadata.runtimeId as string | undefined;
+      if (runtimeId && nodeMap.has(runtimeId)) {
+        return nodeMap.get(runtimeId);
       }
     }
 
@@ -463,7 +561,9 @@ export class LocalAiDiscoveryService {
   private readonly scanners = new Map<string, DiscoveryScanner>();
 
   constructor(scanners: DiscoveryScanner[] = [
+    new OllamaRuntimeScanner(),
     new OllamaScanner(),
+    new OllamaModelScanner(),
     new LmStudioScanner(),
     new LocalModelScanner(),
     new McpScanner(),
@@ -538,9 +638,26 @@ export class LocalAiDiscoveryService {
       }
 
       if (resource.type === 'model') {
-        const ollamaParent = this.registry.findByType('ollama')[0];
-        if (ollamaParent) {
-          this.registry.addRelationship(ollamaParent.id, node.id, 'contains', { inferred: true, parentType: 'ollama' });
+        const runtimeParentId = typeof resource.metadata.runtimeId === 'string' ? resource.metadata.runtimeId : undefined;
+        const modelRootId = typeof resource.metadata.modelRootId === 'string' ? resource.metadata.modelRootId : undefined;
+        const ollamaRootId = typeof resource.metadata.ollamaRootId === 'string' ? resource.metadata.ollamaRootId : undefined;
+        const parentId = runtimeParentId ?? modelRootId ?? ollamaRootId ?? this.registry.findByType('runtime')[0]?.id ?? this.registry.findByType('ollama')[0]?.id;
+        if (parentId) {
+          this.registry.addRelationship(parentId, node.id, 'contains', {
+            inferred: true,
+            parentType: runtimeParentId ? 'runtime' : 'storage'
+          });
+        }
+      }
+
+      if (resource.type === 'endpoint') {
+        const runtimeParentId = typeof resource.metadata.runtimeId === 'string' ? resource.metadata.runtimeId : undefined;
+        const parentId = runtimeParentId ?? this.registry.findByType('runtime')[0]?.id;
+        if (parentId) {
+          this.registry.addRelationship(parentId, node.id, 'connects_to', {
+            inferred: true,
+            relation: 'runtime-endpoint'
+          });
         }
       }
     }
@@ -573,6 +690,68 @@ async function pathExists(target: string): Promise<boolean> {
     return true;
   } catch {
     return false;
+  }
+}
+
+function runCommand(command: string, args: string[]): { stdout: string; stderr: string; status: number | null } | undefined {
+  const result = spawnSync(command, args, { encoding: 'utf8' });
+  if (result.error) {
+    return undefined;
+  }
+
+  return {
+    stdout: result.stdout ?? '',
+    stderr: result.stderr ?? '',
+    status: result.status
+  };
+}
+
+async function resolveOllamaExecutablePath(context: DiscoveryScanContext): Promise<string | undefined> {
+  const env = context.environment ?? process.env;
+  const baseDir = context.rootPath ?? os.homedir();
+  const localAppData = env.LOCALAPPDATA ?? path.join(baseDir, 'AppData', 'Local');
+  const candidates = [
+    env.OLLAMA_EXE,
+    path.join(localAppData, 'Programs', 'Ollama', 'ollama.exe'),
+    'C:\\Program Files\\Ollama\\ollama.exe',
+    '/usr/local/bin/ollama',
+    '/usr/bin/ollama'
+  ].filter((candidate): candidate is string => Boolean(candidate));
+
+  for (const candidate of candidates) {
+    if (await pathExists(candidate)) {
+      return candidate;
+    }
+  }
+
+  return undefined;
+}
+
+interface OllamaTagModel {
+  name: string;
+  model: string;
+  modified_at?: string;
+  size?: number;
+  digest?: string;
+  details?: Record<string, unknown>;
+  capabilities?: string[];
+}
+
+async function fetchOllamaTags(endpoint: string): Promise<{ ok: boolean; models: OllamaTagModel[]; error?: string }> {
+  try {
+    const response = await fetch(`${endpoint.replace(/\/$/, '')}/api/tags`);
+    if (!response.ok) {
+      return { ok: false, models: [], error: `HTTP ${response.status}` };
+    }
+
+    const payload = (await response.json()) as { models?: OllamaTagModel[] };
+    return { ok: true, models: payload.models ?? [] };
+  } catch (error) {
+    return {
+      ok: false,
+      models: [],
+      error: error instanceof Error ? error.message : 'Unknown endpoint error'
+    };
   }
 }
 

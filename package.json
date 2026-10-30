@@ -1,6 +1,6 @@
 {
     "name": "maestro",
-    "version": "0.1.10",
+    "version": "0.2.0",
     "private": true,
     "type": "module",
     "scripts": {
@@ -16,7 +16,8 @@
         "validate:otto-ui-contract": "node --import tsx ./scripts/otto-ui-tracer-bullet.ts",
         "verify:diagnostics-artifacts": "node --import tsx ./scripts/verify-diagnostics-artifacts.ts",
         "verify:observability-bridge-diagnostics": "node --import tsx ./scripts/verify-observability-bridge-diagnostics.ts",
-        "check:ai-discovery-env": "node --import tsx ./scripts/verify-local-ai-discovery-env.ts"
+        "check:ai-discovery-env": "node --import tsx ./scripts/verify-local-ai-discovery-env.ts",
+        "validate:ai-discovery-local": "node --import tsx ./scripts/run-local-ai-discovery-validation.ts"
     },
     "dependencies": {
         "@otto/command-service": "file:../otto-command-service",
