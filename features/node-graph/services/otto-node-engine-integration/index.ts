@@ -11,6 +11,7 @@ import type {
 } from '../../../../src/shared/index.js';
 import { InMemoryGraphService } from '../../../node-graph/services/graph-service/index.js';
 import { MaestroOttoIntegrationService } from '../maestro-otto-integration/index.js';
+import { OttoNodeEngineClientLoader } from '../otto-node-engine-client-loader/index.js';
 
 export interface OttoNodeEngineClient {
   createGraph(graph: GraphDefinition): Promise<GraphPersistenceResult>;
@@ -38,6 +39,27 @@ export class MaestroOttoNodeEngineService {
     private readonly featureFlags: OttoNodeEngineFeatureFlags,
     private readonly client?: OttoNodeEngineClient
   ) {}
+
+  static async create(input: {
+    featureFlags: OttoNodeEngineFeatureFlags;
+    moduleName?: string;
+  }): Promise<{ service: MaestroOttoNodeEngineService; clientStatus: 'available' | 'unavailable'; reason?: string }> {
+    if (!input.featureFlags.enableOttoNodeEngine) {
+      return {
+        service: new MaestroOttoNodeEngineService(input.featureFlags),
+        clientStatus: 'unavailable',
+        reason: 'Otto node engine is disabled by feature flag.'
+      };
+    }
+
+    const loader = new OttoNodeEngineClientLoader({ moduleName: input.moduleName });
+    const loaded = await loader.load();
+    return {
+      service: new MaestroOttoNodeEngineService(input.featureFlags, loaded.client),
+      clientStatus: loaded.status,
+      reason: loaded.reason
+    };
+  }
 
   async loadGraph(graphId: string, version?: string): Promise<GraphDefinition | undefined> {
     if (this.featureFlags.enableOttoNodeEngine && this.client) {

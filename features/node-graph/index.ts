@@ -14,8 +14,10 @@ export {
 } from './services/maestro-otto-integration/index.js';
 export { runPhaseIEndToEndValidation, buildPhaseIGraph } from './services/end-to-end-validation/index.js';
 export { MaestroOttoNodeEngineService } from './services/otto-node-engine-integration/index.js';
+export { OttoNodeEngineClientLoader } from './services/otto-node-engine-client-loader/index.js';
 export { DiscoveryGraphSyncService } from './services/discovery-graph-sync/index.js';
 export type { OttoNodeEngineClient, OttoNodeEngineFeatureFlags } from './services/otto-node-engine-integration/index.js';
+export type { OttoNodeEngineClientFactoryModule, OttoNodeEngineClientLoaderOptions, OttoNodeEngineClientLoaderResult } from './services/otto-node-engine-client-loader/index.js';
 export type { DiscoveryGraphSource, DiscoveryGraphSyncAssertion, DiscoveryGraphSyncResult } from './services/discovery-graph-sync/index.js';
 export type { ExecutionLayer, TopologicalOrder } from './models/types.js';
 

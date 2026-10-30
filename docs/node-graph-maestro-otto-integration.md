@@ -46,3 +46,14 @@ Integrate node graph execution contracts with runtime and discovery registry dat
 - Validation:
   - `features/node-graph/tests/discovery-graph-sync.test.ts`
   - `tests/node-graph/phase-m-discovery-graph-sync.test.ts`
+
+## Phase N Extension: Runtime Client Loading
+
+- Service: `features/node-graph/services/otto-node-engine-client-loader/index.ts`
+  - Adds dynamic module loading for Otto node-engine clients with explicit availability diagnostics.
+  - Validates required module export contract (`createMaestroClient`) before integration.
+- Integration update:
+  - `MaestroOttoNodeEngineService.create(...)` now bootstraps feature-flag-aware client loading and fallback-safe service initialization.
+- Validation:
+  - `features/node-graph/tests/otto-node-engine-client-loader.test.ts`
+  - `tests/node-graph/phase-n-client-loader.test.ts`
