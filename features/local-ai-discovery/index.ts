@@ -825,3 +825,6 @@ export {
   AiDiscoveryUiStateBuilder,
   DEFAULT_AI_DISCOVERY_UI_STATE_BUILDER
 } from './services/ui-integration/index.js';
+export {
+  ContinuousDiscoveryService
+} from './services/continuous-discovery/index.js';

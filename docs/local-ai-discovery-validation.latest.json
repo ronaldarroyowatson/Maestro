@@ -1,5 +1,5 @@
 {
-  "executedAt": "2026-10-30T03:16:42.160Z",
+  "executedAt": "2026-10-30T11:25:40.139Z",
   "context": {
     "rootPath": "d:\\OneDrive\\Documents\\GitHub\\Maestro",
     "ollamaDir": "C:\\Users\\ronal\\AppData\\Local\\Programs\\Ollama",
@@ -139,7 +139,7 @@
     ],
     "resolvedOllamaExecutable": "C:\\Users\\ronal\\AppData\\Local\\Programs\\Ollama\\ollama.exe",
     "ollamaVersionOutput": "ollama version is 0.40.13",
-    "ollamaListOutput": "NAME                ID              SIZE      MODIFIED    \ntinyllama:latest    2644915ede35    637 MB    3 hours ago",
+    "ollamaListOutput": "NAME                ID              SIZE      MODIFIED     \ntinyllama:latest    2644915ede35    637 MB    11 hours ago",
     "ollamaApiTags": {
       "models": [
         {
@@ -372,8 +372,8 @@
         },
         "relationships": [],
         "discoveredBy": "local-ai-discovery-service",
-        "createdAt": "2026-10-30T03:16:42.025Z",
-        "lastSeen": "2026-10-30T03:16:42.024Z",
+        "createdAt": "2026-10-30T11:25:40.005Z",
+        "lastSeen": "2026-10-30T11:25:40.005Z",
         "path": "d:\\OneDrive\\Documents\\GitHub\\Maestro"
       },
       {
@@ -398,8 +398,8 @@
         },
         "relationships": [],
         "discoveredBy": "endpoint-scanner",
-        "createdAt": "2026-10-30T03:16:42.025Z",
-        "lastSeen": "2026-10-30T03:16:42.024Z",
+        "createdAt": "2026-10-30T11:25:40.005Z",
+        "lastSeen": "2026-10-30T11:25:40.005Z",
         "path": "http://127.0.0.1:11434"
       },
       {
@@ -445,8 +445,8 @@
         },
         "relationships": [],
         "discoveredBy": "ollama-model-scanner",
-        "createdAt": "2026-10-30T03:16:42.025Z",
-        "lastSeen": "2026-10-30T03:16:42.018Z",
+        "createdAt": "2026-10-30T11:25:40.005Z",
+        "lastSeen": "2026-10-30T11:25:39.997Z",
         "path": "http://127.0.0.1:11434"
       },
       {
@@ -470,8 +470,8 @@
         },
         "relationships": [],
         "discoveredBy": "ollama-scanner",
-        "createdAt": "2026-10-30T03:16:42.025Z",
-        "lastSeen": "2026-10-30T03:16:42.003Z",
+        "createdAt": "2026-10-30T11:25:40.005Z",
+        "lastSeen": "2026-10-30T11:25:39.982Z",
         "path": "C:\\Users\\ronal\\.ollama\\models"
       },
       {
@@ -495,8 +495,8 @@
         },
         "relationships": [],
         "discoveredBy": "ollama-scanner",
-        "createdAt": "2026-10-30T03:16:42.025Z",
-        "lastSeen": "2026-10-30T03:16:42.003Z",
+        "createdAt": "2026-10-30T11:25:40.005Z",
+        "lastSeen": "2026-10-30T11:25:39.982Z",
         "path": "C:\\Users\\ronal\\AppData\\Local\\Programs\\Ollama"
       },
       {
@@ -524,8 +524,8 @@
         },
         "relationships": [],
         "discoveredBy": "ollama-runtime-scanner",
-        "createdAt": "2026-10-30T03:16:42.025Z",
-        "lastSeen": "2026-10-30T03:16:42.003Z",
+        "createdAt": "2026-10-30T11:25:40.005Z",
+        "lastSeen": "2026-10-30T11:25:39.982Z",
         "path": "C:\\Users\\ronal\\AppData\\Local\\Programs\\Ollama\\ollama.exe"
       }
     ],

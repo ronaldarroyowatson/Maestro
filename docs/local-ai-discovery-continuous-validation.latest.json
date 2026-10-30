@@ -1,0 +1,61 @@
+{
+  "executedAt": "2026-10-30T11:25:44.323Z",
+  "events": [
+    {
+      "scanNumber": 1,
+      "status": "complete",
+      "reason": "startup",
+      "durationMs": 80,
+      "resourceCount": 5,
+      "scannedAt": "2026-10-30T11:25:40.507Z"
+    },
+    {
+      "scanNumber": 2,
+      "status": "complete",
+      "reason": "scheduled+triggered",
+      "durationMs": 57,
+      "resourceCount": 5,
+      "scannedAt": "2026-10-30T11:25:41.070Z"
+    },
+    {
+      "scanNumber": 3,
+      "status": "complete",
+      "reason": "scheduled",
+      "durationMs": 43,
+      "resourceCount": 5,
+      "scannedAt": "2026-10-30T11:25:44.225Z"
+    }
+  ],
+  "snapshot": {
+    "active": false,
+    "paused": false,
+    "intervalMs": 2000,
+    "minIntervalMs": 500,
+    "scanCount": 3,
+    "lastScanAt": "2026-10-30T11:25:44.225Z",
+    "lastScanDurationMs": 43,
+    "lastError": null,
+    "pendingTriggerCount": 0
+  },
+  "failures": [],
+  "testResults": [
+    {
+      "name": "Scheduler Interval Test",
+      "result": "PASS"
+    },
+    {
+      "name": "Event Driven Update Test",
+      "result": "PASS"
+    },
+    {
+      "name": "Pause Resume Test",
+      "result": "PASS"
+    },
+    {
+      "name": "Disconnected Service Test",
+      "result": "PASS"
+    }
+  ],
+  "passCount": 4,
+  "failCount": 0
+}

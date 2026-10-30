@@ -628,6 +628,8 @@ Documentation updates:
 - scan policy and scheduling guide
 - operational considerations for low-impact discovery
 
+Current implementation status: Phase E is complete. The local AI discovery feature now includes a continuous discovery runtime with configurable scheduling intervals, pause/resume controls, event-triggered rescans, incremental change-set diffs, and throttled update output. Validation includes scheduler interval behavior, failure handling, rapid trigger coalescing, and real-machine continuous scan evidence.
+
 #### Phase F — Otto Node Graph Foundation
 
 Objective: create a reusable node-based workflow system inside Otto for visual orchestration.

@@ -9,6 +9,7 @@ Defines the repeatable validation commands and expected outputs for Phase B disc
 - `npm run typecheck`
 - `npm test -- --run features/local-ai-discovery/tests`
 - `npm run validate:ai-discovery-local`
+- `npm run validate:ai-discovery-continuous`
 
 ## Expected Output Standard
 
@@ -38,6 +39,15 @@ Defines the repeatable validation commands and expected outputs for Phase B disc
 
 - Empty Resource List Test
 - Large Scale Resource Scan Test
+- Rapid Repeated Scanning Test
+
+### Continuous discovery tests
+
+- Scheduler Interval Test
+- Pause Resume Test
+- Event Driven Update Test
+- Resource Throttling Test
+- Disconnected Service Test
 
 ## Real-machine validation checks
 
