@@ -490,6 +490,7 @@ This ordering keeps the platform grounded in actual local evidence before introd
 Current implementation status: Phase A is implemented and revalidated under the mandatory feature validation framework. The core design rule remains the unified resource-node model, and the discovery framework under `features/local-ai-discovery/index.ts` now includes runtime and model scanners for Ollama in addition to local model files, LM Studio, MCP configuration, AI-development repositories, and local endpoints.
 Phase B is complete and validated as a repeatable local testing environment. The repo now includes: `features/local-ai-discovery/services/test-environment/index.ts`, the machine validation command `npm run validate:ai-discovery-local`, structured PASS/FAIL real-machine outputs, and evidence artifacts in `docs/local-ai-discovery-validation.latest.json`.
 Real-machine validation confirms runtime detection, executable detection, model metadata extraction, registry dedupe/update behavior, and runtime->model relationship generation. Remaining roadmap-priority gaps are expansion scanners (Python virtual environments, Docker workloads, agent frameworks, richer MCP runtime coverage).
+Phase C execution has begun with registry hardening primitives: searchable registry queries, status lifecycle updates, stale missing-resource removal, and relationship dedupe safeguards.
 #### Phase A — Local AI Discovery Framework
 
 Objective: create a modular, plugin-driven discovery framework for local AI resources.
